@@ -1,4 +1,4 @@
-// Header.tsx
+// Header.tsx (קוד סופי: צמוד לימין, 10% רווח, גובה מוגדל)
 import React, { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react'; 
 import {
@@ -10,8 +10,11 @@ import {
   IconButton, 
   Stack, 
   Link, 
+  type BoxProps // נדרש כדי שרכיב Logo יוכל לקבל sx
+ // נדרש כדי שרכיב Logo יוכל לקבל sx
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import MenuIcon from '@mui/icons-material/Menu'; 
 
 // --- 1. הגדרות צבעים ורוחב ---
 
@@ -21,22 +24,28 @@ const COLORS = {
   searchBtnBg: 'black',
   linkText: 'white',
   inputTextColor: 'black',
-  contentMaxWidth: '1280px', 
+  // *** הערך הנכון והממוסגר ***
+  contentMaxWidth: '95%', 
   indicatorBar: 'white',
   borderRadius: '8px', 
-  linkGap: 4, // חזר לגודל קטן יותר כפי שנראה בתמונה
-  logoLinkGap: 4, 
+  linkGap: 4, 
+  logoLinkGap: 0, // איפסנו כי נשתמש ב-margin 10%
   searchDonateGap: 2, 
+  innerPadding: { xs: 1.5, sm: 2, md: 3 } 
 };
 
-// --- 2. רכיב הלוגו ---
-const Logo: React.FC = () => (
+// --- 2. רכיב הלוגו (מעודכן לקבלת sx) ---
+interface LogoProps extends BoxProps {}
+
+const Logo: React.FC<LogoProps> = ({ sx }) => (
   <Box 
+    // הוספת ה-sx שהתקבל ל-Box החיצוני (כדי לקבל את ה-10% רווח)
     sx={{
-      // *** גודל הלוגו כפי שנראה בתמונה (קטן יחסית) ***
-      width: { xs: '40px', sm: '50px' }, 
-      height: { xs: '40px', sm: '50px' }, 
+      width: { xs: '45px', sm: '70px' }, 
+      height: { xs: '45px', sm: '70px' }, 
       flexShrink: 0,
+      cursor: 'pointer',
+      ...sx // מיזוג המאפיינים החיצוניים (כמו ml: '10%')
     }}
   >
     <Box 
@@ -82,169 +91,204 @@ const Header: React.FC = () => {
         disableGutters 
         sx={{ 
           display: 'flex',
-          justifyContent: 'flex-start', 
+          justifyContent: 'space-between', 
           alignItems: 'center', 
           
-          // *** התיקון הקריטי לצמידות לקצוות ***
-          padding: '0 !important', // מבטל כל פאדינג פנימי ב-MUI
-          paddingY: '10px', // מחזיר רק את הפאדינג האנכי 
+          padding: '0 !important', 
+          // גובה מוגדל
+          paddingY: { xs: '15px', sm: '20px' }, 
+          minHeight: { xs: '60px', sm: '80px' }, 
           
-          minHeight: '55px', 
+          // הגבלת התוכן ל-1280px ומירוכזו
           maxWidth: COLORS.contentMaxWidth, 
           width: '100%', 
           margin: '0 auto', 
           direction: 'rtl', 
+          px: 0, 
         }}
       >
         
-        {/* === בלוק 1: צד ימין (לוגו וקישורים) - צמוד לימין === */}
+        {/* === בלוק 1: צד ימין (לוגו וקישורים) === */}
         <Stack 
           direction="row"
           alignItems="center"
-          spacing={0}
+          // איפוס spacing כי נשתמש ב-margin-left: 10%
+          spacing={0} 
           sx={{ 
-            flexShrink: 0, 
-            height: '100%', 
+            // הצמדה מוחלטת: ריווח ימין (pr) הוא 0
+            pr: 0, 
+            // שמירת ריווח משמאל לקישורים
+            pl: COLORS.innerPadding, 
+            flexShrink: 0,
           }}
         >
-            <Logo />
+          {/* *** קריטי: הוספת מרווח שמאלי של 10% ללוגו *** */}
+          <Logo sx={{ ml: { xs: 0, md: '10%' } }} />
             
-            {/* 2. קישורים */}
-            <Stack 
-              direction="row" 
-              marginLeft={COLORS.logoLinkGap} 
-              gap={COLORS.linkGap} 
-              sx={{ 
-                height: '100%', 
-                alignItems: 'center', 
-                display: { xs: 'none', md: 'flex' } 
-              }}
-            >
-              {navLinks.map((text, index) => (
-                <Link 
-                  key={index}
-                  href={`/${text}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setActiveTab(text);
-                  }}
-                  sx={{
-                    flexShrink: 0, 
-                    color: COLORS.linkText,
-                    textDecoration: 'none',
-                    // *** גודל גופן כפי שנראה בתמונה (קטן יחסית) ***
-                    fontSize: { xs: '14px', sm: '16px' }, 
-                    padding: '8px 0', 
-                    fontWeight: 500,
-                    position: 'relative', 
-                    height: '100%',
-                    
-                    '&:hover, &:active, &:visited': { color: COLORS.linkText },
-                    
-                    '&::after': {
-                      content: '""',
-                      position: 'absolute',
-                      bottom: 0,
-                      left: '50%', 
-                      transform: activeTab === text ? 'translate(-50%) scaleX(1)' : 'translate(-50%) scaleX(0)',
-                      height: '4px',
-                      width: '70%',
-                      backgroundColor: COLORS.indicatorBar,
-                      transition: 'transform 0.2s ease-in-out',
-                      transformOrigin: 'bottom',
-                    }
-                  }}
-                >
-                  {text}
-                </Link>
-              ))}
-            </Stack>
+          {/* 2. קישורים (מרווחים וגדולים) */}
+          <Stack 
+            direction="row" 
+            gap={COLORS.linkGap} 
+            sx={{ 
+              height: '100%', 
+              alignItems: 'center', 
+              display: { xs: 'none', md: 'flex' },
+            }}
+          >
+            {navLinks.map((text, index) => (
+              <Link 
+                key={index}
+                href={`/${text}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveTab(text);
+                }}
+                sx={{
+                  color: COLORS.linkText,
+                  textDecoration: 'none',
+                  fontSize: { md: '1.05rem', lg: '1.2rem' }, 
+                  fontWeight: 600, 
+                  
+                  // פאדינג אופקי ליצירת רוחב אחיד ומרווח
+                  padding: '10px 18px', 
+                  paddingY: '10px', 
+                  
+                  position: 'relative', 
+                  height: '100%',
+                  flexShrink: 0, 
+
+                  '&:hover, &:active, &:visited': { color: COLORS.linkText },
+                  
+                  // פס אינדיקציה רחב ואחיד
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0, 
+                    width: activeTab === text ? '100%' : '0%', 
+                    height: '4px',
+                    backgroundColor: COLORS.indicatorBar,
+                    transition: 'width 0.2s ease-in-out', 
+                    transformOrigin: 'bottom',
+                  }
+                }}
+              >
+                {text}
+              </Link>
+            ))}
+          </Stack>
         </Stack>
         
-        {/* === *** שטח ריק מתרחב ודוחף את הבלוק השמאלי לקצה *** === */}
+        {/* === שטח ריק מתרחב (הרווח האדום הגדול) === */}
         <Box sx={{ flexGrow: 1 }} /> 
         
-        {/* === בלוק 2: צד שמאל (חיפוש ותרמות) - צמוד לשמאל === */}
+        {/* === בלוק 2: צד שמאל (חיפוש ותרמות) - צמוד לשמאל ה-1280px === */}
         <Stack
           direction="row"
           alignItems="center"
           gap={COLORS.searchDonateGap} 
           sx={{ 
+            // שמירת ריווח משמאל לחיפוש
+            pl: COLORS.innerPadding, 
+            // הצמדה מוחלטת: ריווח ימין (pr) הוא 0
+            pr: 0, 
             flexShrink: 0,
-            paddingLeft: 0, 
-            marginLeft: 0, 
           }}
         >
-          
-            {/* 2. כפתור 'תרמות' הלבן */}
-            <Button
-              variant="contained"
+               {/* 2. כפתור 'תרמות' הלבן */}
+          <Button
+            variant="contained"
+            sx={{
+              backgroundColor: COLORS.searchBg,
+              color: COLORS.inputTextColor,
+              border: '1px solid black',
+              padding: { xs: '8px 12px', sm: '10px 18px' }, 
+              fontSize: { xs: '14px', sm: '16px' },
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              flexShrink: 0,
+              boxShadow: 'none',
+              borderRadius: COLORS.borderRadius, 
+              '&:hover': { backgroundColor: COLORS.searchBg, boxShadow: 'none' }
+            }}
+            aria-label="תרמו עכשיו"
+          >
+            תרומות
+          </Button>
+          {/* 1. טופס חיפוש */}
+          <Box 
+            component="form" 
+            onSubmit={handleSearch} 
+            sx={{ 
+              display: { xs: 'none', sm: 'flex' }, 
+              alignItems: 'stretch',
+              overflow: 'hidden',
+              borderRadius: COLORS.borderRadius, 
+              border: '1px solid black',
+              height: { sm: '45px', md: '50px' }
+            }}
+          >
+            {/* שדה טקסט לחיפוש */}
+            <InputBase
+              type="text"
+              placeholder="חפש שיעור" 
+              value={searchTerm}
+              onChange={handleInputChange} 
+              aria-label="הזן מילות חיפוש"
               sx={{
+                flexGrow: 1,
+                padding: '8px 15px', 
+                fontSize: { xs: '14px', sm: '16px' },
                 backgroundColor: COLORS.searchBg,
                 color: COLORS.inputTextColor,
-                border: '1px solid black',
-                padding: { xs: '6px 10px', sm: '8px 15px' }, 
-                fontSize: { xs: '14px', sm: '16px' },
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                flexShrink: 0,
-                boxShadow: 'none',
-                borderRadius: COLORS.borderRadius, 
-                '&:hover': { backgroundColor: COLORS.searchBg, boxShadow: 'none' }
+                minWidth: { sm: '150px', md: '200px' }, 
+                direction: 'rtl',
+                textAlign: 'right',
               }}
-              aria-label="תרמו עכשיו"
-            >
-                תרמות
-            </Button>
-
-            {/* 1. טופס חיפוש */}
-            <Box 
-              component="form" 
-              onSubmit={handleSearch} 
-              sx={{ 
-                display: { xs: 'none', sm: 'flex' },
-                alignItems: 'stretch',
-                overflow: 'hidden',
-                borderRadius: COLORS.borderRadius, 
-                border: '1px solid black',
+            />
+            {/* כפתור חיפוש שחור */}
+            <IconButton 
+              type="submit" 
+              aria-label="לחץ לחיפוש"
+              sx={{
+                backgroundColor: COLORS.searchBtnBg,
+                color: COLORS.linkText,
+                width: '45px', 
+                height: '100%', 
+                borderRadius: `${COLORS.borderRadius} 0 0 ${COLORS.borderRadius}`, 
+                '&:hover': { backgroundColor: COLORS.searchBtnBg }
               }}
             >
-                
-                {/* שדה טקסט לחיפוש */}
-                <InputBase
-                    type="text"
-                    placeholder="חפש שיעור" 
-                    value={searchTerm}
-                    onChange={handleInputChange} 
-                    aria-label="הזן מילות חיפוש"
-                    sx={{
-                      flexGrow: 1,
-                      padding: '8px 15px', 
-                      fontSize: { xs: '14px', sm: '16px' },
-                      backgroundColor: COLORS.searchBg,
-                      minWidth: { xs: '100px', sm: '200px' }, 
-                      color: COLORS.inputTextColor,
-                      direction: 'rtl',
-                      textAlign: 'right',
-                    }}
-                />
-                
-                {/* כפתור חיפוש שחור */}
-                <IconButton 
-                  type="submit" 
-                  aria-label="לחץ לחיפוש"
-                  sx={{
-                    backgroundColor: COLORS.searchBtnBg,
-                    color: COLORS.linkText,
-                    width: '40px', 
-                    height: 'auto', 
-                    borderRadius: `${COLORS.borderRadius} 0 0 ${COLORS.borderRadius}`, 
-                    '&:hover': { backgroundColor: COLORS.searchBtnBg }
-                  }}
-                >
-                    <SearchIcon sx={{ width: '24px', height: '24px', fill: COLORS.linkText }} />
-                </IconButton>
-            </Box>
+              <SearchIcon sx={{ width: '24px', height: '24px', fill: COLORS.linkText }} />
+            </IconButton>
+          </Box>
+            
+     
+          
+          {/* 3. כפתור המבורגר לניווט (מופיע רק בטלפון) */}
+          <IconButton 
+            color="inherit" 
+            aria-label="פתח תפריט ניווט"
+            sx={{ 
+              display: { xs: 'flex', md: 'none' }, 
+              color: COLORS.linkText
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+          
+          {/* 4. אייקון חיפוש לטלפון (מופיע רק בטלפון) */}
+          <IconButton 
+            color="inherit" 
+            aria-label="פתח חיפוש"
+            sx={{ 
+              display: { xs: 'flex', sm: 'none' }, 
+              color: COLORS.linkText,
+            }}
+            onClick={() => console.log('פתח חיפוש במסך מלא')}
+          >
+            <SearchIcon />
+          </IconButton>
         </Stack>
 
       </Toolbar>

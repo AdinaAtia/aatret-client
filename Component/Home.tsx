@@ -1,223 +1,5 @@
-// import React, { useState } from 'react';
-// import { 
-//   Box, 
-//   Typography, 
-//   InputBase, 
-//   IconButton, 
-//   Stack,
-//   Paper, // נשתמש ב-Paper לכרטיסים (Cards)
-//   Button,
-// } from '@mui/material';
-// import SearchIcon from '@mui/icons-material/Search';
-// import Header from './Header'; // ודא שהנתיב נכון
 
-// // --- 1. הגדרות רוחב וצבעים ---
-// const COLORS = {
-//   mainBg: '#922b2b', // הצבע האדום כהה של הכפתורים וה-Header
-//   inputTextColor: 'black',
-//   contentMaxWidth: '1280px', 
-//   searchBg: 'white',
-//   searchBtnBg: 'black',
-//   borderRadius: '8px',
-// };
 
-// // --- 2. קומפוננטת דף הבית ---
-// const Home: React.FC = () => {
-//   const [centralSearchTerm, setCentralSearchTerm] = useState<string>('');
-
-//   const handleCentralSearch = (event: React.FormEvent) => {
-//     event.preventDefault();
-//     console.log('חיפוש מרכזי:', centralSearchTerm);
-//   };
-
-//   const cardActions = [
-//     { label: 'הוצאות ספרים', onClick: () => console.log('לחץ: הוצאות ספרים') },
-//     { label: 'שיעורי קבלה', onClick: () => console.log('לחץ: שיעורי קבלה') },
-//     { label: 'כללי דינאות', onClick: () => console.log('לחץ: כללי דינאות') },
-//   ];
-
-//   return (
-//     <Box 
-//       sx={{
-//         direction: 'rtl',
-//         minHeight: '100vh',
-//         backgroundColor: 'white', // רקע הדף לבן
-//       }}
-//     >
-      
-//       {/* 1. ה-HEADER */}
-//       <Header />
-      
-//       {/* 2. קונטיינר התוכן המרכזי */}
-//       <Box
-//         sx={{
-//           maxWidth: COLORS.contentMaxWidth,
-//           width: '100%',
-//           margin: '0 auto',
-//           padding: { xs: 2, md: 5 },
-//           textAlign: 'center',
-//         }}
-//       >
-        
-//         {/* --- אזור כותרת וחיפוש עליון --- */}
-//         <Box sx={{ marginY: { xs: 4, md: 8 } }}>
-//           <Typography
-//             variant="h1"
-//             component="h1"
-//             sx={{
-//               fontWeight: 900,
-//               fontSize: { xs: '3rem', sm: '4rem', md: '5rem' },
-//               color: COLORS.inputTextColor,
-//               lineHeight: 1.1,
-//             }}
-//           >
-//             עטרת מרדכי
-//           </Typography>
-//           <Typography
-//             variant="body1"
-//             sx={{
-//               marginTop: 1,
-//               fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' },
-//               color: COLORS.inputTextColor,
-//               fontWeight: 500,
-//             }}
-//           >
-//             ישיבה ללימוד קבלה, נב"י ותורת האריז"ל
-//           </Typography>
-//         </Box>
-
-//         {/* תיבת חיפוש מרכזית גדולה */}
-//         <Box
-//           component="form"
-//           onSubmit={handleCentralSearch}
-//           sx={{
-//             display: 'flex',
-//             alignItems: 'stretch',
-//             justifyContent: 'center',
-//             marginTop: { xs: 5, md: 8 },
-//             marginBottom: 5,
-//           }}
-//         >
-//           <Stack
-//             direction="row"
-//             sx={{
-//               width: { xs: '100%', sm: '80%', md: '600px' },
-//               overflow: 'hidden',
-//               borderRadius: COLORS.borderRadius,
-//               border: '1px solid black',
-//               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-//             }}
-//           >
-//             {/* שדה טקסט לחיפוש */}
-//             <InputBase
-//               type="text"
-//               placeholder="חפש שיעור"
-//               value={centralSearchTerm}
-//               onChange={(e) => setCentralSearchTerm(e.target.value)}
-//               aria-label="הזן מילות חיפוש בדף הבית"
-//               sx={{
-//                 flexGrow: 1,
-//                 padding: '12px 20px',
-//                 fontSize: { xs: '16px', sm: '18px' },
-//                 backgroundColor: COLORS.searchBg,
-//                 color: COLORS.inputTextColor,
-//                 direction: 'rtl',
-//                 textAlign: 'right',
-//                 '& .MuiInputBase-input': { padding: 0 }
-//               }}
-//             />
-//             {/* כפתור חיפוש שחור */}
-//             <IconButton
-//               type="submit"
-//               aria-label="לחץ לחיפוש"
-//               sx={{
-//                 backgroundColor: COLORS.searchBtnBg,
-//                 color: COLORS.searchBg,
-//                 width: '55px',
-//                 height: 'auto',
-//                 borderRadius: '0', 
-//                 '&:hover': { backgroundColor: COLORS.searchBtnBg }
-//               }}
-//             >
-//               <SearchIcon sx={{ width: '28px', height: '28px', fill: COLORS.searchBg }} />
-//             </IconButton>
-//           </Stack>
-//         </Box>
-        
-//         {/* קו הפרדה */}
-//         <Box sx={{ borderBottom: '1px solid #ccc', marginY: 5 }} />
-
-//         {/* --- אזור ספרי הישיבה --- */}
-//         <Box sx={{ marginTop: 8, marginBottom: 5 }}>
-          
-//           {/* כותרת: "ספרי הישיבה" */}
-//           <Typography
-//             variant="h4"
-//             component="h2"
-//             sx={{
-//               fontWeight: 700,
-//               fontSize: { xs: '1.5rem', md: '2rem' },
-//               color: COLORS.inputTextColor,
-//               marginBottom: 4,
-//             }}
-//           >
-//             ספרי הישיבה
-//           </Typography>
-
-//           {/* מלבן תוכן גדול (כאן יבואו תמונות או רשימת ספרים) */}
-//           <Paper
-//             elevation={0} // בלי צל כפי שנראה בתמונה
-//             sx={{
-//               width: '100%',
-//               minHeight: '400px', // גובה גדול כפי שנראה בתמונה
-//               border: '1px solid #ccc',
-//               marginBottom: 5,
-//               backgroundColor: 'white',
-//             }}
-//           >
-//             {/* תוכן המלבן הלבן */}
-//           </Paper>
-
-//           {/* שורת הכפתורים/כרטיסים האדומים */}
-//           <Stack
-//             direction={{ xs: 'column', sm: 'row' }}
-//             spacing={3}
-//             justifyContent="center"
-//             alignItems="stretch"
-//           >
-//             {cardActions.map((action, index) => (
-//               <Button
-//                 key={index}
-//                 variant="contained"
-//                 onClick={action.onClick}
-//                 sx={{
-//                   backgroundColor: COLORS.mainBg,
-//                   color: COLORS.searchBg, // טקסט לבן
-//                   fontWeight: 'bold',
-//                   textTransform: 'none', // ללא אותיות גדולות
-//                   padding: { xs: '15px 10px', sm: '20px 10px' },
-//                   fontSize: '1.1rem',
-//                   borderRadius: COLORS.borderRadius,
-//                   flexGrow: 1, // גורם לכרטיסים לתפוס רוחב שווה
-//                   minHeight: '120px', // גובה קבוע כפי שנראה בתמונה
-//                   '&:hover': {
-//                     backgroundColor: '#7a2222', // צל מעט כהה יותר ברפרוף
-//                   }
-//                 }}
-//               >
-//                 {action.label}
-//               </Button>
-//             ))}
-//           </Stack>
-
-//         </Box>
-        
-//       </Box>
-//     </Box>
-//   );
-// };
-
-// export default Home;
 import React, { useState } from 'react'; 
 import { 
   Box, 
@@ -227,26 +9,27 @@ import {
   Stack,
   Paper, 
   Button,
-  Grid, // משמש כ-container בלבד
+  Grid, 
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
 // ודא שהנתיב ל-Header נכון
 import Header from './Header'; 
-
+// בתוך אזור האימפורטים בראש הקובץ
+import LatestLessonCard from './LatestLessonCard';
 // --- 1. הגדרות רוחב וצבעים ---
 const COLORS = {
   mainBg: '#922b2b', 
   inputTextColor: 'black',
-  contentMaxWidth: '1280px', 
+  contentMaxWidth: '95%px', // רוחב קבוע
   searchBg: 'white',
   searchBtnBg: 'black',
   borderRadius: '8px',
-  // rabbiBg: '#e9e9e9', 
-  rabbiBg: 'white', // שונה מ-'#e9e9e9' ל-'white'
+  rabbiBg: 'white', 
+  
 };
 
-// --- קומפוננטת כרטיס רב (לשימוש חוזר) ---
+// --- קומפוננטת כרטיס רב ---
 interface RabbiCardProps {
     name: string;
     title: string;
@@ -255,52 +38,52 @@ interface RabbiCardProps {
 
 const RabbiCard: React.FC<RabbiCardProps> = ({ name, title, imageSrc }) => (
     <Paper 
-        elevation={1} 
-        sx={{ 
-            textAlign: 'right', 
-            padding: 2, 
-            borderRadius: COLORS.borderRadius,
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-        }}
+      elevation={1} 
+      sx={{ 
+        textAlign: 'right', 
+        padding: 2, 
+        borderRadius: COLORS.borderRadius,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+      }}
     >
-        <Stack direction="row" spacing={2} alignItems="center">
-            <Box 
-                sx={{ 
-                    width: '100px', 
-                    height: '100px', 
-                    backgroundColor: COLORS.rabbiBg, 
-                    borderRadius: '4px',
-                    backgroundImage: `url(${imageSrc})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                }}
-            />
-            
-            <Box>
-                <Typography variant="h6" fontWeight="bold">
-                    {name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    {title}
-                </Typography>
-            </Box>
-        </Stack>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Box 
+          sx={{ 
+            width: '100px', 
+            height: '100px', 
+            backgroundColor: COLORS.rabbiBg, 
+            borderRadius: '4px',
+            backgroundImage: `url(${imageSrc})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
         
-        <Button 
-            variant="contained" 
-            size="small"
-            sx={{ 
-                backgroundColor: COLORS.mainBg, 
-                color: 'white',
-                marginTop: 2,
-                alignSelf: 'flex-start',
-                '&:hover': { backgroundColor: '#7a2222' }
-            }}
-        >
-            לשיעורי הרב
-        </Button>
+        <Box>
+          <Typography variant="h6" fontWeight="bold">
+            {name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {title}
+          </Typography>
+        </Box>
+      </Stack>
+      
+      <Button 
+        variant="contained" 
+        size="small"
+        sx={{ 
+          backgroundColor: COLORS.mainBg, 
+          color: 'white',
+          marginTop: 2,
+          alignSelf: 'flex-start',
+          '&:hover': { backgroundColor: '#7a2222' }
+        }}
+      >
+        לשיעורי הרב
+      </Button>
     </Paper>
 );
 
@@ -338,19 +121,20 @@ const Home: React.FC = () => {
       
       {/* 1. ה-HEADER */}
       <Header />
-      
-      {/* 2. קונטיינר התוכן המרכזי */}
+    
+      {/* 2. קונטיינר התוכן העליון (כותרת וחיפוש) */}
       <Box
         sx={{
           maxWidth: COLORS.contentMaxWidth,
           width: '100%',
           margin: '0 auto',
           padding: { xs: 2, md: 5 }, 
+          paddingBottom: 0, // איפוס פאדינג תחתון
           textAlign: 'center',
         }}
       >
         
-        {/* --- אזור כותרת וחיפוש עליון --- */}
+        {/* --- אזור כותרת עליון --- */}
         <Box sx={{ marginY: { xs: 4, md: 8 } }}>
           <Typography
             variant="h1"
@@ -373,75 +157,39 @@ const Home: React.FC = () => {
               fontWeight: 500,
             }}
           >
-            ישיבה ללימוד קבלה, נב"י ותורת האריז"ל
+            ישיבה ללימוד קבלה עפ"י תורת האר"י ז"ל
           </Typography>
         </Box>
 
-        {/* תיבת חיפוש מרכזית גדולה */}
-        <Box
-          component="form"
-          onSubmit={handleCentralSearch}
-          sx={{
-            display: 'flex',
-            alignItems: 'stretch',
-            justifyContent: 'center',
-            marginTop: { xs: 5, md: 8 },
-            marginBottom: 5,
-          }}
-        >
-          <Stack
-            direction="row"
-            sx={{
-              width: { xs: '100%', sm: '80%', md: '600px' }, 
-              overflow: 'hidden',
-              borderRadius: COLORS.borderRadius,
-              border: '1px solid black',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            }}
-          >
-            {/* שדה טקסט לחיפוש */}
-            <InputBase
-              type="text"
-              placeholder="חפש שיעור"
-              value={centralSearchTerm}
-              onChange={(e) => setCentralSearchTerm(e.target.value)}
-              aria-label="הזן מילות חיפוש בדף הבית"
-              sx={{
-                flexGrow: 1,
-                padding: '12px 20px',
-                fontSize: { xs: '16px', sm: '18px' },
-                backgroundColor: COLORS.searchBg,
-                color: COLORS.inputTextColor,
-                direction: 'rtl',
-                textAlign: 'right',
-                '& .MuiInputBase-input': { padding: 0 }
-              }}
-            />
-            {/* כפתור חיפוש שחור */}
-            <IconButton
-              type="submit"
-              aria-label="לחץ לחיפוש"
-              sx={{
-                backgroundColor: COLORS.searchBtnBg,
-                color: COLORS.searchBg,
-                width: '55px',
-                height: 'auto',
-                borderRadius: '0', 
-                '&:hover': { backgroundColor: COLORS.searchBtnBg }
-              }}
-            >
-              <SearchIcon sx={{ width: '28px', height: '28px', fill: COLORS.searchBg }} />
-            </IconButton>
-          </Stack>
-        </Box>
         
-        {/* קו הפרדה */}
-        <Box sx={{ borderBottom: '1px solid #ccc', marginY: 5 }} />
-
+      </Box>
+      
+      {/* 3. קו הפרדה ברוחב מלא עם מרווח גדול (80px) */}
+      <Box 
+        sx={{ 
+          borderBottom: '3px solid black', 
+          width: '100%',
+          marginTop: { xs: 5, md: 8 }, // מרווח עליון
+          marginBottom: 10, // מרווח תחתון גדול (80px)
+        }} 
+      />
+  <LatestLessonCard />
+      {/* 4. קונטיינר התוכן התחתון (ספרי הישיבה ורבנים) */}
+      <Box
+        sx={{
+          maxWidth: COLORS.contentMaxWidth,
+          width: '100%',
+          margin: '0 auto',
+          padding: { xs: 2, md: 5 }, 
+          paddingTop: 0, // איפוס פאדינג עליון
+          textAlign: 'center',
+        }}
+      >
+        
         {/* --- אזור ספרי הישיבה --- */}
         <Box sx={{ marginTop: 8, marginBottom: 5 }}>
-          <Typography variant="h4" component="h2" sx={{ fontWeight: 700, fontSize: { xs: '1.5rem', md: '2rem' }, color: COLORS.inputTextColor, marginBottom: 4,}}>ספרי הישיבה</Typography>
-          <Paper elevation={0} sx={{ width: '100%', minHeight: '400px', border: '1px solid #ccc', marginBottom: 5, backgroundColor: 'white',}}>{/* תוכן המלבן הלבן */}</Paper>
+         <Typography variant="h4" component="h2" sx={{ fontWeight: 700, fontSize: { xs: '3rem', md: '3rem' }, color: COLORS.inputTextColor, marginBottom: 4, fontFamily: 'Arial' }}>ספרי הישיבה</Typography>
+          <Paper elevation={0} sx={{ width: '95%', minHeight: '400px', border: '1px solid #ccc', marginBottom: 5, backgroundColor: 'white',}}>{/* תוכן המלבן הלבן */}</Paper>
           
           <Stack
             direction={{ xs: 'column', sm: 'row' }} 
@@ -476,42 +224,58 @@ const Home: React.FC = () => {
         </Box>
         
         
-        {/* --- קו הפרדה נוסף (בין ספרי הישיבה לראש הישיבה) --- */}
-        <Box sx={{ borderBottom: '1px solid #ccc', marginY: 5 }} />
+        {/* 3. קו הפרדה ברוחב מלא עם מרווח גדול (80px) */}
+      <Box 
+        sx={{ 
+          borderBottom: '3px solid black', 
+          width: '100%',
+          marginTop: { xs: 5, md: 8 }, // מרווח עליון
+          marginBottom: 10, // מרווח תחתון גדול (80px)
+        }} 
+      />
 
 
-        {/* --- אזור מרן ראש הישיבה (מתוקן באמצעות Box) --- */}
+        {/* --- אזור מרן ראש הישיבה --- */}
         <Box sx={{ marginY: 8, backgroundColor: COLORS.rabbiBg, padding: 4, borderRadius: COLORS.borderRadius, textAlign: 'right' }}>
             
-            {/* Grid container נשאר לניהול ה-spacing */}
             <Grid container spacing={4} alignItems="stretch"> 
                 
-                {/* עמודה 1: תמונה גדולה - משתמשים ב-Box במקום Grid item */}
+                {/* עמודה 1: תמונה גדולה */}
                 <Box 
-                    // רוחב: 100% במובייל, 8/12 בדסקטופ (פחות רווח)
                     sx={{ 
                         width: { xs: '100%', md: 'calc((8 / 12) * 100% - 16px)' }, 
-                        marginBottom: { xs: 4, md: 0 }, // רווח אנכי
-                        marginLeft: { xs: 0, md: '16px' } // פיצוי על ה-spacing
+                        marginBottom: { xs: 4, md: 0 }, 
+                        // marginRight: { xs: 0, md: '16px' } 
                     }} 
                 >
-                    <Box 
-                        sx={{ 
-                            height: '100%',
-                            minHeight: { xs: '250px', md: '400px' },
-                            backgroundColor: 'white',
-                            borderRadius: COLORS.borderRadius,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                            backgroundImage: 'url(./public/DSC_5195.jpg)',
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                        }} 
-                    />
+   <Box
+    sx={{
+        // flexShrink: 0,
+        // *** 1. לוודא שהרוחב הוא 100% מתוך ה-Grid item (md={6}) ***
+        // width: '100%', 
+        
+        // *** 2. הקטנת יחס הגובה/רוחב ל-35% (יהפוך את התמונה לרחבה ונמוכה יותר) ***
+        paddingTop: '30%', 
+        // position: 'relative', 
+        
+        backgroundImage: 'url(./public/DSC_5195.JPG)',
+        
+        // *** 3. שומרים על 'contain' להצגת כל התמונה ***
+        backgroundSize: 'contain', 
+        backgroundRepeat: 'no-repeat', 
+        
+        // backgroundPosition: 'center',
+        // borderRadius: '8px',
+        // boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+        order: { xs: 2, md: 1 
+          
+        },
+    }}
+/>
                 </Box>
                 
-                {/* עמודה 2: טקסט וכפתור - משתמשים ב-Box במקום Grid item */}
+                {/* עמודה 2: טקסט וכפתור */}
                 <Box 
-                    // רוחב: 100% במובייל, 4/12 בדסקטופ (פחות רווח)
                     sx={{ 
                         width: { xs: '100%', md: 'calc((4 / 12) * 100% - 16px)' }, 
                         marginLeft: { xs: 0, md: '16px' }
@@ -552,19 +316,26 @@ const Home: React.FC = () => {
             </Grid>
 
         </Box>
+         {/* 3. קו הפרדה ברוחב מלא עם מרווח גדול (80px) */}
+      <Box 
+        sx={{ 
+          borderBottom: '3px solid black', 
+          width: '100%',
+          marginTop: { xs: 5, md: 8 }, // מרווח עליון
+          marginBottom: 10, // מרווח תחתון גדול (80px)
+        }} 
+      />
 
-        {/* --- אזור רשת הרבנים (2X2 Grid - מתוקן באמצעות Box) --- */}
+        {/* --- אזור רשת הרבנים (2X2 Grid) --- */}
         <Box sx={{ marginY: 8 }}>
             
-            {/* Grid container נשאר לניהול ה-spacing */}
             <Grid container spacing={4}> 
                 {rabbiCardsData.map((rabbi, index) => (
-                    // משתמשים ב-Box עם מאפייני רוחב רספונסיביים ב-sx
                     <Box 
                         key={index} 
                         // xs: 100% רוחב; sm: 50% רוחב (2 עמודות)
                         sx={{
-                            width: { xs: '100%', sm: 'calc(50% - 16px)' }, // 50% פחות חצי מרווח (כדי להתאים ל-spacing=4)
+                            width: { xs: '100%', sm: 'calc(50% - 16px)' }, 
                             marginBottom: { xs: 4, sm: 0 },
                             marginLeft: { xs: 0, sm: '16px' }
                         }}

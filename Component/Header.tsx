@@ -1,5 +1,8 @@
 // Header.tsx (קוד סופי: צמוד לימין, 10% רווח, גובה מוגדל)
 import React, { useState } from 'react';
+import { NavLink } from "react-router-dom"
+import { Outlet, useNavigate } from "react-router-dom";
+
 import type { ChangeEvent, FormEvent } from 'react'; 
 import {
   AppBar, 
@@ -64,6 +67,7 @@ const Logo: React.FC<LogoProps> = ({ sx }) => (
 
 // --- 3. רכיב ה-Header הראשי ---
 const Header: React.FC = () => {
+   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('שיעורים');
   
@@ -140,6 +144,9 @@ const Header: React.FC = () => {
                 key={index}
                 href={`/${text}`}
                 onClick={(e) => {
+                  if (text === 'צור קשר') {
+                    navigate('/RabbiQuestionForm');
+                  }
                   e.preventDefault();
                   setActiveTab(text);
                 }}

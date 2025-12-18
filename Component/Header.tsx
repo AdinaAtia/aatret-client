@@ -80,7 +80,7 @@ const Header: React.FC = () => {
       setSearchTerm(event.target.value);
   }
 
-  const navLinks = ['שיעורים', 'אודות', 'גלריה', 'ספרים', 'צור קשר']; 
+  const navLinks = ['שיעורים', 'אודות', 'גלריה', 'ספרים', 'צור קשר','שאל את הרב']; 
 
   return (
     <AppBar 
@@ -144,8 +144,11 @@ const Header: React.FC = () => {
                 key={index}
                 href={`/${text}`}
                 onClick={(e) => {
-                  if (text === 'צור קשר') {
+                  if (text === 'שאל את הרב'){
                     navigate('/RabbiQuestionForm');
+                  }
+                    if (text === 'צור קשר'){
+                    navigate('/ContactForm');
                   }
                   e.preventDefault();
                   setActiveTab(text);

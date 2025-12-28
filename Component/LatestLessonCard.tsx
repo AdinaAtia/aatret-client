@@ -1,136 +1,181 @@
-import React from 'react';                                          // ייבוא ספריית React.
-import { Box, Button, Paper, Stack } from '@mui/material';      // ייבוא קומפוננטות MUI למבנה ועיצוב.
-import DownloadIcon from '@mui/icons-material/GetApp';          // ייבוא אייקון ההורדה.
-import PlayCircleIcon from '@mui/icons-material/PlayCircleOutline'; // ייבוא אייקון הצפייה.
+import React from 'react';
+import { Box, Button, Paper, Typography, Stack } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/GetApp';
+import PlayCircleIcon from '@mui/icons-material/PlayCircleOutline';
+import { Clock, Calendar } from 'lucide-react'; 
 
-// --- הגדרות עיצוב קבועות ---
-const CARD_COLORS = {                                             // אובייקט עם צבעים וערכי עיצוב קבועים.
-    mainBg: '#922b2b',                                          // צבע רקע ראשי (חום כהה) לכפתור הצפייה.
-    lightGrayBg: '#f0f0f0',                                    // צבע רקע אפור בהיר לכרטיס הראשי (Paper).
-    borderRadius: '12px',                                      // רדיוס קימורי פינות ברירת מחדל.
-    textColor: 'black',                                        // צבע טקסט ראשי.
+const CARD_COLORS = {
+    mainBrown: '#9c6644', 
+    creamBg: '#fdfbe7', 
+    borderRadius: '24px', 
 };
 
-// --- נתונים ופונקציות קבועים ---
-const handleWatch = () => console.log('התחלת צפייה בשיעור אחרון'); // פונקציה המטפלת בלחיצה על כפתור צפייה.
-const handleDownload = () => console.log('הורדת שיעור אחרון');   // פונקציה המטפלת בלחיצה על כפתור הורדה.
-
-const LATEST_LESSON_DATA = {                                      // אובייקט שמחזיק את נתוני התמונה.
-    imageSrc: '/DSC_5195.JPG',                                 // נתיב לתמונת הרב (יש להחליף לנתיב אמיתי).
+const LATEST_LESSON_DATA = {
+    imageSrc: '/DSC_5195.JPG',
+    title: 'שיעור אחרון',
+    subTitle: 'כוונות העמידה דרוש ב׳',
+    lessonNum: "מס' 003",
+    category: 'מטבע ברכה',
+    dateHebrew: "כ\"ו חשוון תשפ\"ה",
+    dateGregorian: '25/04/25',
+    time: '01:03:05'
 };
-// -----------------------------
 
-
-const LatestLessonCard: React.FC = () => (                        // הגדרת הקומפוננטה הפונקציונלית.
-    <Box                                                          // קונטיינר עוטף חיצוני.
+const LatestLessonCard: React.FC = () => (
+    <Box
         sx={{
-            direction: 'rtl',                                    // כיווניות מימין לשמאל (RTL).
-            maxWidth: '1280px',                                  // רוחב מקסימלי לקונטיינר.
-            width: '100%',                                       // תופס את כל הרוחב הזמין.
-            margin: '0 auto',                                    // ממקם את הקונטיינר במרכז הדף.
-            padding: { xs: 2, md: 5 },                           // פאדינג מהצדדים.
-            paddingTop: 0,                                       // ביטול פאדינג עליון.
+            direction: 'rtl',
+            width: '100%',
+            maxWidth: '1400px',
+            margin: '60px auto 20px', 
+            px: { xs: 3, sm: 5, md: 8, lg: 12 }, 
+            boxSizing: 'border-box',
+            position: 'relative'
         }}
     >
-        <Paper                                                     // קומפוננטת הכרטיס הראשי (עם צל).
-            elevation={4}                                        // הוספת צל רמה 4.
+        {/* כותרת "שיעור אחרון" */}
+        <Box sx={{
+            position: 'absolute',
+            top: '-25px',
+            right: { xs: '30px', sm: '50px', md: '100px', lg: '140px' },
+            backgroundColor: CARD_COLORS.mainBrown,
+            color: 'white',
+            px: 5,
+            py: 1.2,
+            borderRadius: '20px',
+            zIndex: 10,
+        }}>
+            <Typography sx={{ fontWeight: 800, fontSize: '1.4rem' }}>
+                {LATEST_LESSON_DATA.title}
+            </Typography>
+        </Box>
+
+        <Paper
+            elevation={0}
             sx={{
-                borderRadius: CARD_COLORS.borderRadius,          // פינות מעוגלות.
-                backgroundColor: CARD_COLORS.lightGrayBg,        // צבע רקע אפור בהיר.
-                padding: 4,                                      // פאדינג פנימי בתוך הכרטיס.
-                display: 'flex',                                 // הפיכה למכולת Flex.
-                flexDirection: { xs: 'column', md: 'row' },      // סידור: עמודה במובייל, שורה במחשב.
-                gap: 4,                                          // רווח בין האלמנטים הפנימיים.
-                alignItems: 'center',                              // יישור האלמנטים אנכית למרכז.
-                minHeight: { xs: '85%', md: '450px' }            // גובה מינימלי לכרטיס.
+                borderRadius: CARD_COLORS.borderRadius,
+                backgroundColor: CARD_COLORS.creamBg, 
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row-reverse' }, 
+                overflow: 'visible',
+                minHeight: { md: '450px' },
+                alignItems: 'stretch',
+                width: '100%',
             }}
         >
-            
-            {/* 1. תמונת הרב (צד שמאל) */}
+            {/* תמונת הרב */}
             <Box
                 sx={{
-                    flexShrink: 0,                               // מונע מהתמונה להתכווץ.
-                    width: { xs: '100%', md: '50%' },             // רוחב התמונה (50% במחשב).
-                    height: { xs: '200px', md: '300px' },         // גובה התמונה.
-                    backgroundImage: `url(${LATEST_LESSON_DATA.imageSrc})`, // טעינת התמונה.
-                    backgroundSize: 'cover',                       // התאמת גודל התמונה לכיסוי מלא.
-                    backgroundPosition: 'center',                  // מיקום התמונה במרכז.
-                    borderRadius: '8px',                           // פינות מעוגלות לתמונה.
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',        // צל עדין לתמונה.
-                    order: { xs: 2, md: 1 },                       // סדר הצגה: שני במובייל, ראשון במחשב.
+                    width: { xs: 'calc(100% - 40px)', md: '50%' },
+                    minHeight: { xs: '250px', md: 'auto' },
+                    backgroundImage: `url(${LATEST_LESSON_DATA.imageSrc})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    margin: '25px',
+                    borderRadius: '25px',
+                    flexShrink: 0
                 }}
             />
 
-            {/* 2. אזור הכפתורים (צד ימין) */}
+            {/* אזור תוכן */}
             <Box
                 sx={{
-                    flexGrow: 1,                                   // תופס את כל הרוחב הנותר.
-                    textAlign: 'right',                              // יישור תוכן לימין.
-                    order: { xs: 1, md: 2 },                       // סדר הצגה: ראשון במובייל, שני במחשב.
-                    display: 'flex',                                 // הפיכה למכולת Flex.
-                    flexDirection: 'column',                         // סידור אנכי (עמודה).
-                    justifyContent: 'flex-end',                     // **דוחף את הכפתורים לתחתית** האזור.
-                    height: { xs: 'auto', md: '300px' },             // גובה זהה לתמונה לשמירת יישור.
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    padding: { xs: '40px 20px', md: '40px 60px 40px 0' }, 
+                    textAlign: 'right',
                 }}
             >
+                <Typography variant="h4" sx={{ fontWeight: 900, mb: 0.5, color: 'black', fontSize: '2.2rem' }}>
+                    {LATEST_LESSON_DATA.subTitle}
+                </Typography>
                 
-                {/* פה היה כל הטקסט - הוסר! */}
-                
+                <Typography variant="body1" sx={{ fontWeight: 600, mb: 2, color: '#333', opacity: 0.8 }}>
+                    {LATEST_LESSON_DATA.lessonNum}
+                </Typography>
+
+                <Box sx={{ 
+                    backgroundColor: 'black', 
+                    color: 'white', 
+                    px: 2, py: 0.5, 
+                    borderRadius: '8px',
+                    width: 'fit-content',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    mb: 5
+                }}>
+                    {LATEST_LESSON_DATA.category}
+                </Box>
+
+                {/* --- התיקון כאן: ריווח מוגדל בין התאריכים --- */}
+               <Stack 
+    direction="row" 
+    sx={{ 
+        mb: 5, 
+        color: '#333', 
+        display: 'flex',
+        flexWrap: 'wrap', // מאפשר לאלמנטים לרדת שורה בטלפון במקום להידחס
+        rowGap: 2,        // ריווח אנכי במידה והם יורדים שורה (בנייד)
+        columnGap: { xs: 4, md: 7 }, // ריווח אופקי שוויוני ומדויק בין הקבוצות
+        justifyContent: 'flex-start',
+        alignItems: 'center'
+    }}
+>
+    {/* תאריך עברי */}
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 'fit-content' }}>
+        <Calendar size={20} strokeWidth={1.5} />
+        <Typography sx={{ fontWeight: 700 }}>{LATEST_LESSON_DATA.dateHebrew}</Typography>
+    </Box>
+
+    {/* תאריך לועזי */}
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 'fit-content' }}>
+        <Calendar size={20} strokeWidth={1.5} />
+        <Typography sx={{ fontWeight: 700 }}>{LATEST_LESSON_DATA.dateGregorian}</Typography>
+    </Box>
+
+    {/* שעה */}
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 'fit-content' }}>
+        <Clock size={20} strokeWidth={1.5} />
+        <Typography sx={{ fontWeight: 700 }}>{LATEST_LESSON_DATA.time}</Typography>
+    </Box>
+</Stack>
+
                 {/* כפתורי פעולה */}
-              <Box 
-                    sx={{
-                        display: 'flex',                   // הופך למכולת Flex
-                        flexDirection: 'row',              // סידור בשורה
-                        justifyContent: 'flex-end',        // יישור לימין
-                        gap: 4,                            // *** זה הרווח הנדרש (4 יחידות MUI) ***
-                    }}
-                >
-                    
-                    {/* כפתור צפייה (הכפתור הראשי) */}
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-start' }}>
                     <Button
                         variant="contained"
-                        onClick={handleWatch}
-                        startIcon={<PlayCircleIcon />}
-                        sx={{
-                            backgroundColor: CARD_COLORS.mainBg,
-                            color: 'white',
-                            fontWeight: 'bold',
-                            padding: '5px 38px',
-                            borderRadius: '10px', // הוספת עיגול פינות
-                            
-                            // *** הוספת שורות אלה ליצירת רווח בין הטקסט לאייקון ***
-                            '& .MuiButton-startIcon': {
-                                marginLeft: '8px', // מגדיר רווח של 8 פיקסלים משמאל לאייקון (בכיוון RTL)
-                            },
-                            // ************************************************
-
-                            '&:hover': { backgroundColor: '#7a2222' }
-                        }}
-                    >
-                        לצפייה
-                    </Button>
-                    
-                    {/* כפתור הורדה */}
-                   <Button
-                        variant="contained"
-                        onClick={handleDownload}
-                        startIcon={<DownloadIcon />}
                         sx={{
                             backgroundColor: 'black',
                             color: 'white',
                             fontWeight: 'bold',
-                         padding: '5px 38px',
-                            borderRadius: '10px', // הוספת עיגול פינות
-                            // *** הוספת שורות אלה ליצירת רווח בין הטקסט לאייקון ***
-                            '& .MuiButton-startIcon': {
-                                marginLeft: '8px', // מגדיר רווח של 8 פיקסלים משמאל לאייקון (בכיוון RTL)
-                            },
-                            // ************************************************
-
-                            '&:hover': { backgroundColor: '#222222' }
+                            px: 5, py: 1.2,
+                            borderRadius: '12px',
+                            display: 'flex',
+                            gap: 1,
+                            '&:hover': { backgroundColor: '#222' }
                         }}
                     >
+                        <DownloadIcon />
                         הורדה
+                    </Button>
+
+                    <Button
+                        variant="contained"
+                        sx={{
+                            backgroundColor: CARD_COLORS.mainBrown,
+                            color: 'white',
+                            fontWeight: 'bold',
+                            px: 5, py: 1.2,
+                            borderRadius: '12px',
+                            display: 'flex',
+                            gap: 1,
+                            '&:hover': { backgroundColor: '#7d5236' }
+                        }}
+                    >
+                        <PlayCircleIcon />
+                        לצפייה
                     </Button>
                 </Box>
             </Box>

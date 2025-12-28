@@ -22,7 +22,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 // --- 1. הגדרות צבעים ורוחב ---
 
 const COLORS = {
-  mainBg: '#922b2b', 
+  mainBg: '#9c6644', 
   searchBg: 'white',
   searchBtnBg: 'black',
   linkText: 'white',
@@ -149,6 +149,9 @@ const Header: React.FC = () => {
                   }
                     if (text === 'צור קשר'){
                     navigate('/ContactForm');
+                  }
+                   if (text === 'שיעורים'){
+                    navigate('/AllLessons');
                   }
                   e.preventDefault();
                   setActiveTab(text);

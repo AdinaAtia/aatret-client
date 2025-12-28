@@ -1,417 +1,22 @@
-
-
-// import React, { useState } from 'react'; 
-// import { 
-//   Box, 
-//   Typography, 
-//   InputBase, 
-//   IconButton, 
-//   Stack,
-//   Paper, 
-//   Button,
-//   Grid, 
-// } from '@mui/material';
-// import SearchIcon from '@mui/icons-material/Search';
-
-// // ודא שהנתיב ל-Header נכון
-// import Header from './Header'; 
-// // בתוך אזור האימפורטים בראש הקובץ
-// import LatestLessonCard from './LatestLessonCard';
-// // --- 1. הגדרות רוחב וצבעים ---
-// const COLORS = {
-//   mainBg: '#922b2b', 
-//   inputTextColor: 'black',
-//   contentMaxWidth: '95%px', // רוחב קבוע
-//   searchBg: 'white',
-//   searchBtnBg: 'black',
-//   borderRadius: '8px',
-//   rabbiBg: 'white', 
-  
-// };
-
-// // --- קומפוננטת כרטיס רב ---
-// interface RabbiCardProps {
-//     name: string;
-//     title: string;
-//     imageSrc: string;
-// }
-
-// const RabbiCard: React.FC<RabbiCardProps> = ({ name, title, imageSrc }) => (
-//     <Paper 
-//       elevation={1} 
-//       sx={{ 
-//         textAlign: 'right', 
-//         padding: 2, 
-//         borderRadius: COLORS.borderRadius,
-//         display: 'flex',
-//         flexDirection: 'column',
-//         height: '100%',
-//       }}
-//     >
-//       <Stack direction="row" spacing={2} alignItems="center">
-//         <Box 
-//           sx={{ 
-//             width: '100px', 
-//             height: '100px', 
-//             backgroundColor: COLORS.rabbiBg, 
-//             borderRadius: '4px',
-//             backgroundImage: `url(${imageSrc})`,
-//             backgroundSize: 'cover',
-//             backgroundPosition: 'center',
-//           }}
-//         />
-        
-//         <Box>
-//           <Typography variant="h6" fontWeight="bold">
-//             {name}
-//           </Typography>
-//           <Typography variant="body2" color="text.secondary">
-//             {title}
-//           </Typography>
-//         </Box>
-//       </Stack>
-      
-//       <Button 
-//         variant="contained" 
-//         size="small"
-//         sx={{ 
-//           backgroundColor: COLORS.mainBg, 
-//           color: 'white',
-//           marginTop: 2,
-//           alignSelf: 'flex-start',
-//           '&:hover': { backgroundColor: '#7a2222' }
-//         }}
-//       >
-//         לשיעורי הרב
-//       </Button>
-//     </Paper>
-// );
-
-// // --- 2. קומפוננטת דף הבית ---
-// const Home: React.FC = () => {
-//   const [centralSearchTerm, setCentralSearchTerm] = useState<string>('');
-
-//   const handleCentralSearch = (event: React.FormEvent) => {
-//     event.preventDefault();
-//     console.log('חיפוש מרכזי:', centralSearchTerm);
-//   };
-
-//   const cardActions = [
-//     { label: 'הוצאות ספרים', onClick: () => console.log('לחץ: הוצאות ספרים') },
-//     { label: 'שיעורי קבלה', onClick: () => console.log('לחץ: שיעורי קבלה') },
-//     { label: 'כללי דינאות', onClick: () => console.log('לחץ: כללי דינאות') },
-//   ];
-  
-//   const rabbiCardsData = [
-//     { name: 'הרב יואל בלומנפלד שליט"א', title: 'לימוד איסופום דולור סיט אמט, קונסקטטור אדיפיסינג אליט', imageSrc: 'https://via.placeholder.com/100?text=רב+1' },
-//     { name: 'הרב בנימין עובדיה שליט"א', title: 'לימוד איסופום דולור סיט אמט, קונסקטטור אדיפיסינג אליט', imageSrc: 'https://via.placeholder.com/100?text=רב+2' },
-//     { name: 'הרב ירחמיאל ביסמוט שליט"א', title: 'לימוד איסופום דולור סיט אמט, קונסקטטור אדיפיסינג אליט', imageSrc: 'https://via.placeholder.com/100?text=רב+3' },
-//     { name: 'הרב יואל חזקן שליט"א', title: 'לימוד איסופום דולור סיט אמט, קונסקטטור אדיפיסינג אליט', imageSrc: 'https://via.placeholder.com/100?text=רב+4' },
-//   ];
-
-
-//   return (
-//     <Box 
-//       sx={{
-//         direction: 'rtl',
-//         minHeight: '100vh',
-//         backgroundColor: 'white',
-//       }}
-//     >
-      
-//       {/* 1. ה-HEADER */}
-//       {/* <Header /> */}
-    
-//       {/* 2. קונטיינר התוכן העליון (כותרת וחיפוש) */}
-//       <Box
-//         sx={{
-//           maxWidth: COLORS.contentMaxWidth,
-//           width: '100%',
-//           margin: '0 auto',
-//           padding: { xs: 2, md: 5 }, 
-//           paddingBottom: 0, // איפוס פאדינג תחתון
-//           textAlign: 'center',
-//         }}
-//       >
-        
-//         {/* --- אזור כותרת עליון --- */}
-//         <Box sx={{ marginY: { xs: 4, md: 8 } }}>
-//           <Typography
-//             variant="h1"
-//             component="h1"
-//             sx={{
-//               fontWeight: 900,
-//               fontSize: { xs: '3rem', sm: '4rem', md: '5rem' }, 
-//               color: COLORS.inputTextColor,
-//               lineHeight: 1.1,
-//             }}
-//           >
-//             עטרת מרדכי
-//           </Typography>
-//           <Typography
-//             variant="body1"
-//             sx={{
-//               marginTop: 1,
-//               fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' }, 
-//               color: COLORS.inputTextColor,
-//               fontWeight: 500,
-//             }}
-//           >
-//             ישיבה ללימוד קבלה עפ"י תורת האר"י ז"ל
-//           </Typography>
-//         </Box>
-
-        
-//       </Box>
-      
-//       {/* 3. קו הפרדה ברוחב מלא עם מרווח גדול (80px) */}
-//       <Box 
-//         sx={{ 
-//           borderBottom: '3px solid black', 
-//           width: '100%',
-//           marginTop: { xs: 5, md: 8 }, // מרווח עליון
-//           marginBottom: 10, // מרווח תחתון גדול (80px)
-//         }} 
-//       />
-//   <LatestLessonCard />
-//      <Box
-//   sx={{
-//     maxWidth: COLORS.contentMaxWidth,
-//     width: '100%',
-//     margin: '0 auto',
-//     padding: { xs: 2, md: 5 }, 
-//     paddingTop: 0, 
-//     textAlign: 'center',
-//   }}
-// >
-  
-// <Box sx={{ marginTop: 8, marginBottom: 5 }}>
-//   {/* כותרת */}
-//   <Typography 
-//     variant="h4" 
-//     component="h2" 
-//     sx={{ 
-//       fontWeight: 700, 
-//       fontSize: { xs: '2.5rem', md: '3rem' },
-//       color: COLORS.inputTextColor, 
-//       marginBottom: 4, 
-//       fontFamily: 'Arial',
-//       textAlign: 'center'
-//     }}
-//   >
-//     ספרי הישיבה
-//   </Typography>
-
-//   {/* המלבן הלבן הגדול (Paper) - מעוצב ומרובע יותר */}
-//   <Paper 
-//     elevation={0} 
-//     sx={{ 
-//       width: '100%', 
-//       maxWidth: '1000px', 
-//       margin: '0 auto',
-//       minHeight: '400px', 
-//       border: '1px solid #ccc', 
-//       marginBottom: 6, 
-//       backgroundColor: COLORS.searchBg, 
-//       borderRadius: COLORS.borderRadius, 
-//       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-//     }}
-//   >
-//     {/* תוכן המלבן הלבן */}
-//   </Paper>
-  
-//   {/* רשת הכפתורים (3 עמודות) */}
-//   <Grid 
-//     container 
-//     spacing={5} // מרווח גדול יותר בין כפתורים
-//     justifyContent="center"
-//     alignItems="stretch"
-//     sx={{ width: '100%', margin: '0 auto' }} 
-//   >
-//     {cardActions.map((action, index) => (
-//       <Grid 
-//         item 
-//         xs={12} // רוחב מלא במובייל
-//         sm={4} // 3 עמודות בטאבלט ומעלה (12/3=4)
-//         key={index}
-//       >
-//         {/* Paper עוטף את הלחצן, ומגדיר את יחס הגובה-רוחב 1:1 */}
-//         <Paper
-//           elevation={0}
-//           sx={{
-//             width: '100%',
-//             position: 'relative',
-//             paddingTop: '100%', // **הופך את ה-Paper לריבוע** (גובה=רוחב)
-//             borderRadius: COLORS.borderRadius,
-//             overflow: 'hidden', 
-//           }}
-//         >
-//           <Button
-//             variant="contained"
-//             onClick={action.onClick}
-//             sx={{
-//               // ממלא את הריבוע שיצר ה-Paper
-//               position: 'absolute', 
-//               top: 0,
-//               left: 0,
-//               width: '100%',
-//               height: '100%',
-              
-//               // עיצוב:
-//               backgroundColor: COLORS.mainBg,
-//               color: COLORS.searchBg, 
-//               fontWeight: 700,
-//               textTransform: 'none', 
-//               fontSize: '1.4rem', // פונט גדול יותר להדגשה
-//               padding: '10px', 
-//               borderRadius: COLORS.borderRadius,
-//               whiteSpace: 'normal', 
-//               lineHeight: 1.3,
-//               '&:hover': { backgroundColor: '#7a2222' }
-//             }}
-//           >
-//             {action.label}
-//           </Button>
-//         </Paper>
-//       </Grid>
-//     ))}
-//   </Grid>
-// </Box>
-
-//         {/* --- אזור מרן ראש הישיבה --- */}
-//         <Box sx={{ marginY: 8, backgroundColor: COLORS.rabbiBg, padding: 4, borderRadius: COLORS.borderRadius, textAlign: 'right' }}>
-            
-//             <Grid container spacing={4} alignItems="stretch"> 
-                
-//                 {/* עמודה 1: תמונה גדולה */}
-//                 <Box 
-//                     sx={{ 
-//                         width: { xs: '100%', md: 'calc((8 / 12) * 100% - 16px)' }, 
-//                         marginBottom: { xs: 4, md: 0 }, 
-//                         // marginRight: { xs: 0, md: '16px' } 
-//                     }} 
-//                 >
-//    <Box
-//     sx={{
-//         // flexShrink: 0,
-//         // *** 1. לוודא שהרוחב הוא 100% מתוך ה-Grid item (md={6}) ***
-//         // width: '100%', 
-        
-//         // *** 2. הקטנת יחס הגובה/רוחב ל-35% (יהפוך את התמונה לרחבה ונמוכה יותר) ***
-//         paddingTop: '30%', 
-//         // position: 'relative', 
-        
-//         backgroundImage: 'url(./public/DSC_5195.JPG)',
-        
-//         // *** 3. שומרים על 'contain' להצגת כל התמונה ***
-//         backgroundSize: 'contain', 
-//         backgroundRepeat: 'no-repeat', 
-        
-//         // backgroundPosition: 'center',
-//         // borderRadius: '8px',
-//         // boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-//         order: { xs: 2, md: 1 
-          
-//         },
-//     }}
-// />
-//                 </Box>
-                
-//                 {/* עמודה 2: טקסט וכפתור */}
-//                 <Box 
-//                     sx={{ 
-//                         width: { xs: '100%', md: 'calc((4 / 12) * 100% - 16px)' }, 
-//                         marginLeft: { xs: 0, md: '16px' }
-//                     }}
-//                 >
-//                     <Stack spacing={2} sx={{ height: '100%', justifyContent: 'space-between', paddingLeft: { md: 2 } }}>
-                        
-//                         <Box>
-//                             <Typography variant="h4" component="h2" sx={{ fontWeight: 700, color: COLORS.inputTextColor, marginBottom: 1 }}>
-//                                 מרן ראש הישיבה
-//                             </Typography>
-//                             <Typography variant="h6" component="h3" sx={{ fontWeight: 500, color: COLORS.inputTextColor, marginBottom: 2 }}>
-//                                 הרה"ג הרב מרדכי עטייה שליט"א
-//                             </Typography>
-//                             <Typography variant="body1" color="text.secondary">
-//                                 מרן ראש הישיבה הרב מרדכי עטייה שיבדל"א היה מגדולי המתמידים בישיבה בדור הקודם, וכאן הקבלה בדרכו, מקים "ישיבת עטרת מרדכי" ללימודי דינאות והכשרת רבנים.
-//                             </Typography>
-//                         </Box>
-
-//                         <Button 
-//                             variant="contained" 
-//                             sx={{ 
-//                                 backgroundColor: COLORS.mainBg, 
-//                                 color: 'white',
-//                                 fontWeight: 'bold',
-//                                 textTransform: 'none',
-//                                 alignSelf: 'flex-start',
-//                                 padding: '10px 20px',
-//                                 marginTop: 3,
-//                                 '&:hover': { backgroundColor: '#7a2222' }
-//                             }}
-//                         >
-//                             לשיעורי הרב
-//                         </Button>
-//                     </Stack>
-//                 </Box>
-                
-//             </Grid>
-
-//         </Box>
-//          {/* 3. קו הפרדה ברוחב מלא עם מרווח גדול (80px) */}
-//       <Box 
-//         sx={{ 
-//           borderBottom: '3px solid black', 
-//           width: '100%',
-//           marginTop: { xs: 5, md: 8 }, // מרווח עליון
-//           marginBottom: 10, // מרווח תחתון גדול (80px)
-//         }} 
-//       />
-
-//         {/* --- אזור רשת הרבנים (2X2 Grid) --- */}
-//         <Box sx={{ marginY: 8 }}>
-            
-//             <Grid container spacing={4}> 
-//                 {rabbiCardsData.map((rabbi, index) => (
-//                     <Box 
-//                         key={index} 
-//                         // xs: 100% רוחב; sm: 50% רוחב (2 עמודות)
-//                         sx={{
-//                             width: { xs: '100%', sm: 'calc(50% - 16px)' }, 
-//                             marginBottom: { xs: 4, sm: 0 },
-//                             marginLeft: { xs: 0, sm: '16px' }
-//                         }}
-//                     > 
-//                         <RabbiCard {...rabbi} />
-//                     </Box>
-//                 ))}
-//             </Grid>
-
-//         </Box>
-        
-//       </Box>
-//     </Box>
-//   );
-// };
-
-// export default Home;
-import React, { useState ,useEffect} from 'react'; 
+import React, { useState, useEffect } from 'react'; 
 import { 
   Box, 
   Typography, 
   Stack,
   Paper, 
   Button,
-  Grid, 
 } from '@mui/material';
+import Grid from '@mui/material/Grid'; // שימוש ב-Grid2 החדש
 import LatestLessonCard from './LatestLessonCard';
+import LecturesGrid from './LecturesGrid';
+import LessonPlayer from './LessonPlayer'; // ייבוא הנגן
+import BooksCarousel from './BooksCarousel'; // ודאי שהנתיב לקובץ נכון
 
 // --- 1. הגדרות רוחב וצבעים ---
 const COLORS = {
-  mainBg: '#922b2b', 
+  mainBg: '#9c6644', 
   inputTextColor: 'black',
-  contentMaxWidth: '95%px',
+  contentMaxWidth: '100%',
   rabbiBg: 'white', 
   borderRadius: '8px',
 };
@@ -419,43 +24,64 @@ const COLORS = {
 // --- 2. קומפוננטת דף הבית ---
 const Home: React.FC = () => {
   const [centralSearchTerm, setCentralSearchTerm] = useState<string>('');
+  const [selectedLesson, setSelectedLesson] = useState<any | null>(null); // הוספת המצב לשיעור נבחר
+  
   const handleCentralSearch = (event: React.FormEvent) => {
     event.preventDefault();
     console.log('חיפוש מרכזי:', centralSearchTerm);
   };
 
-  const cardActions = [
-    { label: 'הוצאות ספרים', onClick: () => console.log('לחץ: הוצאות ספרים') },
-    { label: 'שיעורי קבלה', onClick: () => console.log('לחץ: שיעורי קבלה') },
-    { label: 'כללי דינאות', onClick: () => console.log('לחץ: כללי דינאות') },
-  ];
-  
-const [rabbiCardsData, setRabbiCardsData] = useState<any[]>([]);
-useEffect(() => {
-  fetch('http://localhost:1337/api/rabbis?populate=photo_url')
-    .then(res => res.json())
-    .then(data => {
-      if (!data?.data) {
-        console.error('No data returned from API');
-        return;
-      }
+  const [rabbiCardsData, setRabbiCardsData] = useState<any[]>([]);
 
-      const formatted = data.data
-        .filter((r: any) => r?.attributes) // מסנן ערכים ללא attributes
-        .map((r: any) => ({
-          name: r.attributes.name || 'No name',
-          title: r.attributes.note?.[0]?.content?.[0]?.text || '',
-          imageSrc: r.attributes.photo_url?.data?.[0]?.attributes?.url
-            ? `http://localhost:1337${r.attributes.photo_url.data[0].attributes.url}`
-            : '/placeholder.png',
-        }));
+  useEffect(() => {
+    fetch('http://localhost:1337/api/rabbis?populate=photo_url')
+      .then(res => res.json())
+      .then(data => {
+        if (!data?.data) {
+          setRabbiCardsData([]);
+          return;
+        }
 
-      console.log('Formatted rabbis:', formatted);
-      setRabbiCardsData(formatted);
-    })
-    .catch(err => console.error('Error fetching rabbis:', err));
-}, []);
+        const formatted = data.data.map((r: any) => {
+          let title = '';
+          if (r.note && r.note.length > 0) {
+            const block = r.note[0];
+            if (block.children && block.children.length > 0) {
+              title = block.children[0].text || '';
+            }
+          }
 
+          let imageSrc = '/placeholder.png';
+          if (r.photo_url && r.photo_url.length > 0) {
+            const photo = r.photo_url[0];
+            if (photo && photo.url) {
+              imageSrc = `http://localhost:1337${photo.url}`;
+            } else if (photo?.attributes?.url) {
+              imageSrc = `http://localhost:1337${photo.attributes.url}`;
+            }
+          }
+
+          return {
+            id: r.id,
+            name: r.name || 'No name',
+            title,
+            imageSrc,
+          };
+        });
+        setRabbiCardsData(formatted);
+      })
+      .catch(err => console.error('Error fetching rabbis:', err));
+  }, []);
+
+  // --- שינוי נדרש: אם נבחר שיעור, נציג רק את הנגן ---
+  if (selectedLesson) {
+    return (
+      <LessonPlayer 
+        lesson={selectedLesson} 
+        onBack={() => setSelectedLesson(null)} 
+      />
+    );
+  }
 
   return (
     <Box 
@@ -471,7 +97,7 @@ useEffect(() => {
           maxWidth: COLORS.contentMaxWidth,
           width: '100%',
           margin: '0 auto',
-          padding: { xs: 2, md: 5 }, 
+          padding: { md: 1 }, 
           paddingBottom: 0,
           textAlign: 'center',
         }}
@@ -512,185 +138,177 @@ useEffect(() => {
         }} 
       />
 
-      {/* --- LatestLessonCard מובנה בתוך Home --- */}
-       <LatestLessonCard />
+      {/* --- LatestLessonCard --- */}
+    
+    <Box sx={{ 
+   // תואם ל-maxWidth של הכותרת אם הגדרת
+  mx: 'auto', 
+  // px: {  md: 1 }, // שוליים זהים בדיוק לאלו של הכותרת (שורות 83-90)
+  width: '100%' 
+}}>  <LatestLessonCard /></Box>  
+      <Box sx={{ my: { xs: 8, md: 15 } }} />
 
-      {/* --- אזור ספרי הישיבה --- */}
+      {/* --- LecturesGrid עם פונקציית בחירה --- */}
+ <Box sx={{ 
+ // תואם ל-maxWidth של הכותרת אם הגדרת
+  mx: 'auto', 
+  // px: {  md: 1 }, // שוליים זהים בדיוק לאלו של הכותרת (שורות 83-90)
+  width: '100%' 
+}}>
+ <LecturesGrid onLessonSelect={(lesson) => setSelectedLesson(lesson)} /></Box>  
+      {/* <LecturesGrid onLessonSelect={(lesson) => setSelectedLesson(lesson)} /> */}
+
+      <Box sx={{ my: { xs: 4, md: 7.5 } }} />
+      <BooksCarousel />
+     <Box sx={{ my: { xs: 4, md: 7.5 } }} />
+     {/* --- אזור מרן ראש הישיבה --- */}
+<Grid
+  container
+  spacing={0}
+  alignItems="stretch"
+  sx={{ 
+    width: '100vw', // פריסה לכל רוחב המסך
+    position: 'relative',
+    left: '50%',
+    right: '50%',
+    marginLeft: '-50vw',
+    marginRight: '-50vw',
+    minHeight: '56dvh',
+    mb: { xs: 6, md: 10 },
+    direction: 'rtl'
+  }}
+>
+  <Grid size={{ xs: 12 }} sx={{ display: 'flex' }}>
+    <Paper
+      elevation={0}
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column-reverse', md: 'row' }, // תמונה משמאל ב-Desktop, מעל ב-Mobile
+        width: '100%',
+        minHeight: '100%',
+        borderRadius: 0,
+        overflow: 'hidden',
+        backgroundColor: '#fdfbe7', // צבע הקרם העדין מהתמונה
+        borderTop: '1px solid #000', 
+        borderBottom: '1px solid #000',
+      }}
+    >
+      {/* אזור הטקסט - שומר על הגדלים המקוריים שלך */}
       <Box
         sx={{
-          maxWidth: COLORS.contentMaxWidth,
-          width: '100%',
-          margin: '0 auto',
-          padding: { xs: 2, md: 5 }, 
-          paddingTop: 0,
-          textAlign: 'center',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          p: { xs: '2rem', md: '3rem' },
+          textAlign: 'right',
+          minWidth: 0,
         }}
       >
-        <Box sx={{ marginTop: 8, marginBottom: 5 }}>
-          <Typography variant="h4" component="h2" sx={{ fontWeight: 700, fontSize: { xs: '3rem', md: '3rem' }, color: COLORS.inputTextColor, marginBottom: 4, fontFamily: 'Arial' }}>ספרי הישיבה</Typography>
-          <Paper elevation={0} sx={{ width: '95%', minHeight: '400px', border: '1px solid #ccc', marginBottom: 5, backgroundColor: 'white',}}></Paper>
-          
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }} 
-            spacing={3}
-            justifyContent="space-between"
-            alignItems="stretch"
-            sx={{ width: '100%', maxWidth: '800px', margin: '0 auto' }} 
-          >
-            {cardActions.map((action, index) => (
-              <Button
-                key={index}
-                variant="contained"
-                onClick={action.onClick}
+        <Typography sx={{ fontWeight: 800, mb: '0.1rem', fontSize: { xs: '1.2rem', md: '1.8rem' }, fontFamily: 'serif' }}>
+          מרן ראש הישיבה
+        </Typography>
+        <Typography sx={{ fontWeight: 600, mb: '1rem', fontSize: { xs: '0.9rem', md: '1.1rem' } }}>
+          הרה"ג הרב מרדכי עטייה שליט"א
+        </Typography>
+        <Typography sx={{ color: 'text.primary', lineHeight: 1.6, fontSize: { xs: '0.85rem', md: '0.95rem' }, maxWidth: '95%', mb: '1.5rem' }}>
+          מרן ראש הישיבה הרב מרדכי עטייה היה מגדולי המחזירים בתשובה בדור הקודם, גאון הקבלה בדורנו, מקים ישיבת "עטרת מרדכי" ללימודי דיינות והכשרת רבנים.
+        </Typography>
+        
+        <Button
+          variant="contained"
+          sx={{
+            backgroundColor: 'black', // צבע שחור כמו בתמונה
+            width: 'fit-content',
+            px: 4, py: 1,
+            borderRadius: '4px',
+            alignSelf: 'flex-start',
+            textTransform: 'none',
+            fontWeight: 700,
+            '&:hover': { backgroundColor: '#222' },
+          }}
+        >
+          לשיעורי הרב
+        </Button>
+      </Box>
+
+      {/* אזור התמונה - בצד שמאל */}
+      <Box
+        sx={{
+          width: { xs: '100%', md: '40%' }, // רחבה יותר כמו שביקשת קודם
+          minHeight: { xs: '300px', md: 'auto' },
+          backgroundImage: 'url(/DSC_5195.JPG)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          flexShrink: 0,
+        }}
+      />
+    </Paper>
+  </Grid>
+</Grid>
+      <Box sx={{ my: { xs: 8, md: 15 } }} />
+
+      {/* --- אזור רשת המרצים --- */}
+      <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 2, pb: 8 }}>
+        <Grid container spacing={3} alignItems="stretch">
+          {rabbiCardsData.map((rabbi, index) => (
+            <Grid key={index} size={{ xs: 12, md: 6 }} sx={{ display: 'flex' }}>
+              <Paper
+                elevation={2}
                 sx={{
-                  backgroundColor: COLORS.mainBg,
-                  color: 'white', 
-                  fontWeight: 'bold',
-                  textTransform: 'none', 
-                  padding: { xs: '15px 10px', sm: '20px 10px' },
-                  fontSize: '1.1rem',
-                  borderRadius: COLORS.borderRadius,
-                  flexGrow: 1, 
-                  minHeight: '120px',
-                  minWidth: { xs: '100%', sm: '200px' }, 
-                  '&:hover': { backgroundColor: '#7a2222' }
+                  display: 'flex',
+                  flexDirection: 'row',
+                  borderRadius: '1rem', 
+                  overflow: 'hidden',
+                  width: '100%',
+                  minHeight: { xs: 'auto', sm: '25vh' }, 
+                  backgroundColor: '#ffffff',
                 }}
               >
-                {action.label}
-              </Button>
-            ))}
-          </Stack>
-        </Box>
-
-        <Box 
-          sx={{ 
-            borderBottom: '3px solid black', 
-            width: '100%',
-            marginTop: { xs: 5, md: 8 },
-            marginBottom: 10,
-          }} 
-        />
-
-        {/* --- אזור מרן ראש הישיבה --- */}
-        <Box sx={{ marginY: 8, backgroundColor: COLORS.rabbiBg, padding: 4, borderRadius: COLORS.borderRadius, textAlign: 'right' }}>
-          <Grid container spacing={4} alignItems="stretch"> 
-            <Box sx={{ width: { xs: '100%', md: 'calc((8 / 12) * 100% - 16px)' }, marginBottom: { xs: 4, md: 0 } }}> 
-              <Box
-                sx={{
-                  paddingTop: '30%',
-                  backgroundImage: 'url(./public/DSC_5195.JPG)',
-                  backgroundSize: 'contain', 
-                  backgroundRepeat: 'no-repeat', 
-                  order: { xs: 2, md: 1 },
-                }}
-              />
-            </Box>
-            
-            <Box sx={{ width: { xs: '100%', md: 'calc((4 / 12) * 100% - 16px)' }, marginLeft: { xs: 0, md: '16px' } }}>
-              <Stack spacing={2} sx={{ height: '100%', justifyContent: 'space-between', paddingLeft: { md: 2 } }}>
-                <Box>
-                  <Typography variant="h4" component="h2" sx={{ fontWeight: 700, color: COLORS.inputTextColor, marginBottom: 1 }}>
-                    מרן ראש הישיבה
-                  </Typography>
-                  <Typography variant="h6" component="h3" sx={{ fontWeight: 500, color: COLORS.inputTextColor, marginBottom: 2 }}>
-                    הרה"ג הרב מרדכי עטייה שליט"א
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    מרן ראש הישיבה הרב מרדכי עטייה שיבדל"א היה מגדולי המתמידים בישיבה בדור הקודם, וכאן הקבלה בדרכו, מקים "ישיבת עטרת מרדכי" ללימודי דינאות והכשרת רבנים.
-                  </Typography>
-                </Box>
-
-                <Button 
-                  variant="contained" 
-                  sx={{ 
-                    backgroundColor: COLORS.mainBg, 
-                    color: 'white',
-                    fontWeight: 'bold',
-                    textTransform: 'none',
-                    alignSelf: 'flex-start',
-                    padding: '10px 20px',
-                    marginTop: 3,
-                    '&:hover': { backgroundColor: '#7a2222' }
+                <Box
+                  sx={{
+                    width: { xs: '45%', sm: '40%' },
+                    backgroundImage: `url(${rabbi.imageSrc})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
                   }}
-                >
-                  לשיעורי הרב
-                </Button>
-              </Stack>
-            </Box>
-          </Grid>
-        </Box>
-
-        <Box 
-          sx={{ 
-            borderBottom: '3px solid black', 
-            width: '100%',
-            marginTop: { xs: 5, md: 8 },
-            marginBottom: 10,
-          }} 
-        />
-
-        {/* --- אזור רשת הרבנים (2X2 Grid) --- */}
-        <Box sx={{ marginY: 8 }}>
-          <Grid container spacing={4}> 
-            {rabbiCardsData.map((rabbi, index) => (
-              <Box 
-                key={index} 
-                sx={{
-                  width: { xs: '100%', sm: 'calc(50% - 16px)' }, 
-                  marginBottom: { xs: 4, sm: 0 },
-                  marginLeft: { xs: 0, sm: '16px' }
-                }}
-              > 
-                <Paper 
-                  elevation={1} 
+                />
+                <Box 
                   sx={{ 
+                    flex: 1, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    p: '1.5rem', 
                     textAlign: 'right', 
-                    padding: 2, 
-                    borderRadius: COLORS.borderRadius,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: '100%',
+                    minWidth: 0 
                   }}
                 >
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Box 
-                      sx={{ 
-                        width: '100px', 
-                        height: '100px', 
-                        backgroundColor: COLORS.rabbiBg, 
-                        borderRadius: '4px',
-                        backgroundImage: `url(${rabbi.imageSrc})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                      }}
-                    />
-                    <Box>
-                      <Typography variant="h6" fontWeight="bold">
-                        {rabbi.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {rabbi.title}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <Button 
-                    variant="contained" 
-                    size="small"
+                  <Typography variant="h6" fontWeight="bold" sx={{ mb: '0.5rem', fontSize: '1.1rem' }}>
+                    {rabbi.name}
+                  </Typography>
+                  <Box sx={{ flex: 1 }}> 
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5, fontSize: '0.85rem' }}>
+                      {rabbi.title}
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
                     sx={{ 
-                      backgroundColor: COLORS.mainBg, 
-                      color: 'white',
-                      marginTop: 2,
+                      backgroundColor: '#9c6644', 
+                      width: 'fit-content', 
+                      mt: '1rem', 
+                      borderRadius: '0.5rem', 
                       alignSelf: 'flex-start',
-                      '&:hover': { backgroundColor: '#7a2222' }
+                      '&:hover': { backgroundColor: '9c6644' } 
                     }}
                   >
                     לשיעורי הרב
                   </Button>
-                </Paper>
-              </Box>
-            ))}
-          </Grid>
-        </Box>
+                </Box>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
       </Box>
     </Box>
   );

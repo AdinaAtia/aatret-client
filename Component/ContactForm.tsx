@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Typography, TextField, Button, useTheme } from '@mui/material';
 
 const EXPLANATION_TEXT = 
@@ -23,6 +23,9 @@ const ContactForm: React.FC = () => {
     e.preventDefault();
     console.log('טופס נשלח:', formData);
   };
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
 
   const primaryColor = '#000'; // שחור
   const lightBgColor = '#f9f9e0'; // רקע בהיר צהבהב

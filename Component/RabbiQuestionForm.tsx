@@ -42,7 +42,7 @@ const RabbiQuestionForm: React.FC = () => {
     console.log(formData);
   };
 
-  const primaryColor = '#922b2b';
+  const primaryColor = '#9c6644';
   const lightBgColor = '#f7f6dc';
 
   return (

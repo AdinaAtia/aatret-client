@@ -44,7 +44,7 @@ const styles: Record<string, React.CSSProperties> = {
   input: { width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14, background: '#fff', color: '#222' },
   textarea: { width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14, minHeight: 140, resize: 'vertical' as const },
   select: { width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14, background: '#fff', color: '#222' },
-  submit: { width: '100%', background: '#922b2b', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: 8, fontSize: 16, cursor: 'pointer' },
+  submit: { width: '100%', background: '#9c6644', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: 8, fontSize: 16, cursor: 'pointer' },
 };
 
 const AskRabbiForm: React.FC = () => {

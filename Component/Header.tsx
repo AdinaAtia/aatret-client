@@ -1,9 +1,7 @@
-// Header.tsx (קוד סופי: צמוד לימין, 10% רווח, גובה מוגדל)
-import React, { useState } from 'react';
-import { NavLink } from "react-router-dom"
-import { Outlet, useNavigate } from "react-router-dom";
 
-import type { ChangeEvent, FormEvent } from 'react'; 
+
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   AppBar, 
   Toolbar, 
@@ -12,43 +10,46 @@ import {
   InputBase, 
   IconButton, 
   Stack, 
-  Link, 
-  type BoxProps // נדרש כדי שרכיב Logo יוכל לקבל sx
- // נדרש כדי שרכיב Logo יוכל לקבל sx
+  Link,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Collapse
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import MenuIcon from '@mui/icons-material/Menu'; 
-
-// --- 1. הגדרות צבעים ורוחב ---
-
+import CloseIcon from '@mui/icons-material/Close';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 const COLORS = {
   mainBg: '#9c6644', 
-  searchBg: 'white',
-  searchBtnBg: 'black',
   linkText: 'white',
-  inputTextColor: 'black',
-  // *** הערך הנכון והממוסגר ***
-  contentMaxWidth: '95%', 
   indicatorBar: 'white',
   borderRadius: '8px', 
-  linkGap: 4, 
-  logoLinkGap: 0, // איפסנו כי נשתמש ב-margin 10%
-  searchDonateGap: 2, 
-  innerPadding: { xs: 1.5, sm: 2, md: 3 } 
+  linkGap: 3, 
+  elementSpacing: 4, 
 };
 
-// --- 2. רכיב הלוגו (מעודכן לקבלת sx) ---
-interface LogoProps extends BoxProps {}
-
-const Logo: React.FC<LogoProps> = ({ sx }) => (
+// --- רכיב הלוגו - פתרון הריבוע הלבן ---
+const Logo: React.FC<{ onClick?: () => void, sx?: any }> = ({ onClick, sx }) => (
   <Box 
-    // הוספת ה-sx שהתקבל ל-Box החיצוני (כדי לקבל את ה-10% רווח)
+    onClick={onClick}
     sx={{
-      width: { xs: '45px', sm: '70px' }, 
-      height: { xs: '45px', sm: '70px' }, 
+      width: { xs: '60px', sm: '80px', md: '100px' }, 
+      height: { xs: '40px', sm: '60px', md: '80px' }, 
       flexShrink: 0,
       cursor: 'pointer',
-      ...sx // מיזוג המאפיינים החיצוניים (כמו ml: '10%')
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      // התיקון הקריטי:
+      // invert(1) הופך את הכתר השחור ללבן ואת הרקע הלבן לשחור
+      // mixBlendMode: 'screen' גורם לכל מה ששחור להפוך לשקוף לחלוטין
+      filter: 'invert(1)', 
+      mixBlendMode: 'screen',
+      ...sx 
     }}
   >
     <Box 
@@ -56,255 +57,183 @@ const Logo: React.FC<LogoProps> = ({ sx }) => (
       src="/logo.jpg.jpg" 
       alt="לוגו האתר" 
       sx={{
-        width: '100%',
-        height: '100%',
+        width: '90%',
+        height: '90%',
         objectFit: 'contain',
-        display: 'block',
       }} 
     />
   </Box>
 );
 
-// --- 3. רכיב ה-Header הראשי ---
 const Header: React.FC = () => {
-   const navigate = useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<string>('שיעורים');
-  
-  const handleSearch = (event: FormEvent) => {
-    event.preventDefault();
-    console.log('מחפש:', searchTerm);
-  };
+  const [activeTab, setActiveTab] = useState<string>('דף הבית');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-      setSearchTerm(event.target.value);
+  const navLinks = [
+    { text: 'דף הבית', path: '/' },
+    { text: 'שיעורים', path: '/AllLessons' },
+    { text: 'אודות', path: '/About' },
+    { text: 'גלריה', path: '/Gallery' },
+    { text: 'ספרים', path: '/FullBooksPage' },
+    { text: 'צור קשר', path: '/ContactForm' },
+    { text: 'שאל את הרב', path: '/RabbiQuestionForm' },
+  ];
+
+useEffect(() => {
+  // בודק אם הנתיב הנוכחי הוא של דף התרומות
+  if (location.pathname === '/ModernScrollDonation') {
+    setActiveTab(''); // מרוקן את הטאב הפעיל כדי שהפס הלבן ייעלם מכל הקישורים
+    return;
   }
 
-  const navLinks = ['שיעורים', 'אודות', 'גלריה', 'ספרים', 'צור קשר','שאל את הרב']; 
+  const currentLink = navLinks.find(link => link.path === location.pathname);
+  if (currentLink) {
+    setActiveTab(currentLink.text);
+  } else {
+    setActiveTab(''); // גם במקרה של דף לא מוכר, לא יהיה פס
+  }
+}, [location.pathname]);
 
   return (
-    <AppBar 
-      position="static" 
-      sx={{
-        backgroundColor: COLORS.mainBg,
-        width: '100%', 
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-      }}
-    >
+    <AppBar position="static" sx={{ backgroundColor: COLORS.mainBg, width: '100%', boxShadow: 'none' }}>
+      
+      <Collapse in={showMobileSearch}>
+        <Box sx={{ p: 1, backgroundColor: 'white', display: 'flex', alignItems: 'center' }}>
+          <InputBase
+            fullWidth
+            placeholder="חפש שיעור..."
+            sx={{ px: 2, color: 'black' }}
+          />
+          <IconButton onClick={() => setShowMobileSearch(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </Collapse>
+
       <Toolbar 
         disableGutters 
         sx={{ 
           display: 'flex',
           justifyContent: 'space-between', 
           alignItems: 'center', 
-          
-          padding: '0 !important', 
-          // גובה מוגדל
-          paddingY: { xs: '15px', sm: '20px' }, 
-          minHeight: { xs: '60px', sm: '80px' }, 
-          
-          // הגבלת התוכן ל-1280px ומירוכזו
-          maxWidth: COLORS.contentMaxWidth, 
+          paddingY: { xs: '10px', sm: '15px' },
+          maxWidth: '95%', 
           width: '100%', 
           margin: '0 auto', 
           direction: 'rtl', 
-          px: 0, 
         }}
       >
-        
-        {/* === בלוק 1: צד ימין (לוגו וקישורים) === */}
-        <Stack 
-          direction="row"
-          alignItems="center"
-          // איפוס spacing כי נשתמש ב-margin-left: 10%
-          spacing={0} 
-          sx={{ 
-            // הצמדה מוחלטת: ריווח ימין (pr) הוא 0
-            pr: 0, 
-            // שמירת ריווח משמאל לקישורים
-            pl: COLORS.innerPadding, 
-            flexShrink: 0,
-          }}
-        >
-          {/* *** קריטי: הוספת מרווח שמאלי של 10% ללוגו *** */}
-          <Logo sx={{ ml: { xs: 0, md: '10%' } }} />
+        {/* ימין: לוגו וקישורים */}
+        <Stack direction="row" alignItems="center">
+          <Logo 
+            onClick={() => navigate('/')} 
+            sx={{ ml: { xs: 1, md: 2 } }} 
+          />
             
-          {/* 2. קישורים (מרווחים וגדולים) */}
-          <Stack 
-            direction="row" 
-            gap={COLORS.linkGap} 
-            sx={{ 
-              height: '100%', 
-              alignItems: 'center', 
-              display: { xs: 'none', md: 'flex' },
-            }}
-          >
-            {navLinks.map((text, index) => (
+          <Stack direction="row" gap={COLORS.linkGap} sx={{ display: { xs: 'none', md: 'flex' } }}>
+            {navLinks.map((item) => (
               <Link 
-                key={index}
-                href={`/${text}`}
-                onClick={(e) => {
-                  if (text === 'שאל את הרב'){
-                    navigate('/RabbiQuestionForm');
-                  }
-                    if (text === 'צור קשר'){
-                    navigate('/ContactForm');
-                  }
-                   if (text === 'שיעורים'){
-                    navigate('/AllLessons');
-                  }
-                  e.preventDefault();
-                  setActiveTab(text);
-                }}
+                key={item.text}
+                onClick={() => navigate(item.path)}
                 sx={{
                   color: COLORS.linkText,
                   textDecoration: 'none',
-                  fontSize: { md: '1.05rem', lg: '1.2rem' }, 
+                  fontSize: { md: '0.9rem', lg: '1rem' },
                   fontWeight: 600, 
-                  
-                  // פאדינג אופקי ליצירת רוחב אחיד ומרווח
-                  padding: '10px 18px', 
-                  paddingY: '10px', 
-                  
-                  position: 'relative', 
-                  height: '100%',
-                  flexShrink: 0, 
-
-                  '&:hover, &:active, &:visited': { color: COLORS.linkText },
-                  
-                  // פס אינדיקציה רחב ואחיד
+                  padding: '8px 10px', 
+                  cursor: 'pointer',
+                  position: 'relative',
                   '&::after': {
                     content: '""',
                     position: 'absolute',
                     bottom: 0,
-                    left: 0, 
-                    width: activeTab === text ? '100%' : '0%', 
-                    height: '4px',
+                    left: '10%', 
+                    width: activeTab === item.text ? '80%' : '0%', 
+                    height: '3px',
                     backgroundColor: COLORS.indicatorBar,
-                    transition: 'width 0.2s ease-in-out', 
-                    transformOrigin: 'bottom',
+                    transition: 'width 0.2s ease', 
                   }
                 }}
               >
-                {text}
+                {item.text}
               </Link>
             ))}
           </Stack>
         </Stack>
         
-        {/* === שטח ריק מתרחב (הרווח האדום הגדול) === */}
-        <Box sx={{ flexGrow: 1 }} /> 
-        
-        {/* === בלוק 2: צד שמאל (חיפוש ותרמות) - צמוד לשמאל ה-1280px === */}
-        <Stack
-          direction="row"
-          alignItems="center"
-          gap={COLORS.searchDonateGap} 
-          sx={{ 
-            // שמירת ריווח משמאל לחיפוש
-            pl: COLORS.innerPadding, 
-            // הצמדה מוחלטת: ריווח ימין (pr) הוא 0
-            pr: 0, 
-            flexShrink: 0,
-          }}
-        >
-               {/* 2. כפתור 'תרמות' הלבן */}
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: COLORS.searchBg,
-              color: COLORS.inputTextColor,
-              border: '1px solid black',
-              padding: { xs: '8px 12px', sm: '10px 18px' }, 
-              fontSize: { xs: '14px', sm: '16px' },
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              flexShrink: 0,
-              boxShadow: 'none',
-              borderRadius: COLORS.borderRadius, 
-              '&:hover': { backgroundColor: COLORS.searchBg, boxShadow: 'none' }
-            }}
-            aria-label="תרמו עכשיו"
-          >
-            תרומות
-          </Button>
-          {/* 1. טופס חיפוש */}
-          <Box 
-            component="form" 
-            onSubmit={handleSearch} 
-            sx={{ 
-              display: { xs: 'none', sm: 'flex' }, 
-              alignItems: 'stretch',
-              overflow: 'hidden',
-              borderRadius: COLORS.borderRadius, 
-              border: '1px solid black',
-              height: { sm: '45px', md: '50px' }
-            }}
-          >
-            {/* שדה טקסט לחיפוש */}
-            <InputBase
-              type="text"
-              placeholder="חפש שיעור" 
-              value={searchTerm}
-              onChange={handleInputChange} 
-              aria-label="הזן מילות חיפוש"
-              sx={{
-                flexGrow: 1,
-                padding: '8px 15px', 
-                fontSize: { xs: '14px', sm: '16px' },
-                backgroundColor: COLORS.searchBg,
-                color: COLORS.inputTextColor,
-                minWidth: { sm: '150px', md: '200px' }, 
-                direction: 'rtl',
-                textAlign: 'right',
-              }}
-            />
-            {/* כפתור חיפוש שחור */}
-            <IconButton 
-              type="submit" 
-              aria-label="לחץ לחיפוש"
-              sx={{
-                backgroundColor: COLORS.searchBtnBg,
-                color: COLORS.linkText,
-                width: '45px', 
-                height: '100%', 
-                borderRadius: `${COLORS.borderRadius} 0 0 ${COLORS.borderRadius}`, 
-                '&:hover': { backgroundColor: COLORS.searchBtnBg }
-              }}
-            >
-              <SearchIcon sx={{ width: '24px', height: '24px', fill: COLORS.linkText }} />
-            </IconButton>
-          </Box>
-            
-     
-          
-          {/* 3. כפתור המבורגר לניווט (מופיע רק בטלפון) */}
+        {/* שמאל: חיפוש ותרומות */}
+        <Stack direction="row" alignItems="center" spacing={COLORS.elementSpacing}>
           <IconButton 
-            color="inherit" 
-            aria-label="פתח תפריט ניווט"
-            sx={{ 
-              display: { xs: 'flex', md: 'none' }, 
-              color: COLORS.linkText
-            }}
-          >
-            <MenuIcon />
-          </IconButton>
-          
-          {/* 4. אייקון חיפוש לטלפון (מופיע רק בטלפון) */}
-          <IconButton 
-            color="inherit" 
-            aria-label="פתח חיפוש"
-            sx={{ 
-              display: { xs: 'flex', sm: 'none' }, 
-              color: COLORS.linkText,
-            }}
-            onClick={() => console.log('פתח חיפוש במסך מלא')}
+            onClick={() => setShowMobileSearch(!showMobileSearch)}
+            sx={{ display: { xs: 'flex', sm: 'none' }, color: 'white' }}
           >
             <SearchIcon />
           </IconButton>
-        </Stack>
 
+          <Box 
+            sx={{ 
+              display: { xs: 'none', sm: 'flex' }, 
+              borderRadius: COLORS.borderRadius, 
+              backgroundColor: 'white',
+              height: '40px',
+              overflow: 'hidden'
+            }}
+          >
+            <InputBase placeholder="חפש שיעור" sx={{ px: 2, width: { sm: '120px', md: '170px' } }} />
+            <IconButton sx={{ backgroundColor: 'black', color: 'white', borderRadius: 0, '&:hover': {backgroundColor: '#333'} }}>
+              <SearchIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Button  onClick={() => navigate('/ModernScrollDonation')}
+            variant="contained"
+            sx={{
+              backgroundColor: 'white',
+              color: 'black',
+              padding: { xs: '5px 15px', sm: '8px 25px' }, 
+              fontWeight: 'bold',
+              borderRadius: COLORS.borderRadius,
+              boxShadow: 'none',
+              whiteSpace: 'nowrap',
+              '&:hover': { backgroundColor: '#f5f5f5' }
+            }}
+          >
+            תרומות
+          </Button>
+
+          <IconButton onClick={() => setMobileMenuOpen(true)} sx={{ display: { xs: 'flex', md: 'none' }, color: 'white' }}>
+            <MenuIcon />
+          </IconButton>
+          <IconButton 
+        onClick={() => navigate('/admin/login')}
+        sx={{ color: '#fff', ml: 1 }}
+      >
+        <AccountCircleOutlinedIcon fontSize="large"/>
+      </IconButton>
+        </Stack>
       </Toolbar>
+
+      {/* תפריט מובייל */}
+      <Drawer anchor="right" open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
+        <Box sx={{ width: 260, backgroundColor: COLORS.mainBg, height: '100%', direction: 'rtl' }}>
+          <List sx={{ pt: 2 }}>
+            {navLinks.map((item) => (
+              <ListItem key={item.text} disablePadding>
+                <ListItemButton onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}>
+                  <ListItemText 
+                    primary={item.text} 
+                    sx={{ color: 'white', textAlign: 'right', '& .MuiTypography-root': { fontWeight: activeTab === item.text ? 'bold' : 'normal' } }} 
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
     </AppBar>
   );
 };

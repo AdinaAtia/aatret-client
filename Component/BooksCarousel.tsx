@@ -60,7 +60,8 @@ const BooksCarousel = () => {
   position: 'relative' 
 }}>
       
-      <Typography variant="h4" sx={{ fontWeight: 800, mb: 6, fontFamily: 'serif' }}>
+      <Typography variant="h4" sx={{ color:'#9c6644'  , fontSize:60 ,fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+fontWeight: 500, mb: 6 }}>
         ספרי הישיבה
       </Typography>
 
@@ -99,7 +100,7 @@ const BooksCarousel = () => {
     justifyContent: books.length <= 4 ? 'center' : 'flex-start'
   }}
 >
-          {books.slice(0, 5).map((book) => {
+          {books.slice(0, 6).map((book) => {
             // חילוץ תמונה (מערך ב-Strapi 5 לפי ה-JSON שלך)
             let imageUrl = '/book_placeholder.jpg'; 
             if (book.image && Array.isArray(book.image) && book.image.length > 0) {
@@ -142,7 +143,7 @@ const BooksCarousel = () => {
                     sx={{ 
                       maxHeight: '180px', 
                       width: 'auto', 
-                      filter: 'drop-shadow(0px 8px 12px rgba(0,0,0,0.15))',
+                  mixBlendMode: 'multiply',
                       objectFit: 'contain'
                     }}
                   />

@@ -1322,6 +1322,8 @@ const About: React.FC = () => {
     {/* תוכן הטקסט מעל הסרטון */}
     <Box sx={{ zIndex: 11, p: { xs: 4, md: 10 } }}>
       <Typography variant="h1" sx={{ 
+            fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+
         fontWeight: 900, 
         fontSize: { xs: '2.5rem', md: '5.5rem' }, 
         color: COLORS.textSecondary, 
@@ -1331,10 +1333,12 @@ const About: React.FC = () => {
         אודות
       </Typography>
       <Box sx={{ width: '100px', height: '6px', backgroundColor: COLORS.accent, mb: 4, mx: 'auto' }} />
-      <Typography variant="h3" sx={{ color: COLORS.accent, fontWeight: 600, fontSize: { xs: '1.8rem', md: '3.5rem' }, mb: 2 }}>
+      <Typography  variant="h3" sx={{     fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+color: COLORS.accent, fontWeight: 600, fontSize: { xs: '1.8rem', md: '3.5rem' }, mb: 2 }}>
         עטרת מרדכי
       </Typography>
-      <Typography variant="h6" sx={{ color: COLORS.textSecondary, maxWidth: '600px', mx: 'auto', fontSize: { xs: '1rem', md: '1.25rem' } }}>
+      <Typography variant="h6" sx={{     fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+color: COLORS.textSecondary, maxWidth: '600px', mx: 'auto', fontSize: { xs: '1rem', md: '1.25rem' } }}>
         מורשת של תורה, קבלה וחסד
       </Typography>
     </Box>
@@ -1375,9 +1379,9 @@ const About: React.FC = () => {
                   overflowY: 'auto',
                 }}>
                   {/* חלק התמונה / 4 תמונות */}
-                  <Box sx={{ flex: 1, height: { xs: '300px', md: '100vh' }, position: 'sticky', top: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Box sx={{ flex: 1, height: { xs: '300px', md: '100vh' }, position: 'sticky', top: -5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {item.title === "הישיבה כיום" ? (
-                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: { xs: 1, md: 3 }, width: '100%', height: '80%', p: { xs: 2, md: 4 } ,mt: { xs: -6, md: -8 }}}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: { xs: 1, md: 3 }, width: '100%', height: '80%', p: { xs: 2, md: 3 } ,mt: { xs: -8, md: -12 }}}>
                           {[
                             { url: "/py.jpg", trans: "translate(40px, 40px) rotate(2deg)", delay: "1.2s" },
                             { url: "/DSC_5579.webp", trans: "translate(-40px, -40px) rotate(-3deg)", delay: "0.3s" },
@@ -1411,18 +1415,21 @@ const About: React.FC = () => {
                   {/* חלק הטקסט - המבנה המקורי והטוב */}
                   <Box sx={{ 
                     flex: 1.2, 
-                    p: { xs: 3, md: "68px 60px" }, 
+                    p: { xs: 3, md: "55px 60px" }, 
                     display: 'flex', 
                     flexDirection: 'column',
                     justifyContent: 'flex-start'
                   }}>
-                    <YearTypography sx={{ mt: 0, mb: -0.5 }}>{item.year}</YearTypography>
+                    <YearTypography sx={{     fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+mt: 0, mb: -0.5 }}>{item.year}</YearTypography>
                     
-                    <Typography variant="h2" sx={{ fontWeight: 600, mb: 0.5, fontSize: { xs: '1.8rem', md: '2.4rem' } }}>
+                    <Typography variant="h2" sx={{     fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+fontWeight: 600, mb: 0.5, fontSize: { xs: '1.8rem', md: '2.4rem' } }}>
                       {item.title}
                     </Typography>
 
-                    <Typography variant="h6" sx={{ color: COLORS.accent, mb: 1.5, fontWeight: 500, fontSize: '1.1rem' }}>
+                    <Typography variant="h6" sx={{     fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+color: COLORS.accent, mb: 1.5, fontWeight: 500, fontSize: '1.1rem' }}>
                       {item.subtitle}
                     </Typography>
                     
@@ -1436,8 +1443,8 @@ const About: React.FC = () => {
                         position: 'relative', 
                         width: '100%',
                         maxWidth: '900px', 
-                        height: '180px',   
-                        mt: 1, 
+                        height: '190px',   
+                        mt: -2.8, 
                         mx: 'auto',
                         display: 'flex',
                         alignItems: 'center',

@@ -45,8 +45,9 @@ const images2 = [
       
       {/* --- 1. אזור כותרת ולוגו --- */}
       <Box sx={{ zIndex: 1, textAlign: 'center', mb: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography variant="h2" sx={{ color: brandBrown, fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 800, fontSize: { xs: '2.8rem', md: '3.8rem' }, mb: 1 }}>
-          עטרת מרדכי
+        <Typography variant="h2" sx={{     fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+color: brandBrown,  fontWeight: 500, fontSize: { xs: '2.8rem', md: '4rem' }, mb: 1 }}>
+          עטרת מרדכ+י
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, width: '100%' }}>
@@ -57,7 +58,8 @@ const images2 = [
           <Box sx={{ width: { xs: '30px', md: '80px' }, height: '1px', bgcolor: brandBrown, opacity: 0.3 }} />
         </Box>
 
-        <Typography sx={{ color: brandBrown, opacity: 0.8, mt: 2, fontSize: '1.1rem', letterSpacing: '0.25em', fontWeight: 300 }}>
+        <Typography sx={{    fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+ color: brandBrown, opacity: 0.8, mt: 2, fontSize: '1.1rem', letterSpacing: '0.25em', fontWeight: 300 }}>
           רגעים של עליה
         </Typography>
       </Box>
@@ -98,7 +100,8 @@ const images2 = [
 
       {/* --- 3. מדור מחיי הישיבה (הגריד החדש) --- */}
       <Box sx={{ textAlign: 'center', mt: 15, mb: 6 }}>
-        <Typography variant="h3" sx={{ color: brandBrown, fontFamily: "'Frank Ruhl Libre', serif", fontWeight: 800, fontSize: { xs: '2.2rem', md: '3.2rem' } }}>
+        <Typography variant="h3" sx={{     fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+color: brandBrown, fontWeight: 600, fontSize: { xs: '2.2rem', md: '4rem' } }}>
           מחיי הישיבה
         </Typography>
         <Box sx={{ width: '80px', height: '3px', bgcolor: brandBrown, mx: 'auto', mt: 2, borderRadius: '2px' }} />

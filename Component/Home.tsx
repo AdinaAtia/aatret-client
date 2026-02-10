@@ -56,8 +56,6 @@ const Home: React.FC = () => {
         const attr = r.attributes ? r.attributes : r;
         
         // בדיקה בקונסול - לוודא שהמספר באמת מגיע (שימי לב ל-P הגדולה)
-        console.log(`Rabbi: ${attr.name}, Priority Value:`, attr.Priority);
-
         // חילוץ כותרת (Note) מהבלוקים של Strapi
         let title = '';
         if (attr.note && Array.isArray(attr.note) && attr.note.length > 0) {
@@ -92,7 +90,6 @@ const Home: React.FC = () => {
       const sortedRabbis = [...formatted].sort((a, b) => a.priority - b.priority);
 
       // הדפסה של הרשימה הסופית לבדיקה
-      console.log('Final Sorted List:', sortedRabbis.map(r => `${r.name} (${r.priority})`));
 
       setRabbiCardsData(sortedRabbis);
       hasFetchedRabbis.current = true;
@@ -407,11 +404,13 @@ const videoRef = useRef<HTMLVideoElement>(null); // [2] יצירת הרפרנס 
           </Typography>
         </Stack> */}
 
-        <Typography variant="h2" sx={{ fontWeight: 900, mb: 1, fontSize: { xs: '2.2rem', md: '3.5rem' }, fontFamily: 'serif', color: '#1a1a1a' }}>
+        <Typography variant="h2" sx={{    fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+ fontWeight: 500, mb: 1, fontSize: { xs: '2.2rem', md: '4rem' }, color: '#9c6644' }}>
           מרן ראש הישיבה
         </Typography>
 
-        <Typography variant="h5" sx={{ fontWeight: 600, mb: 4, color: '#555', fontSize: { xs: '1.1rem', md: '1.4rem' } }}>
+        <Typography variant="h5" sx={{    fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
+ fontWeight: 500, mb: 4, color: '#9c6622', fontSize: { xs: '1.1rem', md: '1.6rem' } }}>
           הרה"ג הרב מרדכי עטייה שליט"א
         </Typography>
 
@@ -519,7 +518,6 @@ const videoRef = useRef<HTMLVideoElement>(null); // [2] יצירת הרפרנס 
                 >
                   <Typography variant="h6" fontWeight="bold" sx={{ mb: '0.5rem', fontSize: '1.1rem' }}>
                     {rabbi.name}
-             { console.log(rabbi.id )}  
                     
                   </Typography>
                   <Box sx={{ flex: 1 }}> 

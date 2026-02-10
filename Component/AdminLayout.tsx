@@ -30,7 +30,7 @@ const AdminLayout = ({ children, token }: AdminLayoutProps) => {
   // רשימת פריטי התפריט
   const menuItems = [
     { text: 'הוספת שיעור חדש', icon: <AddCircleOutlineIcon />, path: '/admin/add-lesson' },
-    { text: 'הוספת קטגוריה', icon: <FolderIcon />, path: '/admin/add-category' },
+    { text: 'הוספת קטגוריה', icon: <FolderIcon />, path: '/admin/AddNewCategory' },
     { text: 'ניהול ארכיון', icon: <FolderIcon />, path: '/admin/archive' },
     { text: 'ניהול רבני הישיבה', icon: <PeopleIcon />, path: '/admin/rabbis' },
     { text: 'ניהול קטגוריות', icon: <FolderIcon />, path: '/admin/categories' },

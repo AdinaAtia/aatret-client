@@ -209,9 +209,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { Box, createTheme, ThemeProvider } from '@mui/material';
+    // { text: 'ניהול קטגוריות', icon: <FolderIcon />, path: '/admin/categories' },
 
 // ייבוא קומפוננטות רגילות
 import Header from '../Component/Header';
+import CategoryManager from '../Component/CategoryManager';
 import Home from '../Component/Home';
 import RabbiQuestionForm from '../Component/RabbiQuestionForm';
 import AdminLogin from '../Component/AdminLogin';
@@ -221,10 +223,16 @@ import ManageLessons from '../Component/ManageLessons';
 import BookDetailsPage from '../Component/BookDetailsPage';
 import LessonPlayer from '../Component/LessonPlayer';
 import ContactForm from '../Component/ContactForm';
+import SubCategoryTable from '../Component/SubCategoryTable';
+
+import AddNewCategory from '../Component/AddNewCategory';
+
 import AllLessons from '../Component/AllLessons';
 import Gallery from '../Component/Gallery';
 import ModernScrollDonation from '../Component/ModernScrollDonation';
 import About from '../Component/About';
+import GlobalSearch from '../Component/GlobalSearch';
+
 
 // ייבוא הליאוט החדש שבנינו
 import AdminLayout from '../Component/AdminLayout'; 
@@ -280,6 +288,7 @@ function App() {
                 <Route path="/ModernScrollDonation" element={<ModernScrollDonation />} />
                 <Route path="/ContactForm" element={<ContactForm />} />
                 <Route path="/BookDetailsPage" element={<BookDetailsPage />} />
+
                 <Route path="/AllLessons" element={<AllLessons onLessonSelect={(lesson) => setSelectedLesson(lesson)}/>} />
                 <Route path="/Gallery" element={<Gallery />} />
                 <Route path="/About" element={<About />} />
@@ -300,6 +309,9 @@ function App() {
                       <AdminLayout token={token}>
                         <Routes>
                           <Route path="manage" element={<ManageLessons />} />
+                          <Route path="categories" element={<CategoryManager />} />
+                     <Route path="AddNewCategory" element={<AddNewCategory />} />
+
                           {/* הפנייה מתיקיית השורש של אדמין לניהול שיעורים */}
                           <Route path="" element={<Navigate to="manage" replace />} />
                           <Route path="archive" element={<ManageLessons />} /> 

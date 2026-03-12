@@ -1,23 +1,20 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect  } from 'react';
 import { 
   Box, Typography, Table, TableBody, TableCell, TableContainer, 
   TableHead, TableRow, Paper, TextField, IconButton, Tooltip, 
-  InputAdornment, Chip, Stack, Button, 
-  DialogTitle,
-  DialogContent,
-  Dialog,
-  DialogActions,
-  MenuItem
+  InputAdornment,  Stack, Button, 
+
 } from '@mui/material';
-import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarTodayIcon from '@mui/icons-material/CalendarTodayOutlined';
 import axios from 'axios';
 import EditIcon from '@mui/icons-material/Edit';
+import EditLessonDialog from './EditLessonDialog';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'; // הגרסה עם הקווי מתאר, דומה מאוד לצילום
+import DeleteActionPopover from './DeleteActionPopover';
 const COLORS = {
   SIDEBAR_BROWN: '#8c6644', 
   BROWN_DARK: '#9c6644',    
@@ -33,9 +30,11 @@ const ManageLessons = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const pageSize = 30;
+ const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+const [selectedLesson, setSelectedLesson] = React.useState<any>(null);
 const [openEdit, setOpenEdit] = useState(false);//אחראי על הדילוג
-const [selectedLesson, setSelectedLesson] = useState<any>(null);//שומר את הפרטים של השיעור
 const handleEditClick = (lesson: any) => {
+  console.log("נתוני השיעור שנלחץ:", lesson); // תבדקי בקונסול מה השם של השדה (id, id_מספר, documentId?)
   const attributes = lesson.attributes || lesson;
   
   setSelectedLesson({
@@ -46,61 +45,85 @@ const handleEditClick = (lesson: any) => {
   setOpenEdit(true);
 };
 
+const handleOpenPopover = (event: React.MouseEvent<HTMLButtonElement>, lesson: any) => {
+  setAnchorEl(event.currentTarget);
+  setSelectedLesson(lesson);
+};
 
-// פונקציית השליפה המדויקת מהקוד שצירפת
+const handleClosePopover = () => {
+  setAnchorEl(null);
+  setSelectedLesson(null);
+};
 
-  const fetchLessons = async (page: number) => {
-    try {
-      setLoadingLessons(true);
-      // שימוש ב-populate=* כפי שמופיע בקוד שלך כדי למשוך את נתוני הרב והתאריכים
-      let url = `http://localhost:1337/api/lessons?populate=*&sort=lesson_date_gregorian:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`;
-      
-      const response = await axios.get(url);
-      setLessons(response.data.data || []);
-      console.log("hhhhhhhhhhhhhhhhh",lessons);
-      
-      const pagination = response.data.meta?.pagination;
-      setTotalPages(pagination ? pagination.pageCount : 0);
-      setCurrentPage(page);
-    } catch (error) {
-      console.error('Error fetching lessons:', error);
-    } finally {
-      setLoadingLessons(false);
-    }
-  };
-const handleUpdateLesson = async()=>{
-    try {
-const docId = selectedLesson.id; // עכשיו זה מכיל את ה-documentIdconsole.log("lessonId",lessonId);
+ const fetchLessons = async (page: number) => {
+  try {
+    setLoadingLessons(true);
 
-    if (!docId) {
-      alert("שגיאה: לא נמצא מזהה לשיעור");
-      return;
-    }
-
-    const updatedData = {
-      data: {
-        title: selectedLesson.title,
-        duration: selectedLesson.duration,
-        lesson_date_hebrew: selectedLesson.lesson_date_hebrew,
-        lesson_date_gregorian: selectedLesson.lesson_date_gregorian,
-        AudioDir: selectedLesson.AudioDir,
-       rabbi: selectedLesson.rabbi?.documentId || selectedLesson.rabbi?.id || null,
-        AudioFileName: selectedLesson.AudioFileName,
-        // הערה: אם את רוצה לעדכן גם את הרב, צריך לשלוח את ה-ID שלו
-      }
-    };
-await axios.put(`http://localhost:1337/api/lessons/${docId}`, updatedData);   setOpenEdit(false);      // סגירת החלון המוקפץ
-    fetchLessons(currentPage); // רענון הטבלה כדי להציג את הנתונים החדשים
+    // 1. קריאה ל-Endpoint המהיר עם פרמטרים של עמוד וגודל עמוד
+    // ה-URL כעת קצר ונקי משמעותית
+    const url = `http://localhost:1337/api/lessons/fast?page=${page}&pageSize=${pageSize}`;
     
-    // אופציונלי: הודעת אישור קטנה
-    console.log("השיעור עודכן בהצלחה!");
+    const response = await axios.get(url);
+
+    // 2. עדכון רשימת השיעורים
+    // מכיוון שה-Controller מחזיר עכשיו { data: [...] }, אנחנו ניגשים ל-response.data.data
+    // האובייקטים כאן הם "שטוחים" (ללא attributes), למשל: lesson.title
+    const lessonsData = response.data.data || [];
+    setLessons(lessonsData);
+
+    // 3. עדכון מערכת הדיפדוף (Pagination)
+    // ה-Controller מחזיר אובייקט meta זהה למבנה של סטרפי
+    const pagination = response.data.meta?.pagination;
+    if (pagination) {
+      setTotalPages(pagination.pageCount); // סך כל הדפים
+      setCurrentPage(page);                // העמוד הנוכחי
+    }
+
+    console.log("נתוני SQL מהירים שהתקבלו:", lessonsData);
+    console.log("מידע על דיפדוף:", pagination);
 
   } catch (error) {
-    // אם הייתה שגיאה (למשל השרת כבוי או הנתונים לא תקינים)
-    console.error('שגיאה בעדכון השיעור:', error);
-    alert('חלה שגיאה בשמירת הנתונים');
+    console.error('שגיאה בשליפת שיעורים מה-SQL המהיר:', error);
+  } finally {
+    setLoadingLessons(false);
   }
 };
+const getCategoryDisplay = (row: any) => {
+  const attr = row?.attributes || row;
+  if (!attr) return "ללא נתונים";
+
+  const names: string[] = [];
+
+  // 1. הוספת הקטגוריה הראשית (השורש)
+  if (attr.main_category?.data?.attributes?.name) {
+    names.push(attr.main_category.data.attributes.name);
+  }
+
+  // 2. פונקציה פנימית לאיסוף שמות מהתת-קטגוריות (אבא, סבא וכו')
+  const collectSubNames = (subData: any) => {
+    const currentAttr = subData?.attributes;
+    if (!currentAttr) return;
+
+    // אם יש הורה (Parent), נלך אליו קודם כדי לשמור על סדר היררכי
+    if (currentAttr.parent_sub?.data) {
+      collectSubNames(currentAttr.parent_sub.data);
+    }
+    
+    // הוספת השם של הקטגוריה הנוכחית
+    if (currentAttr.name) {
+      names.push(currentAttr.name);
+    }
+  };
+
+  // הפעלת האיסוף מהתת-קטגוריה שמשויכת לשיעור
+  collectSubNames(attr.sub_category?.data);
+
+  // 3. ניקוי כפילויות (במקרה ששם ה"ראשית" זהה לשם ה"אבא") וחיבור בחיצים
+  const uniqueNames = names.filter((name, index) => names.indexOf(name) === index);
+
+  return uniqueNames.length > 0 ? uniqueNames.join(" » ") : "ללא קטגוריה";
+};
+
 const fetchLecturers = async () => {
     try {
       const response = await axios.get('http://localhost:1337/api/rabbis?fields[0]=name');
@@ -110,6 +133,20 @@ const fetchLecturers = async () => {
     } finally {
     }
   };
+//   const getCategoryPath = (category: any): string => {
+//   if (!category || (!category.data && !category.attributes)) return "ללא קטגוריה";
+  
+//   const data = category.data || category;
+//   const attr = data.attributes || data;
+//   const name = attr?.name || "";
+//   const parent = attr?.parent;
+
+//   if (parent && parent.data) {
+//     return `${getCategoryPath(parent.data)} / ${name}`;
+//   }
+  
+//   return name;
+// };
   useEffect(() => {
     fetchLessons(1);
     fetchLecturers()
@@ -132,8 +169,18 @@ const editFieldStyle = {
   }
 };
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, direction: 'rtl', bgcolor: '#f8f9fa', minHeight: '100vh' }}>
-      
+  <Box sx={{ 
+    p: { xs: 2, md: 4 }, 
+    direction: 'rtl', 
+    bgcolor: '#f8f9fa', 
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center' // ממרכז את התוכן
+  }}>
+    
+    {/* קונטיינר פנימי שמגביל את הרוחב המקסימלי ויוצר רווחים בצדדים */}
+    <Box sx={{ width: '100%', maxWidth: '1400px' }}>  
       <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS.SIDEBAR_BROWN, mb: 4 }}>
         ניהול שיעורים
       </Typography>
@@ -153,14 +200,15 @@ const editFieldStyle = {
           }}
         />
       </Paper>
-
-      <TableContainer component={Paper} sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-        <Table>
+<TableContainer component={Paper} sx={{ borderRadius: '20px', overflow: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+        <Table sx={{ minWidth: 1000 }}> {/* מבטיח שהטבלה לא תימחץ מדי */}
+   
           <TableHead>
             <TableRow >
               {/* שינוי צבע הכתב ללבן (#ffffff) כדי שתראי את הכותרות */}
               <TableCell align="center"   sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700 }}>פרטי השיעור</TableCell>
               <TableCell align="center"  sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700 }}>תאריכים</TableCell>
+             <TableCell align="right" sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700 , textAlign: 'center' }}>קטגוריה</TableCell>
               <TableCell align="center" sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700 }}>משך</TableCell>
               <TableCell align="center" sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700, textAlign: 'center' }}>צפיות</TableCell>
               <TableCell align="center" sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700 }}>נתוני אודיו</TableCell>
@@ -223,6 +271,9 @@ const editFieldStyle = {
     
   </Stack>
 </TableCell>
+<TableCell align="center">
+  {getCategoryDisplay(attr)}
+</TableCell>
 
                     <TableCell>
                       <Stack direction="row" alignItems="center" gap={0.5}>
@@ -241,6 +292,9 @@ const editFieldStyle = {
   size="small" 
   label="תיקייה" 
   defaultValue={attr.AudioDir || ''} 
+  InputProps={{
+    readOnly: true,
+  }}
   sx={{ 
     width: 130,
     // הגדרות עבור תיבת הקלט והמסגרת
@@ -277,6 +331,43 @@ const editFieldStyle = {
   size="small" 
   label="קובץ" 
   defaultValue={attr.AudioFileName || ''} 
+  InputProps={{
+    readOnly: true,
+  }}
+  //dir="rtl" // חשוב מאוד ליישור ראשוני
+  sx={{ 
+    width: 130,
+    '& .MuiOutlinedInput-root': {
+      direction: 'rtl', // מעביר את כל הרכיב למצב ימין לשמאל
+      '& fieldset': {
+        textAlign: 'right', // מעביר את ה"חור" במסגרת לצד ימין
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: COLORS.BROWN_DARK,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      right: 20, // מיקום התחלתי של המילה בימין
+      left: 'auto',
+      transformOrigin: 'right', // מבטיח שהאנימציה תהיה לכיוון ימין
+      '&.Mui-focused': {
+        color: COLORS.BROWN_DARK,
+      },
+    },
+    '& .MuiInputLabel-shrink': {
+      // תיקון המיקום כשהמילה למעלה כדי שלא תתנגש בקו
+      transform: 'translate(0, -9px) scale(0.75)', 
+      right: 10,
+    }
+  }} 
+/>
+<TextField 
+  size="small" 
+  label="קובץ PDF" 
+  defaultValue={attr.AudioFileName || ''} 
+  InputProps={{
+    readOnly: true,
+  }}
   //dir="rtl" // חשוב מאוד ליישור ראשוני
   sx={{ 
     width: 130,
@@ -309,9 +400,11 @@ const editFieldStyle = {
 
                     <TableCell align="center">
                       <Stack direction="row" justifyContent="center" alignItems="center" spacing={1}>
-                        <Tooltip title="שמור שינויים">
-                          <IconButton sx={{ color: COLORS.BROWN_DARK }}><SaveIcon fontSize="small" /></IconButton>
-                        </Tooltip>
+                      <Tooltip title="מחיקת שיעור">
+ <IconButton onClick={(e) => handleOpenPopover(e, lesson)}>
+  <DeleteOutlineIcon sx={{ color: '#d32f2f' }} />
+</IconButton>
+</Tooltip>
                         <IconButton 
                           onClick={() => attr.youtube_id && window.open(`https://youtube.com/watch?v=${attr.youtube_id}`, '_blank')}
                           disabled={!attr.youtube_id}
@@ -321,7 +414,7 @@ const editFieldStyle = {
                         <Tooltip title="ערוך פרטים">
   <IconButton 
   onClick={() => {
-handleEditClick(lesson.attributes || lesson)
+handleEditClick(lesson)
     }}
     sx={{ color: COLORS.SIDEBAR_BROWN }}
   >
@@ -336,7 +429,11 @@ handleEditClick(lesson.attributes || lesson)
             )}
           </TableBody>
         </Table>
-      </TableContainer>
+     </TableContainer>
+
+      {/* פייג'ינציה */}
+      {/* ... הקוד הקיים ... */}
+    </Box>
 
       {/* כפתורי ניווט (Pagination) - כדי שתוכלי לעבור בין 14,000 השיעורים */}
       <Stack direction="row" justifyContent="center" alignItems="center" gap={2} sx={{ mt: 4 }}>
@@ -344,181 +441,20 @@ handleEditClick(lesson.attributes || lesson)
         <Typography fontWeight="bold">עמוד {currentPage} מתוך {totalPages}</Typography>
         <Button disabled={currentPage >= totalPages} onClick={() => fetchLessons(currentPage + 1)} variant="outlined" sx={{ color: COLORS.BROWN_DARK, borderColor: COLORS.BROWN_DARK }}>הבא</Button>
       </Stack>
-     <Dialog 
-  open={openEdit} 
-  onClose={() => setOpenEdit(false)} 
-  dir="rtl"
-  fullWidth
-  maxWidth="sm"
-  PaperProps={{ sx: { borderRadius: '20px', p: 1 } }}
->
-  <DialogTitle sx={{ 
-    fontWeight: 900, 
-    color: COLORS.SIDEBAR_BROWN, 
-    fontSize: '1.5rem',
-    textAlign: 'center',
-    pb: 1
-  }}>
-    עריכת פרטי שיעור
-  </DialogTitle>
-
-  <DialogContent>
-    <Stack spacing={3} sx={{ mt: 2 }}>
-      
-      {/* כותרת השיעור */}
- <TextField
-  fullWidth
-  label="כותרת השיעור"
-  value={selectedLesson?.title || ''}
-  onChange={(e) =>
-    setSelectedLesson((prev: any) => ({
-      ...prev,
-      title: e.target.value,
-    }))
-  }
-  sx={editFieldStyle}
+  <DeleteActionPopover
+  open={Boolean(anchorEl)}
+  anchorEl={anchorEl}
+  onClose={handleClosePopover}
+  lesson={selectedLesson} // מעבירים את כל האובייקט
+  onSuccess={() => fetchLessons(currentPage)} // פשוט מרעננים את הטבלה
 />
-
-
-
-
-      <Stack direction="row" spacing={2}>
-        {/* שם הרב */}
-   <TextField
-  select
-  fullWidth
-  label="בחר רב"
-  // אנחנו בודקים את ה-documentId של הרב המשויך לשיעור
-  value={selectedLesson?.rabbi?.documentId || selectedLesson?.rabbi?.id || ''}
-  onChange={(e) => {
-    const selectedId = e.target.value;
-    // מציאת המרצה הנבחר מתוך הרשימה שמשכנו
-    const selectedLecturer = lecturers.find(l => (l.documentId || l.id) === selectedId);
-    
-    setSelectedLesson((prev: any) => ({
-      ...prev,
-      rabbi: {
-        documentId: selectedId,
-        id: selectedId,
-        // מעדכנים את השם לתצוגה זמנית בדיאלוג
-        name: selectedLecturer?.attributes?.name || selectedLecturer?.name 
-      }
-    }));
-  }}
-  sx={editFieldStyle}
->
-  {lecturers.map((lecturer) => (
-    <MenuItem key={lecturer.id} value={lecturer.documentId || lecturer.id}>
-      {/* בסטרפי 5 לפעמים זה ב-attributes ולפעמים ישירות בתוך האובייקט */}
-      {lecturer.attributes?.name || lecturer.name}
-    </MenuItem>
-  ))}
-</TextField>
-
-        {/* משך זמן */}
-      <TextField
-  label="משך (HH:MM)"
-  value={selectedLesson?.duration || ''}
-  onChange={(e) =>
-    setSelectedLesson((prev: any)=> ({
-      ...prev,
-      duration: e.target.value,
-    }))
-  }
-  sx={{ ...editFieldStyle, width: '150px' }}
+   <EditLessonDialog 
+  open={openEdit}                // מעביר את מצב הפתיחה/סגירה
+  onClose={() => setOpenEdit(false)} // מעביר פונקציה שסוגרת את הדיאלוג
+  lesson={selectedLesson}        // מעביר את נתוני השיעור שנבחר
+  lecturers={lecturers}          // מעביר את רשימת הרבנים
+  onSaveSuccess={() => fetchLessons(currentPage)} // מעביר פונקציה שמרעננת את הטבלה אחרי שמירה
 />
-
-      </Stack>
-
-      <Stack direction="row" spacing={2}>
-        {/* תאריך עברי */}
-       <TextField
-  fullWidth
-  label="תאריך עברי"
-  value={selectedLesson?.lesson_date_hebrew || ''}
-  onChange={(e) =>
-    setSelectedLesson((prev: any) => ({
-      ...prev,
-      lesson_date_hebrew: e.target.value,
-    }))
-  }
-  sx={editFieldStyle}
-/>
-
-        {/* תאריך לועזי */}
-       <TextField
-  fullWidth
-  type="date"
-  InputLabelProps={{ shrink: true }}
-  label="תאריך לועזי"
-  value={selectedLesson?.lesson_date_gregorian || ''}
-  onChange={(e) =>
-    setSelectedLesson((prev: any) => ({
-      ...prev,
-      lesson_date_gregorian: e.target.value,
-    }))
-  }
-  sx={editFieldStyle}
-/>
-
-      </Stack>
-
-      <Typography variant="subtitle2" sx={{ color: COLORS.BROWN_LIGHT, fontWeight: 'bold', mb: -1 }}>נתוני אודיו:</Typography>
-      
-      <Stack direction="row" spacing={2}>
-       <TextField
-  fullWidth
-  label="תיקייה"
-  value={selectedLesson?.AudioDir || ''}
-  onChange={(e) =>
-    setSelectedLesson((prev: any) => ({
-      ...prev,
-      AudioDir: e.target.value,
-    }))
-  }
-  sx={editFieldStyle}
-/>
-
-        <TextField
-  fullWidth
-  label="שם קובץ"
-  value={selectedLesson?.AudioFileName || ''}
-  onChange={(e) =>
-    setSelectedLesson((prev: any) => ({
-      ...prev,
-      AudioFileName: e.target.value,
-    }))
-  }
-  sx={editFieldStyle}
-/>
-
-      </Stack>
-    </Stack>
-  </DialogContent>
-
-  <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
-    <Button 
-      onClick={() => setOpenEdit(false)} 
-      variant="outlined"
-      sx={{ color: COLORS.TEXT_GRAY, borderColor: COLORS.TEXT_GRAY, borderRadius: '10px' }}
-    >
-      ביטול
-    </Button>
-    <Button 
-      onClick={handleUpdateLesson} 
-      variant="contained" 
-      sx={{ 
-        bgcolor: COLORS.SIDEBAR_BROWN, 
-        px: 4,
-        borderRadius: '10px',
-        fontWeight: 'bold',
-        '&:hover': { bgcolor: COLORS.BROWN_DARK } 
-      }}
-    >
-      שמור שינויים
-    </Button>
-  </DialogActions>
-</Dialog>
     </Box>
   );
 };

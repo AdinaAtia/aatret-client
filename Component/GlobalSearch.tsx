@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Autocomplete, TextField, Box, Typography, CircularProgress, IconButton, Paper } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import axios from 'axios';
-import Fuse from 'fuse.js';
 import { useNavigate } from 'react-router-dom';
 
 const GlobalSearch = () => {

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
   TableRow, TableCell, Collapse, Box, Table, TableBody, 
-  Typography, IconButton, Stack, Tooltip, CircularProgress, DialogTitle,
+  Typography, IconButton, Stack,  CircularProgress, DialogTitle,
   DialogContent, Dialog, MenuItem, DialogActions, Button, TextField,
-  Popover, Paper
-} from '@mui/material';
+  Popover } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'; // אייקון אזהרה קטן
 import axios from 'axios';
 import InventoryIcon from '@mui/icons-material/Inventory'; // אייקון לטיוטה
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever'; // אייקון למחיקה

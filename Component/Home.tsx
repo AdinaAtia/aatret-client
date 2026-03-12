@@ -372,8 +372,6 @@ const videoRef = useRef<HTMLVideoElement>(null); // [2] יצירת הרפרנס 
 <Box sx={{ width: '100%', mb: { xs: 8, md: 12 } }}>
  <Grid 
     container 
-    component="div" // זה התיקון! מוסיפים הגדרת רכיב בסיס כדי ש-TS יפסיק להתבלבל
-    disableEqualOverflow 
     sx={{ 
       width: '100%', // הוספתי רוחב מלא כדי למנוע קפיצות
       backgroundColor: '#fdfbe7',
@@ -418,11 +416,16 @@ const videoRef = useRef<HTMLVideoElement>(null); // [2] יצירת הרפרנס 
 הגאון המקובל רבי מרדכי עטייה שליט"א עומד בראשות ישיבת "החיים והשלום" בירושלים, שם הוא ממשיך את מורשת זקנו ומנחיל את תורת הסוד בשיעורים יומיים עמוקים. בשנים האחרונות ראו אור י"ב כרכי סדרת ספריו "עטרת מרדכי", אשר התקבלו באהדה עצומה בקרב לומדי הקבלה בשל שילובם הייחודי בין עומק לבהירות. לצד הנהגתו התורנית, משמש הרב כתובת לרבים הפוקדים את מעונו לעצה, ברכה והדרכה רוחנית. </Typography>
 
         <Button
-          onClick={() => {
-    // שליחה לעמוד השיעורים עם ה-ID מוחבא בתוך ה-state
-    navigate('/AllLessons', { state: { rabbiId: 52 } });
+        onClick={() => {
+    // מציאת ה-ID באופן דינמי לפי השם מתוך הנתונים שמשכנו ב-useEffect
+    const chiefRabbi = rabbiCardsData.find(r => r.name.includes('הרב מרדכי עטייה'));
+    if (chiefRabbi) {
+      navigate('/AllLessons', { state: { rabbiId: chiefRabbi.id } });
+    } else {
+      console.warn('הנתונים עדיין בטעינה...');
+    }
   }}
-          variant="contained"
+  variant="contained"
           sx={{
             backgroundColor: '#9c6644',
             color: '#fff',

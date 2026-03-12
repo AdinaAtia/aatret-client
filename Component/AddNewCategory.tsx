@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Box, TextField, Button, Typography, Paper, CircularProgress, 
   MenuItem, Alert, Stack, Divider, FormControlLabel, Switch, Badge
 } from '@mui/material';
 import axios from 'axios';
-import { PlusCircle, Layers, Send, FileEdit, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlusCircle, Layers, Send, FileEdit, ChevronRight } from 'lucide-react';
 
 const AddNewCategory = () => {
   const [lecturers, setLecturers] = useState<any[]>([]);

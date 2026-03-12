@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import{ useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
@@ -75,11 +75,10 @@ const fetchTree = async (rabbiId: number | string | null) => {
   }
 
   try {
-const url = `http://localhost:1337/api/categories-mains?filters[rabbi][id][$eq]=${rabbiId}&populate[subs][populate][parent_sub]=*&populate[subs][populate][child_subs][populate]=*`; 
-   const { data } = await axios.get(url);
+const url = `http://localhost:1337/api/categories-mains?filters[rabbi][id][$eq]=${rabbiId}&pagination[pageSize]=100&populate[subs][populate][parent_sub]=*&populate[subs][populate][child_subs][populate]=*`;   const { data } = await axios.get(url);
 
     setCategories(data.data);
-    console.log(data.data);
+    console.log("csghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",data.data);
     
   } catch (error) {
     console.error('fetchTree error:', error);

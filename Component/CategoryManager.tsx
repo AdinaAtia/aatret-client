@@ -1,8 +1,8 @@
 import { 
   Box, Typography, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Paper, TextField, IconButton, Tooltip, 
+  TableHead, TableRow, Paper, TextField, IconButton, 
   DialogTitle, DialogContent, Dialog, MenuItem, DialogActions, 
-  InputAdornment, Stack, Button, Chip, Popover, Divider
+  InputAdornment, Stack, Button, Popover
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -13,7 +13,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SubCategoryTable from './SubCategoryTable';
 import CategoryIcon from '@mui/icons-material/Category';
 import Inventory2Icon from '@mui/icons-material/Inventory2'; // אייקון לטיוטה
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Pagination } from '@mui/material';
 

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Box, Typography, Button, Card, CardMedia, CardContent, IconButton, CircularProgress, Chip } from '@mui/material';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';

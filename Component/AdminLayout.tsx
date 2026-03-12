@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, Divider } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -29,7 +29,7 @@ const AdminLayout = ({ children, token }: AdminLayoutProps) => {
 
   // רשימת פריטי התפריט
   const menuItems = [
-    { text: 'הוספת שיעור חדש', icon: <AddCircleOutlineIcon />, path: '/admin/add-lesson' },
+    { text: 'הוספת שיעור חדש', icon: <AddCircleOutlineIcon />, path: '/admin/AudioUploader' },
     { text: 'הוספת קטגוריה', icon: <FolderIcon />, path: '/admin/AddNewCategory' },
     { text: 'ניהול ארכיון', icon: <FolderIcon />, path: '/admin/archive' },
     { text: 'ניהול רבני הישיבה', icon: <PeopleIcon />, path: '/admin/rabbis' },

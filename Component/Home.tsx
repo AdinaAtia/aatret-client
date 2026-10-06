@@ -1,62 +1,266 @@
-import React, { useRef,useState, useEffect } from 'react'; 
+import React, { useRef,useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Box, 
-  Typography, 
-  Stack,
-  Paper, 
+import {
+  Box,
+  Typography,
   Button,
-  Container
+  Card,
+  CardMedia,
+  CardContent,
+  IconButton,
 } from '@mui/material';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
+import { colors, fonts, fontSize, gradients, goldTextFill, rabbiCard, radius, weeklyBar } from '../src/theme/tokens';
 
 import Grid from '@mui/material/Grid';
-import LatestLessonCard from './LatestLessonCard';
 import LecturesGrid from './LecturesGrid';
+import SectionFlourish from './shared/SectionFlourish';
+import SectionArch from './shared/SectionArch';
+import HeroVideo from './HeroVideo';
 import LessonPlayer from './LessonPlayer'; // ייבוא הנגן
 import BooksCarousel from './BooksCarousel'; // ודאי שהנתיב לקובץ נכון
+import { Crown } from './Header';
+import founderContent from './founderContent.json';
+import weeklyLesson from './weeklyLesson.json';
+import donationLetterContent from './donationLetterContent.json';
+
+const MEDIA_BASE_URL = `${import.meta.env.VITE_MEDIA_URL}/About`;
 
 // --- 1. הגדרות רוחב וצבעים ---
-const COLORS = {
-  mainBg: '#9c6644', 
-  inputTextColor: 'black',
-  contentMaxWidth: '100%',
-  rabbiBg: 'white', 
-  borderRadius: '8px',
-};
+
+interface LetterSegment {
+  text: string;
+  bold?: boolean;
+  link?: string;
+}
+interface LetterParagraph {
+  segments: LetterSegment[];
+  sx?: Record<string, unknown>;
+}
+
+const donationLetterParagraphs: LetterParagraph[] = donationLetterContent.paragraphs as LetterParagraph[];
+
+const donationLetterPlainText = donationLetterParagraphs
+  .map((p) => p.segments.map((s) => s.text).join(''))
+  .join('\n\n');
+
+const CLOSING_START = 10;
+const mainLetterLen = donationLetterParagraphs
+  .slice(0, CLOSING_START)
+  .reduce((acc, p) => acc + p.segments.map((s) => s.text).join('').length + 2, 0);
+
+function renderClosingParagraphs(maxLen: number) {
+  let consumed = 0;
+  const nodes: React.ReactNode[] = [];
+  for (let p = CLOSING_START; p < donationLetterParagraphs.length; p++) {
+    if (consumed >= maxLen) break;
+    const para = donationLetterParagraphs[p];
+    const paraText = para.segments.map((s) => s.text).join('');
+    const remaining = maxLen - consumed;
+    const revealLen = Math.min(remaining, paraText.length);
+    let segConsumed = 0;
+    const segNodes: React.ReactNode[] = [];
+    for (let s = 0; s < para.segments.length; s++) {
+      if (segConsumed >= revealLen) break;
+      const seg = para.segments[s];
+      const segText = seg.text.length <= revealLen - segConsumed ? seg.text : seg.text.slice(0, revealLen - segConsumed);
+      segNodes.push(seg.bold || seg.link ? (
+        <Box key={s} component={seg.link ? 'a' : 'span'} href={seg.link} sx={{ fontWeight: 800, color: seg.link ? '#c5a059' : undefined }}>{segText}</Box>
+      ) : segText);
+      segConsumed += seg.text.length;
+    }
+    nodes.push(<Typography component="p" key={p} sx={{ mb: 0.08, fontFamily: "'Yetzira-Regular', sans-serif !important", ...(para.sx || {}) }}>{segNodes}</Typography>);
+    consumed += paraText.length + 2;
+    if (revealLen < paraText.length) break;
+  }
+  return nodes;
+}
+
+const rabbiVideos = [
+  { youtubeId: 'FWJGuXlBQ88', name: 'הראשון לציון הרב מרדכי אליהו זצ"ל', date: 'תשס"א מסיבה על הוצאת ספר עטרת מרדכי על הקדיש' },
+  { youtubeId: 'elWVs7nSbCs', name: 'המקובל הרב דוד שלום שליט"א ראש ישיבת השלום', date: 'תשס"א מסיבה על הוצאת ספר עטרת מרדכי על הקדיש' },
+  { youtubeId: '1-aGtlCP4Kk', name: 'הראשון לציון הרב דוד יוסף שליט"א', date: 'הילולת הרש"ש י\' שבט תשפ"ה ההילולה נערכה לרגל הוצאה לאור של סידור הרש"ש ע"י הנדיב ה"ה יעקב ג"ק אורפלי' },
+  { youtubeId: '-Wd4It5Ap_k', name: 'הרב בן ציון מוצפי שליט״א', date: '' },
+  { youtubeId: 'Y-nZHTds7Tw', name: 'הרב יצחק מאיר מורגנשטרן שליט"א', thumbnail: `${MEDIA_BASE_URL}/צילום מסך 2026-06-22 110957.png`, date: 'תשס"א מסיבה על הוצאת ספר עטרת מרדכי על הקדיש' },
+  { youtubeId: 'QV2Bgb3L7Ug', name: 'הרב אליהו מנצור שליט״א', date: '' },
+  { youtubeId: '2zOk_8o2J-I', name: 'רבה של ירושלים הרב שלום משאש זצ"ל', date: '2026' },
+  { youtubeId: 'jmjeweAHdxs', name: 'הרב בניהו שמואלי שליט"א', date: 'תשס"א מסיבה על הוצאת ספר עטרת מרדכי על הקדיש' },
+  { youtubeId: 'BsKWj2CjOYA', name: 'הרב בניהו שמואלי שליט"א', date: '2026' },
+  { youtubeId: 'yH6uFOh7Wgc', name: 'ביקור ראש הישיבה אצל הרבי מחב"ד', date: '1989' },
+  { youtubeId: 'DXDKQXaw_lM', name: 'הילולת הרש"ש י\' שבט תשפ"ה', date: 'ההילולה נערכה לרגל הוצאה לאור של סידור הרש"ש ע"י הנדיב ה"ה יעקב ג"ק אורפלי' },
+  { youtubeId: '8kWZWx7W010', name: 'תדמית הישיבה', date: '2026' },
+];
+
+function renderDonationLetterUpTo(maxLen: number) {
+  let consumed = 0;
+  const nodes: React.ReactNode[] = [];
+  for (let p = 0; p < donationLetterParagraphs.length; p++) {
+    if (consumed >= maxLen) break;
+    const para = donationLetterParagraphs[p];
+    const paraText = para.segments.map((s) => s.text).join('');
+    const remaining = maxLen - consumed;
+    const revealLen = Math.min(remaining, paraText.length);
+
+    let segConsumed = 0;
+    const segNodes: React.ReactNode[] = [];
+    for (let s = 0; s < para.segments.length; s++) {
+      if (segConsumed >= revealLen) break;
+      const seg = para.segments[s];
+      const segRemaining = revealLen - segConsumed;
+      const segText = seg.text.length <= segRemaining ? seg.text : seg.text.slice(0, segRemaining);
+      segNodes.push(
+        seg.bold || seg.link ? (
+          <Box
+            key={s}
+            component={seg.link ? 'a' : 'span'}
+            href={seg.link}
+            sx={{ fontWeight: 800, color: seg.link ? '#c5a059' : undefined }}
+          >
+            {segText}
+          </Box>
+        ) : (
+          segText
+        )
+      );
+      segConsumed += seg.text.length;
+    }
+
+    nodes.push(
+      <Typography component="p" key={p} sx={{ mb: 0.08, fontFamily: "'Yetzira-Regular', sans-serif !important", ...(para.sx || {}) }}>
+        {segNodes}
+      </Typography>
+    );
+
+    consumed += paraText.length + 2; // +2 = מפריד הפסקאות (\n\n)
+    if (revealLen < paraText.length) break;
+  }
+  return nodes;
+}
+
+function LazyYouTube({ youtubeId, thumbnail }: { youtubeId: string; thumbnail?: string }) {
+  const [active, setActive] = useState(false);
+  if (active) {
+    return (
+      <iframe
+        width="100%"
+        height="100%"
+        src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+        style={{ display: 'block', border: 'none' }}
+        allow="autoplay; encrypted-media"
+        allowFullScreen
+      />
+    );
+  }
+  return (
+    <Box onClick={() => setActive(true)} sx={{ position: 'relative', width: '100%', height: '100%', cursor: 'pointer' }}>
+      <Box
+        component="img"
+        src={thumbnail || `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
+        alt=""
+        sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+      />
+      <Box sx={{
+        position: 'absolute', top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 48, height: 48,
+        bgcolor: 'rgba(0,0,0,0.75)',
+        borderRadius: '50%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: '#fff', fontSize: '1.3rem',
+        pointerEvents: 'none',
+      }}>
+        ▶
+      </Box>
+    </Box>
+  );
+}
 
 // --- 2. קומפוננטת דף הבית ---
 const Home: React.FC = () => {
+ 
   const navigate = useNavigate();
-  const [centralSearchTerm, setCentralSearchTerm] = useState<string>('');
   const [selectedLesson, setSelectedLesson] = useState<any | null>(null); // הוספת המצב לשיעור נבחר
-  const hasFetchedRabbis = useRef(false);
-  const handleCentralSearch = (event: React.FormEvent) => {
-    event.preventDefault();
-    console.log('חיפוש מרכזי:', centralSearchTerm);
-  };
 
+  const hasFetchedRabbis = useRef(false);
+  // const handleCentralSearch = (event: React.FormEvent) => {
+  //   event.preventDefault();
+  // };
+
+  const [videoHeight, setVideoHeight] = useState<string>('100vh');
   const [rabbiCardsData, setRabbiCardsData] = useState<any[]>([]);
+  const [rabbiLatestLessons, setRabbiLatestLessons] = useState<Record<number, any>>({});
+  const rabbisInRow = rabbiCardsData.filter((r) => !r.name.includes('מרדכי עטי'));
+  const rabbiVideosScrollRef = useRef<HTMLDivElement>(null);
+  const [donationLetterTypedLength, setDonationLetterTypedLength] = useState(0);
+  const donationLetterIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const letterContainerRef = useRef<HTMLDivElement>(null);
+  const letterMeasureRef = useRef<HTMLDivElement>(null);
+  const [letterFontSize, setLetterFontSize] = useState<number>(8.8);
+
+  useLayoutEffect(() => {
+    const container = letterContainerRef.current;
+    const measure = letterMeasureRef.current;
+    if (!container || !measure) return;
+
+    const fitFontSize = () => {
+      const maxFontSize = window.innerWidth >= 900 ? 12 : 10;
+      const minFontSize = 4.5;
+      let fontSize = maxFontSize;
+      measure.style.fontSize = `${fontSize}px`;
+      while (measure.scrollHeight > container.clientHeight && fontSize > minFontSize) {
+        fontSize -= 0.2;
+        measure.style.fontSize = `${fontSize}px`;
+      }
+      setLetterFontSize(fontSize);
+    };
+
+    fitFontSize();
+    document.fonts?.ready?.then(fitFontSize).catch(() => {});
+    window.addEventListener('resize', fitFontSize);
+    return () => window.removeEventListener('resize', fitFontSize);
+  }, []);
 
  useEffect(() => {
-  // מניעת כפילות בקריאות (StrictMode)
-  if (hasFetchedRabbis.current) return;
+  const updateVideoHeight = () => {
+    const headerEl = document.querySelector('[role="banner"]');
+    const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0;
+    setVideoHeight(`calc(100vh - ${Math.round(headerHeight + 65)}px)`);
+  };
+  updateVideoHeight();
+  window.addEventListener('resize', updateVideoHeight);
+  return () => window.removeEventListener('resize', updateVideoHeight);
+}, []);
 
-  // שימוש ב-asc בשרת כדי לקבל מהקטן לגדול כבר מה-API
-  fetch('http://localhost:1337/api/rabbis?populate=photo_url&sort[0]=Priority:asc')
-    .then((res) => res.json())
-    .then((data) => {
-      if (!data?.data) {
+ useEffect(() => {
+  setDonationLetterTypedLength(0);
+  let i = 0;
+  donationLetterIntervalRef.current = setInterval(() => {
+    if (i < donationLetterPlainText.length) {
+      i++;
+      setDonationLetterTypedLength(i);
+    } else {
+      clearInterval(donationLetterIntervalRef.current!);
+    }
+  }, 12);
+  return () => clearInterval(donationLetterIntervalRef.current!);
+}, []);
+
+ useEffect(() => {
+  if (hasFetchedRabbis.current) return;
+  hasFetchedRabbis.current = true;
+
+  fetch(`${import.meta.env.VITE_API_URL}/api/rabbis?populate=photo_url&sort[0]=Priority:asc`)
+    .then(r => r.json())
+    .then(async (rabbisData) => {
+      if (!rabbisData?.data) {
         setRabbiCardsData([]);
-        hasFetchedRabbis.current = true;
         return;
       }
 
-      // 1. מיפוי הנתונים
-      const formatted = data.data.map((r: any) => {
+      const formatted = rabbisData.data.map((r: any) => {
         const attr = r.attributes ? r.attributes : r;
-        
-        // בדיקה בקונסול - לוודא שהמספר באמת מגיע (שימי לב ל-P הגדולה)
-        // חילוץ כותרת (Note) מהבלוקים של Strapi
+
         let title = '';
         if (attr.note && Array.isArray(attr.note) && attr.note.length > 0) {
           const block = attr.note[0];
@@ -65,14 +269,13 @@ const Home: React.FC = () => {
           }
         }
 
-        // חילוץ תמונה
         let imageSrc = '/placeholder.png';
         const photoData = attr.photo_url;
         if (photoData && photoData.length > 0) {
           const photo = photoData[0];
           const url = photo.url || photo.attributes?.url;
           if (url) {
-            imageSrc = `http://localhost:1337${url}`;
+            imageSrc = `${import.meta.env.VITE_API_URL}${url}`;
           }
         }
 
@@ -81,29 +284,29 @@ const Home: React.FC = () => {
           name: attr.name || 'ללא שם',
           title,
           imageSrc,
-          // כאן קריטי להשתמש ב-Priority עם P גדולה!
-          priority: Number(attr.Priority) ?? 999 
+          priority: Number(attr.Priority) ?? 999,
         };
       });
 
-      // 2. מיון סופי בקליינט (מהקטן לגדול)
-      const sortedRabbis = [...formatted].sort((a, b) => a.priority - b.priority);
+      setRabbiCardsData([...formatted].sort((a, b) => a.priority - b.priority));
 
-      // הדפסה של הרשימה הסופית לבדיקה
+      const lessonRequests = rabbisData.data.map((r: any) =>
+        fetch(`${import.meta.env.VITE_API_URL}/api/lessons?filters[rabbi][id][$eq]=${r.id}&sort=lesson_date_gregorian:desc&pagination[limit]=1`)
+          .then(res => res.json())
+          .then(data => ({ rabbiId: r.id, lesson: data?.data?.[0] ?? null }))
+      );
 
-      setRabbiCardsData(sortedRabbis);
-      hasFetchedRabbis.current = true;
+      const lessonsResults = await Promise.all(lessonRequests);
+      const lessonsMap: Record<number, any> = {};
+      lessonsResults.forEach(({ rabbiId, lesson }) => {
+        if (lesson) lessonsMap[rabbiId] = lesson;
+      });
+      setRabbiLatestLessons(lessonsMap);
     })
-    .catch((err) => {
-      console.error('Error fetching rabbis:', err);
-    });
+    .catch((err) => console.error('Error fetching data:', err));
 }, []);
-const videoRef = useRef<HTMLVideoElement>(null); // [2] יצירת הרפרנס לווידאו
 
-  const handleVideoEnd = () => {
-    if (videoRef.current) {
-      videoRef.current.load(); // [3] טעינה מחדש מחזירה את ה-Poster
-    }}
+ 
   // --- שינוי נדרש: אם נבחר שיעור, נציג רק את הנגן ---
   if (selectedLesson) {
     return (
@@ -113,7 +316,6 @@ const videoRef = useRef<HTMLVideoElement>(null); // [2] יצירת הרפרנס 
       />
     );
   }
-
   return (
     <Box 
 
@@ -124,433 +326,813 @@ const videoRef = useRef<HTMLVideoElement>(null); // [2] יצירת הרפרנס 
         backgroundColor: 'white',
       }}
     >
-      {/* --- אזור כותרת עליון --- */}
-     {/* --- אזור כותרת עליון מתוקן --- */}
-<Box
-  sx={{
-    maxWidth: COLORS.contentMaxWidth,
-    width: '100%',
-    margin: '0 auto',
-    padding: 0,
-    textAlign: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    minHeight: { xs: '50px', md: '50px' },
-  }}
->
-  {/* האפקט השקוף ברקע */}
-  <Box
-    sx={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundImage: 'url("/pyp.png")',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      opacity: 0.3,
-      zIndex: 0,
-      maskImage: 'radial-gradient(circle at center, black 40%, transparent 95%)',
-      WebkitMaskImage: 'radial-gradient(circle at center, black 40%, transparent 95%)',
-    }}
-  />
-
-  {/* תוכן הטקסט והלוגואים */}
-  <Box sx={{ py: { xs: 8, md: 12 }, zIndex: 1, position: 'relative' }}>
-    
-    {/* שורת הכותרת עם הלוגואים */}
-    <Stack 
-      direction="row" 
-      alignItems="center" 
-      justifyContent="center" 
-        spacing={{ xs: 2, sm: 6, md: 12 }}
-
-      // spacing={{ xs: 1, sm: 2, md: 4 }} // מרווח משתנה לפי גודל מסך
-      sx={{ mb: 1 }}
-    >
-      {/* לוגו ימין */}
-      {/* <Box
-        component="img"
-        src="/logo.jpg.jpg" // ודאי שזה השם המדויק בתיקיית public
-        sx={{
-          // height: { xs: '60px', sm: '100px', md: '140px' }, // גדל עם המסך
-          // objectFit: 'contain'
-          // height: { xs: '60px', sm: '100px', md: '140px' }, // הגדלתי משמעותית
-        objectFit: 'contain',
-        // השורה הבאה מעלימה רקע לבן אם קיים (עובד הכי טוב אם הלוגו שחור/כהה)
-        mixBlendMode: 'multiply',
-        }}
-      /> */}
-
-<Typography
-  variant="h1"
-  component="h1"
-  sx={{
-    fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
-    fontWeight: 500,
-    fontSize: { xs: '2.5rem', sm: '4.5rem', md: '5.5rem' },
-    color: COLORS.inputTextColor || 'black',
-    lineHeight: 1.1,
-    whiteSpace: 'nowrap',
-    textAlign: 'center'
-  }}
->
-  עטרת מרדכי
-</Typography>
-
-      {/* לוגו שמאל */}
-      {/* <Box
-        component="img"
-        src="/logo.jpg.jpg"
-        sx={{
-          height: { xs: '40px', sm: '60px', md: '90px' },
-          objectFit: 'contain'
-        }}
-      /> */}
-    </Stack>
-    
-    {/* הקו המפריד */}
-    <Box sx={{ 
-      width: '80px', 
-      height: '3px', 
-      backgroundColor: 'black', 
-      margin: '0 auto', 
-      mb: 2,
-      opacity: 0.3 
-    }} />
-
-    {/* כותרת המשנה */}
-    <Typography
-      variant="body1"
-      sx={{
-            fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
-
-        marginTop: 1,
-        fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.6rem' },
-        color: COLORS.inputTextColor || 'black',
-        fontWeight: 400,
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}
-    >
-      ישיבה ללימוד קבלה עפ"י תורת האר"י ז"ל
-    </Typography>
-  </Box>
-</Box>
-
-{/* הפס המבדיל - עכשיו התמונה נוגעת בו ישירות */}
-<Box 
-  sx={{ 
-    borderBottom: '#444444', 
-    marginTop: 0, // איפסתי מרג'ין כדי שהחיבור יהיה מושלם
-    marginBottom: 10,
-  }} 
-/>
      
-
-      {/* --- LatestLessonCard --- */}
 
     <Box sx={{ 
    // תואם ל-maxWidth של הכותרת אם הגדרת
   mx: 'auto', 
   // px: {  md: 1 }, // שוליים זהים בדיוק לאלו של הכותרת (שורות 83-90)
   width: '100%' 
-}}>  <LatestLessonCard onLessonSelect={(lesson) => setSelectedLesson(lesson)} /></Box>  
-      <Box sx={{ my: { xs: 8, md: 15 } }} />
-<Box
-  sx={{
-    position: 'relative',
-    overflow: 'hidden',
-    pt: { xs: 1, md: 2 }, // צמצום משמעותי של הרווח העליון (Padding Top)
-    pb: { xs: 2, md: 4 },
-    direction: 'rtl',
-  }}
->
-  <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
-    <Stack
-      direction={{ xs: 'column', md: 'row' }}
-      spacing={2} // צמצום הרווח בין המגילה לסרטון
-      alignItems="stretch"
-      justifyContent="center"
-    >
-      {/* צד ימין: המגילה - מקבלת חלק 1 מתוך 3 */}
-      <Box 
-        sx={{ 
-          flex: 1, // פרופורציה של 1
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center'
+}}> 
+{/* --- אזור פתיחה (Hero Section) --- */}
+<Box sx={{
+  position: 'relative',
+  width: '100%',
+  height: { xs: '80vh', md: '90vh' },
+  overflow: 'hidden',
+  direction: 'rtl',
+  bgcolor: colors.cream,
+}}>
+  {/* סרטון רקע — פרוס על כל השטח. בנייד מוגשת תמונה סטטית במקומו (HeroVideo.tsx) */}
+  <HeroVideo
+    sx={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      zIndex: 0,
+    }}
+  />
+
+  {/* צעיף קרם בהיר על כל הסרטון */}
+  <Box sx={{
+    position: 'absolute',
+    inset: 0,
+    zIndex: 1,
+    pointerEvents: 'none',
+    background: `linear-gradient(180deg, ${colors.cream}D4 0%, ${colors.creamAlt}C4 45%, ${colors.sand}CC 100%)`,
+  }} />
+
+  {/* מסגרת הקשת — שני פסי זהב דקים מעל הסרטון */}
+  <Box sx={{
+    position: 'absolute',
+    inset: { xs: '12px', md: '26px' },
+    zIndex: 2,
+    pointerEvents: 'none',
+    borderRadius: radius.arch,
+    border: `1px solid ${colors.goldDeep}A6`,
+  }} />
+  <Box sx={{
+    position: 'absolute',
+    inset: { xs: '19px', md: '36px' },
+    zIndex: 2,
+    pointerEvents: 'none',
+    borderRadius: radius.arch,
+    border: `1px solid ${colors.goldDeep}5C`,
+  }} />
+
+  {/* כיתוב מעל הסרטון */}
+  <Box sx={{
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
+    zIndex: 3,
+    px: 2,
+  }}>
+    {/* הכתר — אותה קומפוננטת Crown של ההאדר */}
+    <Box sx={{
+      mb: { xs: 1.5, md: 2 },
+      '& svg': { width: { xs: '34px', md: '46px' }, height: 'auto' },
+    }}>
+      <Crown width={46} height={39} />
+    </Box>
+
+    <Typography sx={{
+      fontFamily: fonts.heading,
+      fontSize: { xs: '11px', md: fontSize.sm },
+      fontWeight: 400,
+      color: `${colors.wine}D9`,
+      letterSpacing: { xs: '0.5em', md: '0.75em' },
+      textIndent: { xs: '0.5em', md: '0.75em' },
+      mb: { xs: 0.5, md: 1 },
+    }}>
+      ישיבת
+    </Typography>
+
+    <Typography sx={{
+      fontFamily: fonts.headingOrnate,
+      fontSize: 'clamp(2.75rem, 7.5vw, 6rem)',
+      fontWeight: 400,
+      color: colors.wine,
+      lineHeight: 1.05,
+      letterSpacing: '0.02em',
+      textAlign: 'center',
+    }}>
+      עטרת מרדכי
+    </Typography>
+
+    {/* קו מפריד עם מעוינים */}
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, my: { xs: 2, md: 2.5 } }}>
+      <Box sx={{ width: { xs: '55px', md: '105px' }, height: '1px', background: `linear-gradient(90deg, transparent 0%, ${colors.goldDeep} 100%)` }} />
+      <Box sx={{ width: '5px', height: '5px', transform: 'rotate(45deg)', bgcolor: colors.gold }} />
+      <Box sx={{ width: '4px', height: '4px', transform: 'rotate(45deg)', bgcolor: colors.goldDeep, opacity: 0.6 }} />
+      <Box sx={{ width: '5px', height: '5px', transform: 'rotate(45deg)', bgcolor: colors.gold }} />
+      <Box sx={{ width: { xs: '55px', md: '105px' }, height: '1px', background: `linear-gradient(90deg, ${colors.goldDeep} 0%, transparent 100%)` }} />
+    </Box>
+
+    <Typography sx={{
+      fontFamily: fonts.heading,
+      fontSize: { xs: fontSize.md, md: fontSize.lg },
+      fontWeight: 400,
+      color: colors.wine,
+      lineHeight: 1.5,
+      letterSpacing: '0.03em',
+    }}>
+      ישיבה ללימוד קבלה
+    </Typography>
+
+    <Typography sx={{
+      fontFamily: fonts.body,
+      fontSize: { xs: fontSize.xs, md: fontSize.sm },
+      fontWeight: 400,
+      color: `${colors.wine}B8`,
+      letterSpacing: '0.05em',
+      mt: { xs: 0.5, md: 1 },
+    }}>
+      עפ"י תורת האר"י ז"ל
+    </Typography>
+
+    {/* שני הכפתורים */}
+    <Box sx={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: { xs: 1.5, md: 2 },
+      mt: { xs: 3.5, md: 5 },
+    }}>
+      <Button
+        onClick={() => navigate('/About')}
+        sx={{
+          fontFamily: fonts.body,
+          fontSize: fontSize.md,
+          fontWeight: 500,
+          py: 1.3,
+          px: { xs: 4, md: 5.5 },
+          whiteSpace: 'nowrap',
+          borderRadius: radius.sm,
+          color: colors.wine,
+          background: gradients.gold,
+          border: `1px solid ${colors.goldDeep}`,
+          boxShadow: '0 4px 12px rgba(138,101,34,0.28)',
+          '&:hover': { background: gradients.gold, filter: 'brightness(1.07)' },
+          transition: '0.3s',
         }}
       >
-        <Box 
-              sx={{ 
-                flex: 1, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                px: { xs: 2, md: 4 },
-                position: 'relative' // נדרש בשביל המיקום של הכפתור
-              }}
-            >
-        <Box
-          component="img"
-          src="/megila.png"
-          sx={{
-            width: '100%',
-            maxHeight: '500px',
-            objectFit: 'contain',
-            filter: 'drop-shadow(0px 15px 30px rgba(0,0,0,0.15))',
-          }}
-        />
-      </Box>
- <Button
-          onClick={() => navigate('/ModernScrollDonation')
-}
-          sx={{
-            position: 'absolute',
-            bottom: '17%', // מיקום יחסי מעל הטקסט במגילה
-            left: '80%',
-            transform: 'translateX(-50%)',
-            width: '15%',  // רוחב האזור הלחיץ
-            height: '8%',  // גובה האזור הלחיץ
-         
-            cursor: 'pointer',
-            borderRadius: '4px',
-           
-          }}
-        />
-        </Box>
-      {/* צד שמאל: הסרטון - מקבל 2 חלקים מתוך 3 */}
-      <Box 
-        sx={{ 
-          flex: 1.5, // פרופורציה של 2 (פי 2 מהמגילה)
-          width: '100%', 
-          borderRadius: '12px',
-          overflow: 'hidden',
-          boxShadow: '0px 10px 30px rgba(0,0,0,0.1)',
-          backgroundColor: '#000',
-          display: 'flex'
+        אודות הישיבה
+      </Button>
+
+      <Button
+        onClick={() => navigate('/AllLessons')}
+        sx={{
+          fontFamily: fonts.body,
+          fontSize: fontSize.md,
+          fontWeight: 500,
+          py: 1.3,
+          px: { xs: 4, md: 5.5 },
+          whiteSpace: 'nowrap',
+          borderRadius: radius.sm,
+          color: colors.wine,
+          backgroundColor: `${colors.cream}8C`,
+          border: `1px solid ${colors.goldDeep}`,
+          '&:hover': { backgroundColor: `${colors.cream}D9` },
+          transition: '0.3s',
         }}
       >
-  <video
-              ref={videoRef} // [4] חיבור הרפרנס
-              onEnded={handleVideoEnd} // [5] הפעלת הפונקציה בסיום
-              controls
-              poster="/image (12).png"
-              style={{ 
-                width: '100%', 
-                height: '100%', 
-                objectFit: 'cover',
-                display: 'block' 
-              }}
-            >
-              <source src="/video-placeholder.mp4" type="video/mp4" />
-            </video>
-      </Box>
-    </Stack>
-  </Container>
+        ארכיון השיעורים
+      </Button>
+    </Box>
+  </Box>
+</Box>
+ {/* <LatestLessonCard onLessonSelect={(lesson) => setSelectedLesson(lesson)} /> */}
+  </Box>
+
+{/* --- פס השיעור השבועי ---
+    כל המידות נמדדו מקובץ העיצוב ואומתו מול צילום המסך. ראה weeklyBar ב-tokens.ts.
+    דסקטופ: שורה אחת ממורכזת, gap 40px, גובה 103px.
+    נייד: עמודה מיושרת לימין, גובה 234px, בלי המפרידים האנכיים. */}
+<Box sx={{
+  width: '100%',
+  boxSizing: 'border-box',
+  bgcolor: weeklyBar.bg,
+  borderTop: `${weeklyBar.ruleWidth}px solid ${weeklyBar.rule}`,
+  borderBottom: `${weeklyBar.ruleWidth}px solid ${weeklyBar.rule}`,
+  height: { xs: 'auto', lg: `${weeklyBar.height.desktop}px` },
+  minHeight: { xs: `${weeklyBar.height.mobile}px`, md: 'unset' },
+  py: { xs: 0, md: 2, lg: 0 },
+  px: { xs: '20px', md: 3 },
+  display: 'flex',
+  flexDirection: { xs: 'column', md: 'row' },
+  alignItems: { xs: 'flex-start', md: 'center' },
+  justifyContent: 'center',
+  direction: 'rtl',
+  gap: { xs: 0, md: '20px', lg: `${weeklyBar.gap}px` },
+}}>
+  {/* ימין: מעוין + כותרת הפס */}
+  <Box sx={{
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row-reverse',
+    gap: `${weeklyBar.diamond.gap}px`,
+    mt: { xs: '30px', md: 0 },
+  }}>
+    {/* המעוין — ריבוע מסובב, 13px באלכסון (מדויק יותר מתו גופן) */}
+    <Box sx={{
+      width: weeklyBar.diamond.diagonal / Math.SQRT2,
+      height: weeklyBar.diamond.diagonal / Math.SQRT2,
+      bgcolor: weeklyBar.title.color,
+      transform: 'rotate(45deg)',
+      flexShrink: 0,
+    }} />
+    <Typography sx={{
+      fontFamily: fonts.heading,
+      fontSize: { xs: `${weeklyBar.title.mobile}px`, lg: `${weeklyBar.title.desktop}px` },
+      fontWeight: 700,
+      color: weeklyBar.title.color,
+      lineHeight: 1.2,
+      whiteSpace: 'nowrap',
+    }}>{weeklyLesson.title}</Typography>
+  </Box>
+
+  <Box sx={{
+    display: { xs: 'none', md: 'block' },
+    width: `${weeklyBar.divider.w}px`,
+    height: `${weeklyBar.divider.h}px`,
+    bgcolor: weeklyBar.rule,
+    flexShrink: 0,
+  }} />
+
+  {/* אמצע: יום ושעה + הכתובית — מיושר לימין, לא למרכז */}
+  <Box sx={{ textAlign: 'right', mt: { xs: '22px', md: 0 } }}>
+    <Typography sx={{
+      fontFamily: fonts.body,
+      fontSize: `${weeklyBar.time.size}px`,
+      fontWeight: 700,
+      color: weeklyBar.time.color,
+      lineHeight: `${weeklyBar.timeLineHeight}px`,
+      whiteSpace: 'nowrap',
+    }}>{weeklyLesson.day} · {weeklyLesson.time}</Typography>
+    <Typography sx={{
+      fontFamily: fonts.body,
+      fontSize: `${weeklyBar.subtitle.size}px`,
+      color: weeklyBar.subtitle.color,
+      lineHeight: 1.5,
+    }}>{weeklyLesson.subtitle}</Typography>
+  </Box>
+
+  <Box sx={{
+    display: { xs: 'none', md: 'block' },
+    width: `${weeklyBar.divider.w}px`,
+    height: `${weeklyBar.divider.h}px`,
+    bgcolor: weeklyBar.rule,
+    flexShrink: 0,
+  }} />
+
+  {/* מיקום — האייקון מימין לטקסט */}
+  <Box sx={{
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row-reverse',
+    gap: '8px',
+    mt: { xs: '10px', md: 0 },
+  }}>
+    <PlaceOutlinedIcon sx={{ fontSize: weeklyBar.pin.size, color: weeklyBar.pin.color, flexShrink: 0 }} />
+    <Typography sx={{
+      fontFamily: fonts.body,
+      fontSize: { xs: `${weeklyBar.place.mobile}px`, lg: `${weeklyBar.place.desktop}px` },
+      color: { xs: weeklyBar.subtitle.color, lg: weeklyBar.place.color },
+      lineHeight: 1.5,
+    }}>{weeklyLesson.location} · {weeklyLesson.address}</Typography>
+  </Box>
+
+  {/* שמאל: כפתור — מסגרת בלבד. הטקסט והניווט ללא שינוי. */}
+  <Button
+    onClick={() => {
+      const roshHayeshiva = rabbiCardsData.find((r) => r.name.includes('מרדכי עטי'));
+      navigate('/AllLessons', { state: { rabbiId: roshHayeshiva?.id } });
+    }}
+    sx={{
+      alignSelf: { xs: 'center', md: 'auto' },
+      mt: { xs: '26px', md: 0 },
+      height: `${weeklyBar.button.h}px`,
+      px: `${weeklyBar.button.px}px`,
+      backgroundColor: 'transparent',
+      color: weeklyBar.title.color,
+      border: `1px solid ${weeklyBar.button.border}`,
+      borderRadius: `${weeklyBar.button.radius}px`,
+      fontFamily: fonts.body,
+      fontWeight: 700,
+      fontSize: `${weeklyBar.button.size}px`,
+      whiteSpace: 'nowrap',
+      boxShadow: 'none',
+      flexShrink: 0,
+      '&:hover': { bgcolor: `${colors.gold}26`, borderColor: weeklyBar.button.border, boxShadow: 'none' },
+      transition: '0.2s',
+    }}
+  >{weeklyLesson.buttonText}</Button>
 </Box>
 
-      {/* --- LecturesGrid עם פונקציית בחירה --- */}
- <Box sx={{ 
- // תואם ל-maxWidth של הכותרת אם הגדרת
-  mx: 'auto', 
-  // px: {  md: 1 }, // שוליים זהים בדיוק לאלו של הכותרת (שורות 83-90)
-  width: '100%' 
+ <LecturesGrid onLessonSelect={(lesson) => setSelectedLesson(lesson)} />
+
+<Box sx={{ width: '100%', bgcolor: '#c5a059', height: '2px' }} />
+
+{/* --- אזור ראש הישיבה --- */}
+{/* עיצוב לפי ateret-mordechai-design.pdf · נמדד מצילום העיצוב:
+    רקע #F0E9D2 · קווי זהב 1px · גובה 650px · קשת 387x512 · תמונה 361x482 · רווח 14px */}
+<Box sx={{
+  width: '100%',
+  boxSizing: 'border-box',
+  bgcolor: colors.sectionBg,
+  borderTop: `1px solid ${colors.gold}`,
+  borderBottom: `1px solid ${colors.gold}`,
+  minHeight: { xs: 'auto', md: 650 },
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: { xs: 'column', md: 'row' },
+  direction: 'rtl',
+  px: { xs: 2, md: 5, lg: 10 },
+  gap: { xs: 4, md: 6, lg: 10 },
+  py: { xs: 6, md: 5 },
 }}>
- <LecturesGrid onLessonSelect={(lesson) => setSelectedLesson(lesson)} /></Box>  
+  {/* קשת ארון הקודש + תמונה — צד ימין */}
+  <Box sx={{
+    position: 'relative',
+    flexShrink: 0,
+    boxSizing: 'border-box',
+    width: { xs: 258, sm: 310, md: 340, lg: 387 },
+    height: { xs: 341, sm: 410, md: 450, lg: 512 },
+    border: `1px solid ${colors.gold}`,
+    borderRadius: { xs: '129px 129px 6px 6px', sm: '155px 155px 6px 6px', md: '170px 170px 8px 8px', lg: '193px 193px 8px 8px' },
+    p: { xs: '9px', sm: '11px', lg: '13px' },
+  }}>
+    {/* מילוי הקשת — זהב אחיד מאחורי הדמות. נמדד #C5A258 */}
+    <Box sx={{
+      width: '100%',
+      height: '100%',
+      bgcolor: colors.gold,
+      overflow: 'hidden',
+      borderRadius: { xs: '120px 120px 4px 4px', sm: '144px 144px 4px 4px', md: '159px 159px 4px 4px', lg: '180px 180px 4px 4px' },
+    }}>
+      <Box
+        component="img"
+        loading="lazy"
+        decoding="async"
+        src={`${MEDIA_BASE_URL}/דד (1) (1).png`}
+        alt="ראש הישיבה הרב מרדכי עטייה שליט״א"
+        sx={{
+          display: 'block',
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: 'center top',
+        }}
+      />
+    </Box>
+  </Box>
+
+  {/* כיתוב ותיאור — צד שמאל */}
+  <Box sx={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: { xs: 'center', md: 'flex-start' },
+    textAlign: { xs: 'center', md: 'right' },
+    width: '100%',
+    maxWidth: 560,
+  }}>
+    {/* כותרת־על */}
+    <Typography sx={{
+      fontFamily: fonts.body,
+      fontSize: fontSize.xs,
+      fontWeight: 500,
+      letterSpacing: '0.35em',
+      color: colors.goldDeep,
+      mb: 2,
+    }}>ראש הישיבה</Typography>
+
+    {/* השם */}
+    <Typography sx={{
+      fontFamily: fonts.heading,
+      fontSize: { xs: fontSize.xl, md: '34px', lg: fontSize.xxl },
+      fontWeight: 400,
+      lineHeight: 1.15,
+      color: colors.wine,
+    }}>הרב מרדכי עטייה</Typography>
+
+    <Typography sx={{
+      fontFamily: fonts.heading,
+      fontSize: { xs: fontSize.md, md: fontSize.lg },
+      fontWeight: 400,
+      lineHeight: 1.4,
+      color: `${colors.wine}A6`,
+      mt: 0.5,
+    }}>שליט״א</Typography>
+
+    {/* קו מפריד עם מעוין — הרכיב המשותף */}
+    <Box sx={{ width: '100%' }}>
+      <SectionFlourish mt="8px" mb="24px" />
+    </Box>
+
+    {/* טקסט תיאור */}
+    <Typography sx={{
+      fontFamily: fonts.body,
+      fontSize: { xs: fontSize.sm, md: fontSize.md },
+      lineHeight: 2,
+      color: `${colors.ink}E0`,
+    }}>{founderContent.newSectionDescription}</Typography>
+
+    {/* כפתורים */}
+    <Box sx={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 2,
+      mt: 5,
+      width: { xs: '100%', sm: 'auto' },
+      justifyContent: { xs: 'center', md: 'flex-start' },
+    }}>
+      <Button
+        onClick={() => {
+          const roshHayeshiva = rabbiCardsData.find((r) => r.name.includes('מרדכי עטי'));
+          navigate('/AllLessons', { state: { rabbiId: roshHayeshiva?.id } });
+        }}
+        sx={{
+          background: gradients.goldButton,
+          color: colors.wine,
+          fontFamily: fonts.body,
+          fontWeight: 600,
+          fontSize: fontSize.sm,
+          borderRadius: radius.control,
+          width: { xs: '100%', sm: 201 },
+          height: 51,
+          boxShadow: 'none',
+          whiteSpace: 'nowrap',
+          '&:hover': { background: gradients.goldButton, filter: 'brightness(1.06)', boxShadow: 'none' },
+          transition: '0.2s',
+        }}
+      >לשיעורי ראש הישיבה</Button>
+
+      <Button
+        onClick={() => navigate('/About')}
+        sx={{
+          backgroundColor: 'transparent',
+          color: colors.wine,
+          border: `1px solid ${colors.gold}`,
+          fontFamily: fonts.body,
+          fontWeight: 600,
+          fontSize: fontSize.sm,
+          borderRadius: radius.control,
+          width: { xs: '100%', sm: 165 },
+          height: 51,
+          boxShadow: 'none',
+          whiteSpace: 'nowrap',
+          '&:hover': { bgcolor: `${colors.gold}26`, borderColor: colors.goldDeep, boxShadow: 'none' },
+          transition: '0.2s',
+        }}
+      >אודות הישיבה</Button>
+    </Box>
+  </Box>
+</Box>
+
+      {/* --- רבני הישיבה --- */}
+      <Box id="rabbis-section" sx={{ width: '100%', bgcolor: colors.creamAlt, py: { xs: '48px', md: '80px' }, direction: 'rtl', scrollMarginTop: '80px' }}>
+        <Box sx={{
+          width: '100%',
+          maxWidth: `${Math.min(rabbiCard.width * Math.max(rabbisInRow.length, 5) + rabbiCard.gap * (Math.max(rabbisInRow.length, 5) - 1) + 48, 1440)}px`,
+          mx: 'auto',
+          px: { xs: '16px', md: '24px' },
+          boxSizing: 'border-box',
+        }}>
+
+          {/* כותרת הקטע */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: '32px', md: '40px' } }}>
+            <SectionArch mb="16px" />
+
+            <Typography sx={{
+              fontFamily: fonts.headingOrnate,
+              fontSize: { xs: fontSize.xl, md: fontSize.xxl },
+              fontWeight: 400,
+              lineHeight: 1.2,
+              color: rabbiCard.heading.color,
+            }}>
+              רבני הישיבה
+            </Typography>
+
+            <SectionFlourish mt="24px" />
+          </Box>
+
+          {/* כל הכרטיסים בשורה אחת: בדסקטופ עמודה לכל כרטיס, בנייד גלילה אופקית */}
+          <Box sx={{
+            display: { xs: 'flex', md: 'grid' },
+            gridTemplateColumns: { md: `repeat(${Math.max(rabbisInRow.length, 1)}, minmax(0, 1fr))` },
+            gap: { xs: '16px', md: `${rabbiCard.gap}px` },
+            overflowX: { xs: 'auto', md: 'visible' },
+            scrollSnapType: { xs: 'x proximity', md: 'none' },
+            pb: { xs: '12px', md: 0 },
+            mx: { xs: '-16px', md: 0 },
+            px: { xs: '16px', md: 0 },
+            '& > *': { flex: { xs: '0 0 200px', md: 'initial' }, scrollSnapAlign: 'start' },
+          }}>
+            {rabbisInRow.map((rabbi) => {
+              const lesson = rabbiLatestLessons[rabbi.id];
+              const hasPhoto = Boolean(rabbi.imageSrc) && !rabbi.imageSrc.includes('placeholder');
+
+              return (
+                <Box
+                  key={rabbi.id}
+                  onClick={() => lesson && setSelectedLesson(lesson)}
+                  sx={{
+                    cursor: lesson ? 'pointer' : 'default',
+                    transition: 'transform 0.25s ease, filter 0.25s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      filter: `drop-shadow(0 10px 20px ${colors.wine}26)`,
+                    },
+                  }}
+                >
+                  {/* הכרטיס: מסגרת 1px זהב, פינות מעוגלות 12px */}
+                  <Box sx={{
+                    height: '100%',
+                    border: `1px solid ${rabbiCard.border}`,
+                    borderRadius: `${rabbiCard.radius}px`,
+                    bgcolor: rabbiCard.bg,
+                    overflow: 'hidden',
+                    boxSizing: 'border-box',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}>
+                    {/* קשת ארון הקודש — ריבוע בעיצוב, ולכן aspect-ratio 1 */}
+                    <Box sx={{
+                      width: '100%',
+                      aspectRatio: '1 / 1',
+                      flexShrink: 0,
+                      bgcolor: rabbiCard.arch.fill,
+                      borderRadius: radius.arch,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      {hasPhoto ? (
+                        <Box
+                          component="img"
+                          src={rabbi.imageSrc}
+                          alt={rabbi.name}
+                          loading="lazy"
+                          sx={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }}
+                        />
+                      ) : (
+                        <Crown width={rabbiCard.crown.w} height={rabbiCard.crown.h} />
+                      )}
+                    </Box>
+
+                    <Box sx={{
+                      flexGrow: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      pt: `${rabbiCard.pad.top}px`,
+                      px: '12px',
+                      pb: `${rabbiCard.pad.bottom}px`,
+                    }}>
+                      <Typography sx={{
+                        fontFamily: fonts.heading,
+                        fontSize: `${rabbiCard.name.size}px`,
+                        fontWeight: 400,
+                        lineHeight: 1.2,
+                        color: rabbiCard.name.color,
+                      }}>
+                        {rabbi.name}
+                      </Typography>
+
+                      <Box sx={{
+                        width: `${rabbiCard.rule.w}px`,
+                        height: `${rabbiCard.rule.h}px`,
+                        bgcolor: rabbiCard.rule.color,
+                        mt: `${rabbiCard.pad.ruleTop}px`,
+                      }} />
+
+                      <Box sx={{ flexGrow: 1, minHeight: `${rabbiCard.pad.ruleBottom}px` }} />
+
+                      {/* הכפתור: מסגרת 1px זהב ללא מילוי, רדיוס 6px */}
+                      <Button
+                        disableRipple
+                        onClick={(e) => { e.stopPropagation(); navigate('/AllLessons', { state: { rabbiId: rabbi.id } }); }}
+                        sx={{
+                          width: `${rabbiCard.button.w}px`,
+                          maxWidth: '100%',
+                          height: `${rabbiCard.button.h}px`,
+                          flexShrink: 0,
+                          minWidth: 0,
+                          p: 0,
+                          boxSizing: 'border-box',
+                          border: `1px solid ${rabbiCard.button.border}`,
+                          borderRadius: `${rabbiCard.button.radius}px`,
+                          bgcolor: 'transparent',
+                          fontFamily: fonts.body,
+                          fontSize: `${rabbiCard.button.size}px`,
+                          fontWeight: 500,
+                          color: rabbiCard.button.color,
+                          transition: 'background-color 0.2s ease',
+                          '&:hover': { bgcolor: rabbiCard.arch.fill },
+                        }}
+                      >
+                        לשיעורי הרב
+                      </Button>
+                    </Box>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
+      </Box>
+
+<Box sx={{ my: { xs: 8, md: 15 } }} />
+
       {/* <LecturesGrid onLessonSelect={(lesson) => setSelectedLesson(lesson)} /> */}
 
       {/* <Box sx={{ my: { xs: 4, md: 7.5 } }} /> */}
       <BooksCarousel />
      <Box sx={{ my: { xs: 4, md: 7.5 } }} />
-  {/* --- אזור מרן ראש הישיבה --- */}
-<Box sx={{ width: '100%', mb: { xs: 8, md: 12 } }}>
- <Grid 
-    container 
-    sx={{ 
-      width: '100%', // הוספתי רוחב מלא כדי למנוע קפיצות
-      backgroundColor: '#fdfbe7',
-      borderTop: '1px solid rgba(0,0,0,0.08)',
-      borderBottom: '1px solid #9c6644',
-      minHeight: { xs: 'auto', md: '65vh' },
-      direction: 'rtl',
-      position: 'relative',
-      overflow: 'hidden'
-    }}
-  >
-    {/* אזור הטקסט */}
-    <Grid 
-      size={{ xs: 12, md: 7 }} 
-      sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        justifyContent: 'center', 
-        p: { xs: 4, md: 10 },
-        order: { xs: 2, md: 1 } 
-      }}
-    >
-      <Box sx={{ maxWidth: '650px', textAlign: 'right' }}>
-        {/* <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
-          <Box sx={{ width: 30, height: 2, backgroundColor: '#9c6644' }} />
-          <Typography sx={{ color: '#9c6644', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase' }}>
-            ממשיך השושלת
-          </Typography>
-        </Stack> */}
 
-        <Typography variant="h2" sx={{    fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
- fontWeight: 500, mb: 1, fontSize: { xs: '2.2rem', md: '4rem' }, color: '#9c6644' }}>
-          מרן ראש הישיבה
-        </Typography>
+{/* --- רבנים מדברים על הישיבה --- */}
+<Box sx={{
+  width: '100%',
+  background: gradients.wine,
+  py: { xs: 6, md: 10 },
+  direction: 'rtl',
+}}>
+  <Box sx={{ maxWidth: '1440px', mx: 'auto', px: { xs: 2, md: 4, lg: 7 } }}>
 
-        <Typography variant="h5" sx={{    fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
- fontWeight: 500, mb: 4, color: '#9c6622', fontSize: { xs: '1.1rem', md: '1.6rem' } }}>
-          הרה"ג הרב מרדכי עטייה שליט"א
-        </Typography>
+    {/* כותרת הקטע */}
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: 4, md: 5 } }}>
+      <Typography sx={{
+        fontFamily: fonts.body,
+        fontSize: fontSize.xs,
+        fontWeight: 600,
+        letterSpacing: '0.3em',
+        color: colors.gold,
+        mb: 1,
+      }}>
+        דברי הרבנים
+      </Typography>
 
-        <Typography sx={{ color: '#444', lineHeight: 1.8, fontSize: { xs: '1rem', md: '1.1rem' }, mb: 5 }}>
-הגאון המקובל רבי מרדכי עטייה שליט"א עומד בראשות ישיבת "החיים והשלום" בירושלים, שם הוא ממשיך את מורשת זקנו ומנחיל את תורת הסוד בשיעורים יומיים עמוקים. בשנים האחרונות ראו אור י"ב כרכי סדרת ספריו "עטרת מרדכי", אשר התקבלו באהדה עצומה בקרב לומדי הקבלה בשל שילובם הייחודי בין עומק לבהירות. לצד הנהגתו התורנית, משמש הרב כתובת לרבים הפוקדים את מעונו לעצה, ברכה והדרכה רוחנית. </Typography>
+      <Typography sx={{
+        fontFamily: fonts.headingOrnate,
+        fontSize: { xs: fontSize.xl, md: fontSize.xxl },
+        fontWeight: 400,
+        lineHeight: 1.25,
+        letterSpacing: '0.02em',
+        textAlign: 'center',
+        background: gradients.goldHorizontal,
+        WebkitBackgroundClip: 'text',
+        backgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        color: 'transparent',
+      }}>
+        דברי גדולי ישראל על הישיבה
+      </Typography>
 
-        <Button
-        onClick={() => {
-    // מציאת ה-ID באופן דינמי לפי השם מתוך הנתונים שמשכנו ב-useEffect
-    const chiefRabbi = rabbiCardsData.find(r => r.name.includes('הרב מרדכי עטייה'));
-    if (chiefRabbi) {
-      navigate('/AllLessons', { state: { rabbiId: chiefRabbi.id } });
-    } else {
-      console.warn('הנתונים עדיין בטעינה...');
-    }
-  }}
-  variant="contained"
-          sx={{
-            backgroundColor: '#9c6644',
-            color: '#fff',
-            px: 5, py: 1.8,
-                                  borderRadius: '0.5rem', 
+      <SectionFlourish mt={1.5} />
+    </Box>
 
-            fontWeight: 700,
-            
-            '&:hover': { backgroundColor: '#9c6644' }
-          }}
-        > לשיעורי הרב
-        </Button>
-      </Box>
-    </Grid>
-
-    {/* אזור התמונה */}
-    <Grid 
-      size={{ xs: 12, md: 5 }} 
-      sx={{ 
-        position: 'relative', 
-        minHeight: { xs: '450px', md: 'auto' },
-        order: { xs: 1, md: 2 } 
-      }}
-    >
-      <Box 
-        sx={{ 
-          position: 'absolute',
-                                borderRadius: '0.5rem', 
-
-          top: '10%', bottom: '10%', left: '10%', right: '10%',
-          border: '1px solid #9c6644',
-          zIndex: 1,
-          display: { xs: 'none', md: 'block' }
-        }} 
-      />
-      <Box
+    <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 1.5 } }}>
+      <IconButton
+        onClick={() => rabbiVideosScrollRef.current?.scrollBy({ left: rabbiVideosScrollRef.current.clientWidth * 0.8, behavior: 'smooth' })}
         sx={{
-          position: 'absolute',
-          top: { xs: 0, md: '15%' },
-          bottom: { xs: 0, md: '5%' },
-          left: { xs: 0, md: '15%' },
-          right: { xs: 0, md: '5%' },
-          backgroundImage: 'url(/compressimage-io/GOOD/p8.webp)',
-          backgroundSize: 'cover',
-                                borderRadius: '0.5rem', 
-
-          backgroundPosition: 'top center',
+          width: '44px',
+          height: '44px',
+          flexShrink: 0,
           zIndex: 2,
-          boxShadow: '-20px 20px 40px rgba(0,0,0,0.15)',
+          color: colors.gold,
+          border: `1px solid ${colors.gold}`,
+          borderRadius: radius.pill,
+          backgroundColor: 'transparent',
+          transition: 'background-color 0.25s ease',
+          '&:hover': { backgroundColor: `${colors.gold}26` },
         }}
-      />
-    </Grid>
-  </Grid>
-  
+      >
+        <ChevronRight size={22} strokeWidth={1.5} />
+      </IconButton>
+
+      <Box
+        ref={rabbiVideosScrollRef}
+        sx={{
+          display: 'flex',
+          flex: 1,
+          gap: { xs: 1.5, md: 2 },
+          overflowX: 'auto',
+          scrollSnapType: 'x mandatory',
+          '&::-webkit-scrollbar': { display: 'none' },
+          msOverflowStyle: 'none',
+          scrollbarWidth: 'none',
+          py: 1,
+        }}
+      >
+        {rabbiVideos.map((v, i) => (
+          <Box key={i} sx={{
+            flexShrink: 0,
+            width: {
+              xs: 'calc(50% - 6px)',
+              sm: 'calc(33.33% - 11px)',
+              md: 'calc(25% - 12px)',
+            },
+            scrollSnapAlign: 'start',
+            display: 'flex',
+            flexDirection: 'column',
+            bgcolor: colors.ink,
+            border: `1px solid ${colors.goldDeep}59`,
+            borderRadius: radius.lg,
+            overflow: 'hidden',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.45)',
+            transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              borderColor: colors.gold,
+              boxShadow: '0 12px 30px rgba(0,0,0,0.6)',
+            },
+          }}>
+            {/* התמונה בתוך מסגרת זהב */}
+            <Box sx={{ p: '8px', pb: 0 }}>
+              <Box sx={{
+                width: '100%',
+                aspectRatio: '16/9',
+                overflow: 'hidden',
+                borderRadius: radius.control,
+                border: `1.5px solid ${colors.gold}`,
+                bgcolor: colors.wine,
+              }}>
+                <LazyYouTube youtubeId={v.youtubeId} thumbnail={(v as any).thumbnail} />
+              </Box>
+            </Box>
+
+            <Box sx={{
+              px: { xs: 1.5, md: 2 },
+              pt: 1.5,
+              pb: 2.5,
+              flexGrow: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+            }}>
+              <Typography sx={{
+                fontFamily: fonts.heading,
+                fontSize: { xs: fontSize.sm, md: fontSize.md },
+                fontWeight: 400,
+                lineHeight: 1.4,
+                color: colors.sand,
+              }}>{v.name}</Typography>
+
+              {v.date && (
+                <>
+                  <Box sx={{ width: '40px', height: '1px', bgcolor: colors.gold, my: '10px' }} />
+                  <Typography sx={{
+                    fontFamily: fonts.body,
+                    fontSize: fontSize.xs,
+                    lineHeight: 1.6,
+                    color: `${colors.gold}B3`,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}>{v.date}</Typography>
+                </>
+              )}
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+      <IconButton
+        onClick={() => rabbiVideosScrollRef.current?.scrollBy({ left: -rabbiVideosScrollRef.current.clientWidth * 0.8, behavior: 'smooth' })}
+        sx={{
+          width: '44px',
+          height: '44px',
+          flexShrink: 0,
+          zIndex: 2,
+          color: colors.gold,
+          border: `1px solid ${colors.gold}`,
+          borderRadius: radius.pill,
+          backgroundColor: 'transparent',
+          transition: 'background-color 0.25s ease',
+          '&:hover': { backgroundColor: `${colors.gold}26` },
+        }}
+      >
+        <ChevronLeft size={22} strokeWidth={1.5} />
+      </IconButton>
+    </Box>
+  </Box>
 </Box>
 
-<Box sx={{ my: { xs: 8, md: 15 } }} />
-
-      {/* --- אזור רשת המרצים --- */}
-      <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 2, pb: 8 }}>
-        <Grid container spacing={3} alignItems="stretch">
-          {rabbiCardsData.map((rabbi, index) => (
-            <Grid key={index} size={{ xs: 12, md: 6 }} sx={{ display: 'flex' }}>
-              <Paper
-                elevation={2}
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  borderRadius: '1rem', 
-                  overflow: 'hidden',
-                  width: '100%',
-                  minHeight: { xs: 'auto', sm: '25vh' }, 
-                  backgroundColor: '#ffffff',
-                }}
-              >
-                <Box
-                  sx={{
-                    width: { xs: '45%', sm: '40%' },
-                    backgroundImage: `url(${rabbi.imageSrc})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                  }}
-                />
-                <Box 
-                  sx={{ 
-                    flex: 1, 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    p: '1.5rem', 
-                    textAlign: 'right', 
-                    minWidth: 0 
-                  }}
-                >
-                  <Typography variant="h6" fontWeight="bold" sx={{ mb: '0.5rem', fontSize: '1.1rem' }}>
-                    {rabbi.name}
-                    
-                  </Typography>
-                  <Box sx={{ flex: 1 }}> 
-                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5, fontSize: '0.85rem' }}>
-                      {rabbi.title}
-                    </Typography>
-                  </Box>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-    // שליחה לעמוד השיעורים עם ה-ID מוחבא בתוך ה-state
-    navigate('/AllLessons', { state: { rabbiId: rabbi.id } });
-  }}
-                    sx={{ 
-                      backgroundColor: '#9c6644', 
-                      width: 'fit-content', 
-                      mt: '1rem', 
-                      borderRadius: '0.5rem', 
-                      alignSelf: 'flex-start',
-                      '&:hover': { backgroundColor: '9c6644' } 
-                    }}
-                  >
-                    לשיעורי הרב
-                  </Button>
-                </Box>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
     </Box>
   );
 };

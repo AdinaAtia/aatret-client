@@ -26,12 +26,16 @@ export default defineConfig({
       },
     }),
   ],
-  // **שלב 2: הוספת הגדרות ה-Alias**
   resolve: {
     alias: {
       // כופה שימוש בעותק יחיד של React ו-React-DOM מתיקיית node_modules
       'react': path.resolve('./node_modules/react'),
       'react-dom': path.resolve('./node_modules/react-dom'),
+    },
+  },
+  server: {
+    proxy: {
+      '/api/lessons/download-file': 'http://localhost:1337',
     },
   },
 });

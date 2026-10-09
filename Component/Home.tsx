@@ -11,12 +11,15 @@ import {
 } from '@mui/material';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
-import { colors, fonts, fontSize, gradients, goldTextFill, rabbiCard, radius, weeklyBar } from '../src/theme/tokens';
+import PlayBadge from './shared/PlayBadge';
+import { colors, fonts, fontSize, goldButtonStyle, goldTextFill, rabbiCard, lessonCard, radius, weeklyBar } from '../src/theme/tokens';
 
 import Grid from '@mui/material/Grid';
 import LecturesGrid from './LecturesGrid';
 import SectionFlourish from './shared/SectionFlourish';
 import SectionArch from './shared/SectionArch';
+import CarouselProgress, { carouselArrowSx } from "./shared/CarouselProgress";
+import { useCarousel } from './shared/useCarousel';
 import HeroVideo from './HeroVideo';
 import LessonPlayer from './LessonPlayer'; // ייבוא הנגן
 import BooksCarousel from './BooksCarousel'; // ודאי שהנתיב לקובץ נכון
@@ -66,7 +69,7 @@ function renderClosingParagraphs(maxLen: number) {
       const seg = para.segments[s];
       const segText = seg.text.length <= revealLen - segConsumed ? seg.text : seg.text.slice(0, revealLen - segConsumed);
       segNodes.push(seg.bold || seg.link ? (
-        <Box key={s} component={seg.link ? 'a' : 'span'} href={seg.link} sx={{ fontWeight: 800, color: seg.link ? '#c5a059' : undefined }}>{segText}</Box>
+        <Box key={s} component={seg.link ? 'a' : 'span'} href={seg.link} sx={{ fontWeight: 800, color: seg.link ? colors.gold : undefined }}>{segText}</Box>
       ) : segText);
       segConsumed += seg.text.length;
     }
@@ -115,7 +118,7 @@ function renderDonationLetterUpTo(maxLen: number) {
             key={s}
             component={seg.link ? 'a' : 'span'}
             href={seg.link}
-            sx={{ fontWeight: 800, color: seg.link ? '#c5a059' : undefined }}
+            sx={{ fontWeight: 800, color: seg.link ? colors.gold : undefined }}
           >
             {segText}
           </Box>
@@ -160,18 +163,7 @@ function LazyYouTube({ youtubeId, thumbnail }: { youtubeId: string; thumbnail?: 
         alt=""
         sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
       />
-      <Box sx={{
-        position: 'absolute', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 48, height: 48,
-        bgcolor: 'rgba(0,0,0,0.75)',
-        borderRadius: '50%',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#fff', fontSize: '1.3rem',
-        pointerEvents: 'none',
-      }}>
-        ▶
-      </Box>
+      <PlayBadge size={52} />
     </Box>
   );
 }
@@ -191,7 +183,8 @@ const Home: React.FC = () => {
   const [rabbiCardsData, setRabbiCardsData] = useState<any[]>([]);
   const [rabbiLatestLessons, setRabbiLatestLessons] = useState<Record<number, any>>({});
   const rabbisInRow = rabbiCardsData.filter((r) => !r.name.includes('מרדכי עטי'));
-  const rabbiVideosScrollRef = useRef<HTMLDivElement>(null);
+  const sagesCarousel = useCarousel(rabbiVideos.length);
+  const rabbisCarousel = useCarousel(rabbisInRow.length);
   const [donationLetterTypedLength, setDonationLetterTypedLength] = useState(0);
   const donationLetterIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const letterContainerRef = useRef<HTMLDivElement>(null);
@@ -478,11 +471,7 @@ const Home: React.FC = () => {
           px: { xs: 4, md: 5.5 },
           whiteSpace: 'nowrap',
           borderRadius: radius.sm,
-          color: colors.wine,
-          background: gradients.gold,
-          border: `1px solid ${colors.goldDeep}`,
-          boxShadow: '0 4px 12px rgba(138,101,34,0.28)',
-          '&:hover': { background: gradients.gold, filter: 'brightness(1.07)' },
+          ...goldButtonStyle,
           transition: '0.3s',
         }}
       >
@@ -530,17 +519,20 @@ const Home: React.FC = () => {
   px: { xs: '20px', md: 3 },
   display: 'flex',
   flexDirection: { xs: 'column', md: 'row' },
-  alignItems: { xs: 'flex-start', md: 'center' },
+  alignItems: { xs: 'stretch', md: 'center' },
   justifyContent: 'center',
   direction: 'rtl',
+  overflow: 'hidden',
+  pb: { xs: '30px', md: 0 },
   gap: { xs: 0, md: '20px', lg: `${weeklyBar.gap}px` },
 }}>
   {/* ימין: מעוין + כותרת הפס */}
   <Box sx={{
     display: 'flex',
     alignItems: 'center',
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     gap: `${weeklyBar.diamond.gap}px`,
+    justifyContent: 'flex-start',
     mt: { xs: '30px', md: 0 },
   }}>
     {/* המעוין — ריבוע מסובב, 13px באלכסון (מדויק יותר מתו גופן) */}
@@ -570,7 +562,7 @@ const Home: React.FC = () => {
   }} />
 
   {/* אמצע: יום ושעה + הכתובית — מיושר לימין, לא למרכז */}
-  <Box sx={{ textAlign: 'right', mt: { xs: '22px', md: 0 } }}>
+  <Box sx={{ textAlign: 'right', mt: { xs: '22px', md: 0 }, minWidth: 0, flex: { md: '0 1 auto' } }}>
     <Typography sx={{
       fontFamily: fonts.body,
       fontSize: `${weeklyBar.time.size}px`,
@@ -599,11 +591,14 @@ const Home: React.FC = () => {
   <Box sx={{
     display: 'flex',
     alignItems: 'center',
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     gap: '8px',
+    justifyContent: 'flex-start',
     mt: { xs: '10px', md: 0 },
+    minWidth: 0,
+    flex: { md: '0 1 auto' },
   }}>
-    <PlaceOutlinedIcon sx={{ fontSize: weeklyBar.pin.size, color: weeklyBar.pin.color, flexShrink: 0 }} />
+    <PlaceOutlinedIcon sx={{ display: { xs: 'none', md: 'inline-block' }, fontSize: weeklyBar.pin.size, color: weeklyBar.pin.color, flexShrink: 0 }} />
     <Typography sx={{
       fontFamily: fonts.body,
       fontSize: { xs: `${weeklyBar.place.mobile}px`, lg: `${weeklyBar.place.desktop}px` },
@@ -619,10 +614,12 @@ const Home: React.FC = () => {
       navigate('/AllLessons', { state: { rabbiId: roshHayeshiva?.id } });
     }}
     sx={{
-      alignSelf: { xs: 'center', md: 'auto' },
+      alignSelf: { xs: 'stretch', md: 'auto' },
+      width: { xs: '100%', md: 'auto' },
+      maxWidth: { xs: '100%', md: 'none' },
       mt: { xs: '26px', md: 0 },
       height: `${weeklyBar.button.h}px`,
-      px: `${weeklyBar.button.px}px`,
+      px: { xs: 0, md: '18px', lg: `${weeklyBar.button.px}px` },
       backgroundColor: 'transparent',
       color: weeklyBar.title.color,
       border: `1px solid ${weeklyBar.button.border}`,
@@ -640,8 +637,6 @@ const Home: React.FC = () => {
 </Box>
 
  <LecturesGrid onLessonSelect={(lesson) => setSelectedLesson(lesson)} />
-
-<Box sx={{ width: '100%', bgcolor: '#c5a059', height: '2px' }} />
 
 {/* --- אזור ראש הישיבה --- */}
 {/* עיצוב לפי ateret-mordechai-design.pdf · נמדד מצילום העיצוב:
@@ -705,7 +700,7 @@ const Home: React.FC = () => {
     alignItems: { xs: 'center', md: 'flex-start' },
     textAlign: { xs: 'center', md: 'right' },
     width: '100%',
-    maxWidth: 560,
+    maxWidth: 600,
   }}>
     {/* כותרת־על */}
     <Typography sx={{
@@ -720,7 +715,7 @@ const Home: React.FC = () => {
     {/* השם */}
     <Typography sx={{
       fontFamily: fonts.heading,
-      fontSize: { xs: fontSize.xl, md: '34px', lg: fontSize.xxl },
+      fontSize: { xs: fontSize.xl, md: '40px', lg: '56px' }, /* PDF: 56px */
       fontWeight: 400,
       lineHeight: 1.15,
       color: colors.wine,
@@ -728,7 +723,7 @@ const Home: React.FC = () => {
 
     <Typography sx={{
       fontFamily: fonts.heading,
-      fontSize: { xs: fontSize.md, md: fontSize.lg },
+      fontSize: { xs: fontSize.md, md: fontSize.lg, lg: '30px' }, /* PDF: 30px */
       fontWeight: 400,
       lineHeight: 1.4,
       color: `${colors.wine}A6`,
@@ -737,14 +732,14 @@ const Home: React.FC = () => {
 
     {/* קו מפריד עם מעוין — הרכיב המשותף */}
     <Box sx={{ width: '100%' }}>
-      <SectionFlourish mt="8px" mb="24px" />
+      <SectionFlourish mt="8px" mb="24px" justify={{ xs: 'center', md: 'flex-start' }} />
     </Box>
 
     {/* טקסט תיאור */}
     <Typography sx={{
       fontFamily: fonts.body,
-      fontSize: { xs: fontSize.sm, md: fontSize.md },
-      lineHeight: 2,
+      fontSize: { xs: fontSize.sm, md: fontSize.md, lg: '18px' }, /* PDF: 18px */
+      lineHeight: 1.95,
       color: `${colors.ink}E0`,
     }}>{founderContent.newSectionDescription}</Typography>
 
@@ -763,17 +758,14 @@ const Home: React.FC = () => {
           navigate('/AllLessons', { state: { rabbiId: roshHayeshiva?.id } });
         }}
         sx={{
-          background: gradients.goldButton,
-          color: colors.wine,
+          ...goldButtonStyle,
           fontFamily: fonts.body,
           fontWeight: 600,
-          fontSize: fontSize.sm,
+          fontSize: { xs: fontSize.sm, lg: fontSize.md }, /* PDF: 16px */
           borderRadius: radius.control,
           width: { xs: '100%', sm: 201 },
           height: 51,
-          boxShadow: 'none',
           whiteSpace: 'nowrap',
-          '&:hover': { background: gradients.goldButton, filter: 'brightness(1.06)', boxShadow: 'none' },
           transition: '0.2s',
         }}
       >לשיעורי ראש הישיבה</Button>
@@ -786,7 +778,7 @@ const Home: React.FC = () => {
           border: `1px solid ${colors.gold}`,
           fontFamily: fonts.body,
           fontWeight: 600,
-          fontSize: fontSize.sm,
+          fontSize: { xs: fontSize.sm, lg: fontSize.md }, /* PDF: 16px */
           borderRadius: radius.control,
           width: { xs: '100%', sm: 165 },
           height: 51,
@@ -828,16 +820,25 @@ const Home: React.FC = () => {
           </Box>
 
           {/* כל הכרטיסים בשורה אחת: בדסקטופ עמודה לכל כרטיס, בנייד גלילה אופקית */}
-          <Box sx={{
+          <Box sx={{ position: 'relative' }}>
+          <Box
+            ref={rabbisCarousel.ref}
+            onScroll={rabbisCarousel.onScroll}
+            sx={{
             display: { xs: 'flex', md: 'grid' },
             gridTemplateColumns: { md: `repeat(${Math.max(rabbisInRow.length, 1)}, minmax(0, 1fr))` },
             gap: { xs: '16px', md: `${rabbiCard.gap}px` },
             overflowX: { xs: 'auto', md: 'visible' },
             scrollSnapType: { xs: 'x proximity', md: 'none' },
+            '&::-webkit-scrollbar': { display: 'none' },
+            msOverflowStyle: 'none',
+            scrollbarWidth: 'none',
             pb: { xs: '12px', md: 0 },
             mx: { xs: '-16px', md: 0 },
             px: { xs: '16px', md: 0 },
-            '& > *': { flex: { xs: '0 0 200px', md: 'initial' }, scrollSnapAlign: 'start' },
+            scrollPaddingInline: { xs: '16px', md: 0 },
+            maskImage: { xs: 'linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent)', md: 'none' },
+            '& > *': { flex: { xs: '0 0 calc((100% - 16px) / 2)', md: 'initial' }, scrollSnapAlign: 'start' },
           }}>
             {rabbisInRow.map((rabbi) => {
               const lesson = rabbiLatestLessons[rabbi.id];
@@ -952,184 +953,171 @@ const Home: React.FC = () => {
               );
             })}
           </Box>
+          </Box>
+
+          <CarouselProgress progress={rabbisCarousel.progress} onSeek={rabbisCarousel.seek} hideOnDesktop />
         </Box>
       </Box>
-
-<Box sx={{ my: { xs: 8, md: 15 } }} />
 
       {/* <LecturesGrid onLessonSelect={(lesson) => setSelectedLesson(lesson)} /> */}
 
       {/* <Box sx={{ my: { xs: 4, md: 7.5 } }} /> */}
       <BooksCarousel />
-     <Box sx={{ my: { xs: 4, md: 7.5 } }} />
 
-{/* --- רבנים מדברים על הישיבה --- */}
+{/* --- דברי גדולי ישראל על הישיבה --- */}
 <Box sx={{
   width: '100%',
-  background: gradients.wine,
-  py: { xs: 6, md: 10 },
+  position: 'relative',
+  bgcolor: colors.creamAlt,
+  py: { xs: '48px', md: '80px' },
   direction: 'rtl',
 }}>
-  <Box sx={{ maxWidth: '1440px', mx: 'auto', px: { xs: 2, md: 4, lg: 7 } }}>
+  <Box sx={{ maxWidth: '1440px', mx: 'auto', px: { xs: '16px', md: '24px', lg: '56px' }, boxSizing: 'border-box' }}>
 
-    {/* כותרת הקטע */}
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: 4, md: 5 } }}>
-      <Typography sx={{
-        fontFamily: fonts.body,
-        fontSize: fontSize.xs,
-        fontWeight: 600,
-        letterSpacing: '0.3em',
-        color: colors.gold,
-        mb: 1,
-      }}>
-        דברי הרבנים
-      </Typography>
+    {/* כותרת הקטע — אותו מבנה כמו "רבני הישיבה": קשת, כותרת, קישוט */}
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: '32px', md: '48px' } }}>
+      <SectionArch mb="16px" />
 
-      <Typography sx={{
+      <Typography component="h2" sx={{
         fontFamily: fonts.headingOrnate,
         fontSize: { xs: fontSize.xl, md: fontSize.xxl },
         fontWeight: 400,
-        lineHeight: 1.25,
-        letterSpacing: '0.02em',
+        lineHeight: 1.2,
         textAlign: 'center',
-        background: gradients.goldHorizontal,
-        WebkitBackgroundClip: 'text',
-        backgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        color: 'transparent',
+        color: rabbiCard.heading.color,
       }}>
         דברי גדולי ישראל על הישיבה
       </Typography>
 
-      <SectionFlourish mt={1.5} />
+      <SectionFlourish mt="24px" />
     </Box>
 
-    <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 1.5 } }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '4px', md: '16px' } }}>
       <IconButton
-        onClick={() => rabbiVideosScrollRef.current?.scrollBy({ left: rabbiVideosScrollRef.current.clientWidth * 0.8, behavior: 'smooth' })}
-        sx={{
-          width: '44px',
-          height: '44px',
-          flexShrink: 0,
-          zIndex: 2,
-          color: colors.gold,
-          border: `1px solid ${colors.gold}`,
-          borderRadius: radius.pill,
-          backgroundColor: 'transparent',
-          transition: 'background-color 0.25s ease',
-          '&:hover': { backgroundColor: `${colors.gold}26` },
-        }}
+        aria-label="הקודם"
+        disabled={!sagesCarousel.canPrev}
+        onClick={() => sagesCarousel.scrollPage('prev')}
+        sx={carouselArrowSx}
       >
         <ChevronRight size={22} strokeWidth={1.5} />
       </IconButton>
 
       <Box
-        ref={rabbiVideosScrollRef}
+        ref={sagesCarousel.ref}
+        onScroll={sagesCarousel.onScroll}
         sx={{
           display: 'flex',
           flex: 1,
-          gap: { xs: 1.5, md: 2 },
+          minWidth: 0,
+          gap: { xs: '16px', md: '24px' },
           overflowX: 'auto',
           scrollSnapType: 'x mandatory',
           '&::-webkit-scrollbar': { display: 'none' },
           msOverflowStyle: 'none',
           scrollbarWidth: 'none',
-          py: 1,
+          py: '12px',
+          // בנייד: הקרוסלה גולשת עד קצה המסך, והכרטיס החתוך מתעמעם בעדינות
+          mx: { xs: '-16px', md: 0 },
+          px: { xs: '16px', md: 0 },
+          scrollPaddingInline: { xs: '16px', md: 0 },
+          maskImage: { xs: 'linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent)', md: 'none' },
         }}
       >
-        {rabbiVideos.map((v, i) => (
-          <Box key={i} sx={{
-            flexShrink: 0,
-            width: {
-              xs: 'calc(50% - 6px)',
-              sm: 'calc(33.33% - 11px)',
-              md: 'calc(25% - 12px)',
-            },
-            scrollSnapAlign: 'start',
-            display: 'flex',
-            flexDirection: 'column',
-            bgcolor: colors.ink,
-            border: `1px solid ${colors.goldDeep}59`,
-            borderRadius: radius.lg,
-            overflow: 'hidden',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.45)',
-            transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              borderColor: colors.gold,
-              boxShadow: '0 12px 30px rgba(0,0,0,0.6)',
-            },
-          }}>
-            {/* התמונה בתוך מסגרת זהב */}
-            <Box sx={{ p: '8px', pb: 0 }}>
-              <Box sx={{
-                width: '100%',
-                aspectRatio: '16/9',
-                overflow: 'hidden',
-                borderRadius: radius.control,
-                border: `1.5px solid ${colors.gold}`,
-                bgcolor: colors.wine,
-              }}>
-                <LazyYouTube youtubeId={v.youtubeId} thumbnail={(v as any).thumbnail} />
-              </Box>
-            </Box>
-
-            <Box sx={{
-              px: { xs: 1.5, md: 2 },
-              pt: 1.5,
-              pb: 2.5,
-              flexGrow: 1,
+        {rabbiVideos.map((v, i) => {
+          // תאריך שהוא רק שנה ("2026") אינו מידע אמיתי — לא מציגים אותו
+          const caption = v.date && !/^\d{4}$/.test(v.date.trim()) ? v.date : '';
+          return (
+            <Box key={i} sx={{
+              flexShrink: 0,
+              width: {
+                xs: 'calc((100% - 16px) / 2)',
+                sm: 'calc((100% - 16px) / 2)',
+                md: 'calc(33.33% - 16px)',
+                lg: 'calc(25% - 18px)',
+              },
+              scrollSnapAlign: 'start',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
+              boxSizing: 'border-box',
+              bgcolor: colors.cream,
+              border: `1px solid ${colors.gold}`,
+              borderRadius: '12px',
+              overflow: 'hidden',
+              boxShadow: lessonCard.shadow,
+              transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: `0 12px 24px ${colors.wine}26`,
+              },
             }}>
-              <Typography sx={{
-                fontFamily: fonts.heading,
-                fontSize: { xs: fontSize.sm, md: fontSize.md },
-                fontWeight: 400,
-                lineHeight: 1.4,
-                color: colors.sand,
-              }}>{v.name}</Typography>
+              {/* מסגרת פנימית כפולה, כמו כריכת הספר */}
+              <Box sx={{ p: '10px 10px 0' }}>
+                <Box sx={{
+                  width: '100%',
+                  aspectRatio: '16/9',
+                  overflow: 'hidden',
+                  borderRadius: '7px',
+                  border: `1px solid ${colors.gold}`,
+                  bgcolor: colors.ink,
+                }}>
+                  <LazyYouTube youtubeId={v.youtubeId} thumbnail={(v as any).thumbnail} />
+                </Box>
+              </Box>
 
-              {v.date && (
-                <>
-                  <Box sx={{ width: '40px', height: '1px', bgcolor: colors.gold, my: '10px' }} />
-                  <Typography sx={{
-                    fontFamily: fonts.body,
-                    fontSize: fontSize.xs,
-                    lineHeight: 1.6,
-                    color: `${colors.gold}B3`,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                  }}>{v.date}</Typography>
-                </>
-              )}
+              <Box sx={{
+                px: '16px',
+                pt: '18px',
+                pb: '22px',
+                flexGrow: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+              }}>
+                <Typography sx={{
+                  fontFamily: fonts.heading,
+                  fontSize: { xs: fontSize.md, md: fontSize.lg },
+                  fontWeight: 400,
+                  lineHeight: 1.3,
+                  color: rabbiCard.name.color,
+                  minHeight: '2.6em',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}>{v.name}</Typography>
+
+                {caption && (
+                  <>
+                    <Box sx={{ width: `${rabbiCard.rule.w}px`, height: '1px', bgcolor: rabbiCard.rule.color, my: '14px' }} />
+                    <Typography sx={{
+                      fontFamily: fonts.body,
+                      fontSize: fontSize.sm,
+                      lineHeight: 1.6,
+                      color: colors.muted,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}>{caption}</Typography>
+                  </>
+                )}
+              </Box>
             </Box>
-          </Box>
-        ))}
+          );
+        })}
       </Box>
 
       <IconButton
-        onClick={() => rabbiVideosScrollRef.current?.scrollBy({ left: -rabbiVideosScrollRef.current.clientWidth * 0.8, behavior: 'smooth' })}
-        sx={{
-          width: '44px',
-          height: '44px',
-          flexShrink: 0,
-          zIndex: 2,
-          color: colors.gold,
-          border: `1px solid ${colors.gold}`,
-          borderRadius: radius.pill,
-          backgroundColor: 'transparent',
-          transition: 'background-color 0.25s ease',
-          '&:hover': { backgroundColor: `${colors.gold}26` },
-        }}
+        aria-label="הבא"
+        disabled={!sagesCarousel.canNext}
+        onClick={() => sagesCarousel.scrollPage('next')}
+        sx={carouselArrowSx}
       >
         <ChevronLeft size={22} strokeWidth={1.5} />
       </IconButton>
     </Box>
+
+    {/* פס התקדמות — מראה איפה בקרוסלה אנחנו */}
+    <CarouselProgress progress={sagesCarousel.progress} onSeek={sagesCarousel.seek} />
   </Box>
 </Box>
 

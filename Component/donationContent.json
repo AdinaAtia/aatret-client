@@ -1,0 +1,51 @@
+{
+  "nedarimUrl": "https://www.matara.pro/nedarimplus/online/?mosad=7002025&Analytic=%D7%90%D7%AA%D7%A8",
+  "contactEmail": "a580024115@gmail.com",
+
+  "hebrew": {
+    "bankTitle": "ניתן להעביר לפרטי חשבון הבנק, כדלהלן:",
+    "bankDetails": [
+      "ישיבת החיים והשלום",
+      "בנק פועלי אגודת ישראל – 52",
+      "סניף 182 כנפי נשרים",
+      "מס' חשבון – 611158",
+      "IBAN: IL240521820000000611158"
+    ],
+    "creditCardText": "כמו\"כ ניתן לתרום ע\"י כרטיס אשראי",
+    "creditCardLink": "לחץ כאן",
+    "taxNote": "ניתן לקבל קבלת מס לפי סעיף 46",
+    "emailNote": "למעוניינים נא לשלוח בקשה לאימייל:",
+    "closing": "בברכת התורה",
+    "signature": "ישיבת החיים והשלום"
+  },
+
+  "english": {
+    "title": "URGENT APPEAL: ATERET MORDECHAI",
+    "subtitle": "Help Sustain the Global Beacon of Torat HaKabbalah",
+    "greeting": "Dear beloved Friends and Supporters of Torah,",
+    "intro": "It is a great merit to see many Talmidei Chachamim including Scholars, Torah sages from every corner of the world tune in to the profound Kabbalah lessons delivered by Rabbi Mordechai Attia א\"שליט, Rosh Yeshiva of Yeshivat HaChaim VeHaShalom in Jerusalem, alongside other esteemed Rabbis of the yeshiva. This sacred dissemination occurs through our flagship platform: the Ateret Mordechai website (ateretmordechai.org).",
+    "treasuryTitle": "A Treasury of Divine Wisdom",
+    "treasuryPoints": [
+      "Over 6,700 lessons archived and freely accessible",
+      "More than 16 million views since inception – and growing daily!",
+      "A exclusive lifeline for authentic Kabbalah study worldwide"
+    ],
+    "challengeTitle": "The Challenge Ahead",
+    "challengeText": "There is an immediate need to revamp and redesign the entire website, in order to update it and ensure this holy resource is easily accessible, and user-friendly for the numerous users for generations to come. Regrettably, mounting expenses have accumulated. To maintain operations and launch the redesign, we urgently require ₪150,000 (approximately $40,000 USD).",
+    "opportunityTitle": "Your Sacred Opportunity",
+    "opportunityText": "We extend a holy call to everyone who has benefited and therefore understands the importance of access to these invaluable Shiurim:",
+    "callToAction": "Partner with us in this monumental mitzvah of spreading Kabbalah worldwide. Your generous donation however large or small directly sustains this global beacon of light. You may wish to make a personal dedication on the website or for memory of your loved ones. For dedication and inquiries:",
+    "taxNote": "Donations from US taxpayers are tax deductible",
+    "fromAbroad": "From Abroad",
+    "creditCardLabel": "Secure Credit Card Donation Link:",
+    "creditCardLink": "Click Here",
+    "usBankTitle": "US Bank Details:",
+    "usBankDetails": "Yeshivat HaHayim VeHashalom 18 Yosef Ben Matatyahu Street, Jerusalem, PO Box 16144, Israel OUR BANK ACCOUNT ABROAD: Wiring For Incoming - INTERNATIONAL Wire to: TD Bank, N.A. Wilmington, Delaware ABA # 0311-01266 Credit to: Our Customer's Account Title - Hahaim Yeshivat Shalom Inc Our Customer's Address - 1124 Elberon Avenue Long Branch NJ 07740 Our Customer's Account Number - 4339465141 *SWIFT/BIC - NRTHUS33XXX - Only for International",
+    "prayerTitle": "A Prayer Fulfilled Through You",
+    "prayer": "\"In the merit of this holy study, may we hasten the Final Redemption and elevate the Divine Presence from the dust.\"",
+    "closing": "With boundless gratitude,",
+    "signature1": "Rabbi Mordechai Attia",
+    "signature2": "Rosh Yeshiva, Yeshivat HaChaim VeHaShalom Jerusalem",
+    "footer": "All contributions fuel the eternal flame of Torah. No gift is too small. Together we illuminate the world."
+  }
+}

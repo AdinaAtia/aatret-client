@@ -1,10 +1,19 @@
 
-import{ useEffect } from 'react';
-import { Box, Typography, Button, Container, Stack, Paper, Divider } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Box, Typography, Button, Container, Stack, Paper, Divider, Dialog, DialogContent, IconButton } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Globe, Users,  Heart, ShieldCheck } from 'lucide-react';
+import CloseIcon from '@mui/icons-material/Close';
+import { useNavigate } from 'react-router-dom';
+
+import { colors, goldButtonStyle } from '../src/theme/tokens';
+const MEDIA_BASE_URL = `${import.meta.env.VITE_MEDIA_URL}/About`;
 
 const LuxuryDonationPage = () => {
+  const [openDonation, setOpenDonation] = useState(false);
+  const navigate = useNavigate();
+  const NEDARIM_URL = "https://www.matara.pro/nedarimplus/online/?mosad=7002025&Analytic=%D7%90%D7%AA%D7%A8";
+
   const donationOptions = [
     { 
       title: 'מגבית לחידוש ותרומות לאתר הישיבה', 
@@ -35,9 +44,11 @@ useEffect(() => {
   window.scrollTo({ top: 0, behavior: 'auto' });
 }, []);
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#fdfbf7', 
+    <Box sx={{
+      minHeight: '100vh',
+      backgroundImage: `url('${MEDIA_BASE_URL}/pastel-yellow-vignette-concrete-textured-background 1 (1) (1).png')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
       position: 'relative',
       overflow: 'hidden',
       display: 'flex',
@@ -45,18 +56,6 @@ useEffect(() => {
       py: 6,
       direction: 'rtl'
     }}>
-      
-      {/* תמונת רקע - פחות מטושטשת */}
-      <Box sx={{
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundImage: 'url("/IMG_0729.webp")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        opacity: 0.12, // הגדלתי מעט נוכחות
-        filter: 'grayscale(100%) blur(2px)', // טישטוש עדין מאוד כפי שביקשת
-        zIndex: 0
-      }} />
 
       <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
         <Stack 
@@ -66,31 +65,37 @@ useEffect(() => {
           justifyContent="center"
         >
           
-          {/* צד ימין: המגילה - יחס שווה */}
+          {/* צד ימין: סרטון */}
           <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', position: 'relative' }}>
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }} 
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1}}
+              transition={{ duration: 1 }}
+              style={{ width: '100%', maxWidth: '700px' }}
             >
-              <Box 
-                component="img" 
-                src="/megila.png" 
-                sx={{ 
-                  width: '100%', 
-                  maxWidth: '525px', 
-                  filter: 'drop-shadow(0px 20px 40px rgba(0,0,0,0.15))'
-                }} 
-              />
-              
-              <motion.div
-                initial={{ opacity: 0, rotate: -20 }}
-                animate={{ opacity: 1, rotate: 10 }}
-                transition={{ delay: 1, duration: 1}}
-                style={{ position: 'absolute', bottom: '20%', right: '15%' }}
-              >
-                {/* <Box component="img" src="/image (10).png" sx={{ width: '80px' }} /> */}
-              </motion.div>
+              <Box sx={{
+                position: 'relative',
+                width: '100%',
+                paddingTop: '56.25%',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.35)'
+              }}>
+                <Box
+                  component="iframe"
+                  src="https://www.youtube.com/embed/7-r83WoriYk"
+                  title="סרטון תרומות"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  sx={{
+                    position: 'absolute',
+                    top: 0, left: 0,
+                    width: '100%',
+                    height: '100%',
+                    border: 'none'
+                  }}
+                />
+              </Box>
             </motion.div>
           </Box>
 
@@ -102,18 +107,18 @@ useEffect(() => {
               transition={{ duration: 1, delay: 1}}
               style={{ width: '100%', maxWidth: '500px' }}
             >
-              <Paper elevation={0} sx={{ 
-                p: 5, 
-                borderRadius: '32px', 
-                border: '1px solid #eaddca',
-                backgroundColor: 'rgba(255, 255, 255, 0.96)',
+              <Paper elevation={0} sx={{
+                p: 5,
+                borderRadius: '32px',
+                border: '1px solid rgba(197, 160, 89, 0.3)',
+                backgroundColor: 'rgba(0, 0, 0, 0.88)',
                 backdropFilter: 'blur(10px)',
-                boxShadow: '0 30px 60px rgba(74, 52, 46, 0.08)'
+                boxShadow: '0 30px 60px rgba(0, 0, 0, 0.5)'
               }}>
-                <Typography variant="h4" sx={{ fontWeight: 900, color: '#4a342e', mb: 1 }}>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: colors.gold, mb: 1, fontFamily: "'Yetzira-Choppy', sans-serif !important" }}>
                   שותפות נצח
                 </Typography>
-                <Typography variant="body1" sx={{ color: '#9c6644', mb: 4 }}>
+                <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.75)', mb: 4 }}>
                   בחרו את אפיק הזכות שלכם:
                 </Typography>
 
@@ -129,22 +134,22 @@ useEffect(() => {
                         textAlign: 'right',
                         p: 2.5,
                         borderRadius: '16px',
-                        borderColor: '#f0e6df',
+                        borderColor: 'rgba(197, 160, 89, 0.3)',
                         '&:hover': {
-                          borderColor: '#d4af37',
-                          backgroundColor: '#fdfbf7',
+                          borderColor: colors.gold,
+                          backgroundColor: 'rgba(197, 160, 89, 0.08)',
                           transform: 'scale(1.02)'
                         }
                       }}
                     >
-                      <Box sx={{ color: '#9c6644', ml: 2, filter: 'sepia(1)' }}>
+                      <Box sx={{ color: colors.gold, ml: 2 }}>
                         {option.icon}
                       </Box>
                       <Box>
-                        <Typography variant="subtitle1" fontWeight="800" color="#4a342e">
+                        <Typography variant="subtitle1" fontWeight="800" sx={{ color: '#ffffff' }}>
                           {option.title}
                         </Typography>
-                        <Typography variant="caption" color="#7d6b5d">
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)' }}>
                           {option.subtitle}
                         </Typography>
                       </Box>
@@ -152,28 +157,28 @@ useEffect(() => {
                   ))}
                 </Stack>
 
-                <Divider sx={{ my: 4 }}>
-                  <Typography variant="caption" sx={{ color: '#d4af37', fontWeight: 'bold' }}>עץ חיים היא למחזיקים בה</Typography>
+                <Divider sx={{ my: 4, borderColor: 'rgba(197, 160, 89, 0.3)' }}>
+                  <Typography variant="caption" sx={{ color: colors.gold, fontWeight: 'bold' }}>עץ חיים היא למחזיקים בה</Typography>
                 </Divider>
 
-                <Button 
+                <Button
                   fullWidth
-                  variant="contained" 
-                  sx={{ 
-                    backgroundColor: '#4a342e', 
-                    py: 2.2, 
+                  variant="contained"
+                  onClick={() => navigate('/DonateLetter')}
+                  sx={{
+                    ...goldButtonStyle,
+                    py: 2.2,
                     borderRadius: '50px',
                     fontWeight: 'bold',
                     fontSize: '1.2rem',
-                    '&:hover': { backgroundColor: '#2d1d19' }
                   }}
                 >
                   אני רוצה להיות שותף
                 </Button>
-                
-                <Stack direction="row" justifyContent="center" spacing={1} mt={3} sx={{ opacity: 0.6 }}>
-                  <ShieldCheck size={16} />
-                  <Typography variant="caption">תשלום מאובטח בתקן PCI-DSS</Typography>
+
+                <Stack direction="row" justifyContent="center" spacing={1} mt={3} sx={{ opacity: 0.5 }}>
+                  <ShieldCheck size={16} color="#ffffff" />
+                  <Typography variant="caption" sx={{ color: '#ffffff' }}>תשלום מאובטח בתקן PCI-DSS</Typography>
                 </Stack>
               </Paper>
             </motion.div>
@@ -181,6 +186,32 @@ useEffect(() => {
           
         </Stack>
       </Container>
+
+      {/* חלון תרומה צף (נדרים פלוס) */}
+      <Dialog 
+        open={openDonation} 
+        onClose={() => setOpenDonation(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: '20px', overflow: 'hidden' }
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, bgcolor: '#fdfbf7' }}>
+          <IconButton onClick={() => setOpenDonation(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ p: 0, height: '80vh' }}>
+          <iframe
+            src={NEDARIM_URL}
+            width="100%"
+            height="100%"
+            title="תרומה מאובטחת"
+            style={{ border: 'none' }}
+          />
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

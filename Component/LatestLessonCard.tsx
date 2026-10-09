@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Box, Button, Paper, Typography, Stack, CircularProgress } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/GetApp';
 import PlayCircleIcon from '@mui/icons-material/PlayCircleOutline';
@@ -27,7 +27,7 @@ const LatestLessonCard= ({ onLessonSelect }: LatestLessonCardProps) => {
                 // שאילתה שמביאה את השיעור הכי חדש של הרב מרדכי עטייה
                 // אנחנו ממיינים לפי תאריך יורד ולוקחים רק את הראשון (limit=1)
                 const response = await axios.get(
-                    'http://localhost:1337/api/lessons?filters[rabbi][name][$eq]=הרב מרדכי עטייה&sort=lesson_date_gregorian:desc&pagination[limit]=1&populate=*'
+                    `${import.meta.env.VITE_API_URL}/api/lessons?filters[rabbi][name][$eq]=הרב מרדכי עטייה&sort=lesson_date_gregorian:desc&pagination[limit]=1&populate=*`
                 );
 
                 if (response.data.data && response.data.data.length > 0) {
@@ -60,7 +60,6 @@ const LatestLessonCard= ({ onLessonSelect }: LatestLessonCardProps) => {
         lesson_date_gregorian, 
         lesson_date_hebrew, 
         youtube_id,
-        category ,
         duration
     } = lesson;
 

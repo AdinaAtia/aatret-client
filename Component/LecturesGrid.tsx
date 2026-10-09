@@ -1,653 +1,203 @@
-// import React, { useState, useEffect, useRef } from 'react'; 
-// // ייבוא Grid2 - חובה כדי שה-size={{ lg: 2.4 }} יעבוד
-// import Grid from '@mui/material/Grid'; 
-// import { 
-//   Card, 
-//   CardMedia, 
-//   CardContent, 
-//   Typography, 
-//   IconButton, 
-//   Box, 
-//   Stack, 
-//   Button, 
-//   CircularProgress 
-// } from "@mui/material";
-// import { Download, Play, Clock, Calendar, RefreshCw } from 'lucide-react'; 
-// import axios from 'axios';
-
-// interface LecturesGridProps {
-//   onLessonSelect: (lesson: any) => void;
-// }
-
-// const LecturesGrid = ({ onLessonSelect }: LecturesGridProps) => {
-//   const [lectures, setLectures] = useState<any[]>([]);
-//   const [isSyncing, setIsSyncing] = useState(false);
-  
-//   // המנעול (Guard) - מבטיח קריאה אחת בלבד לשרת
-//   const hasFetched = useRef(false); 
-  
-//   const MAIN_BROWN = '#9c6644'; 
-
-//   // פונקציה לשליפת נתונים מה-DB
-//   // פונקציה לשליפת נתונים מה-DB עם סינון מובנה בשרת
-// // פונקציה לשליפת נתונים מה-DB עם סינון מדויק לפי השם בתמונה
-//   const fetchLectures = async () => {
-//     try {
-//       const response = await axios.get('http://localhost:1337/api/lessons', {
-//         params: {
-//           populate: '*',
-//           sort: 'lesson_date_gregorian:desc',
-//           // שינוי השם לערך המדויק שמופיע אצלך ב-Rabbi Content Type
-//           'filters[rabbi][name][$eq]': 'הרב מרדכי עטייה' 
-//         }
-//       });
-//       setLectures(response.data.data || []);
-//       hasFetched.current = true;
-//     } catch (error) {
-//       console.error('Error fetching lectures:', error);
-//     }
-//   };
-//   // הרצה רק בטעינה ראשונה עם הגנה מה-Ref
-//   useEffect(() => {
-//     if (!hasFetched.current) {
-//       fetchLectures();
-//     }
-//   }, []); 
-// const [filter, setFilter] = useState('הכל'); // ניהול הטאב הנבחר
-// const LIGHT_BEIGE = '#fdfbe7'; // צבע הרקע מהתמונה
-// const filterOptions = ['חדשים', 'תדמית הישיבה', 'נבחרים', 'קצרים']; // האפשרויות מהתמונה  // פונקציית הסנכרון הידני
-//   const handleSync = async () => {
-//     setIsSyncing(true);
-//     try {
-//       // שליחת POST לכתובת הסנכרון שיצרנו בסטראפי
-//       await axios.post('http://localhost:1337/api/lessons/sync');
-//       // רענון הרשימה מה-DB לאחר שהסנכרון הסתיים
-//       await fetchLectures(); 
-//       alert('השיעורים עודכנו בהצלחה מיוטיוב!');
-//     } catch (error) {
-//       console.error('Sync error:', error);
-//       alert('שגיאה בסנכרון. וודא שהרשאות ה-sync מוגדרות בסטראפי (Public).');
-//     } finally {
-//       setIsSyncing(false);
-//     }
-//   };
-
-//   return (
-//     <Box sx={{ 
-//       width: '100%', 
-//       direction: 'rtl', 
-//       boxSizing: 'border-box',
-//       px: { xs: 2, sm: 3, md: 4, lg: 8 }, 
-//       py: 6 
-//     }}>
-//       {/* שורת סינון ועדכון */}
-// <Stack 
-//   direction={{ xs: 'column', md: 'row' }} 
-// justifyContent="center"  alignItems="center" 
-//   spacing={2} 
-//   sx={{ 
-//     mb: 8, // הגדלת המרווח מהגריד שמתחת
-//     width: '100%' 
-//   }}
-// >
-//   {/* קומפוננטת הטאבים מהצילום מסך */}
-//   <Box sx={{ 
-//     backgroundColor: LIGHT_BEIGE, 
-//     borderRadius: '50px', 
-//   p: 0.8, // הגדלת הריפוד הפנימי של המחסנית
-//     display: 'flex', 
-//    gap: 1.5, // רווח גדול יותר בין הכפתורים
-//     boxShadow: '0 4px 10px rgba(0,0,0,0.08)' // צל מעט בולט יותר
-//   }}>
-//     {filterOptions.map((option) => (
-//       <Button
-//         key={option}
-//         onClick={() => setFilter(option)}
-//         sx={{
-//           borderRadius: '50px',
-//           px: 5,
-//           py: 1,
-//           fontSize: '1rem',
-//           fontWeight: 700,
-//           color: filter === option ? 'white' : 'black',
-//           backgroundColor: filter === option ? MAIN_BROWN : 'transparent',
-//           '&:hover': {
-//             backgroundColor: filter === option ? MAIN_BROWN : 'rgba(156, 102, 68, 0.1)',
-//           },
-//           textTransform: 'none',
-//           minWidth: '100px'
-//         }}
-//       >
-//         {option}
-//       </Button>
-//     ))}
-//   </Box>
-
-//   {/* כפתור עדכון (נשאר בצד שמאל) */}
-//   {/* <Button
-//     variant="contained"
-//     onClick={handleSync}
-//     disabled={isSyncing}
-//     startIcon={isSyncing ? <CircularProgress size={18} color="inherit" /> : <RefreshCw size={18} />}
-//     sx={{
-//       backgroundColor: 'black',
-//       color: 'white',
-//       borderRadius: '10px',
-//       px: 3,
-//       height: '45px',
-//       fontWeight: 700,
-//       '&:hover': { backgroundColor: '#333' }
-//     }}
-//   >
-//     {isSyncing ? 'מעדכן...' : 'עדכן שיעורים'}
-//   </Button> */}
-// </Stack>
-//       {/* כפתור עדכון בראש העמוד */}
-//       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 6 }}>
-//         <Button
-//           variant="contained"
-//           onClick={handleSync}
-//           disabled={isSyncing}
-//           startIcon={isSyncing ? <CircularProgress size={18} color="inherit" /> : <RefreshCw size={18} />}
-//           sx={{
-//             backgroundColor: 'black',
-//             color: 'white',
-//             borderRadius: '10px',
-//             px: 3,
-//             fontWeight: 700,
-//             '&:hover': { backgroundColor: '#333' },
-//             '&.Mui-disabled': { backgroundColor: '#666', color: '#ccc' }
-//           }}
-//         >
-//           {isSyncing ? 'מעדכן מיוטיוב...' : 'עדכן שיעורים'}
-//         </Button>
-//       </Box>
-
-//       {/* גריד הכרטיסים - 5 בשורה */}
-//       <Grid 
-//         container 
-//         spacing={3} 
-//         sx={{ 
-//           rowGap: { xs: 8, md: 10 }, 
-//           margin: 0, 
-//           width: '100%' 
-//         }}
-//         justifyContent="center"
-//       > 
-//         {lectures.map((lecture) => {
-//           const { title, youtube_id, lesson_date_gregorian, lesson_date_hebrew, rabbi,duration } = lecture;
-//           const rabbiName = rabbi?.name || "הרב מרדכי עטייה";
-//           const thumbnailUrl = `https://img.youtube.com/vi/${youtube_id}/mqdefault.jpg`;
-
-//           return (
-//             <Grid 
-//               key={lecture.id} 
-//               size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} // חישוב של 12/5 = 2.4
-//               sx={{ display: 'flex', justifyContent: 'center' }}
-//             >
-//               <Card 
-//                 elevation={0}
-//                 sx={{ 
-//                   width: '100%', 
-//                   borderRadius: '1rem', 
-//                   backgroundColor: '#fdfbe7', 
-//                   display: 'flex', 
-//                   flexDirection: 'column', 
-//                   position: 'relative', 
-//                   overflow: 'visible', 
-//                   minHeight: '280px'
-//                 }}
-//               >
-//                 {/* תמונת השיעור */}
-//                 <Box sx={{ 
-//                   position: 'relative', 
-//                   width: '100%', 
-//                   borderTopLeftRadius: '1rem', 
-//                   borderTopRightRadius: '1rem', 
-//                   overflow: 'hidden' 
-//                 }}>
-//                   <CardMedia 
-//                     component="img" 
-//                     sx={{ aspectRatio: '16/9', objectFit: 'cover' }} 
-//                     image={thumbnailUrl} 
-//                   />
-//                 </Box>
-
-//                 {/* תוכן הכרטיס */}
-//                 <CardContent sx={{ 
-//                   pt: 2, 
-//                   pb: 6, 
-//                   px: 1.5, 
-//                   textAlign: 'center', 
-//                   display: 'flex', 
-//                   flexDirection: 'column', 
-//                   flexGrow: 1 
-//                 }}>
-//                   <Typography variant="body1" sx={{ fontWeight: 900, mb: 1, fontSize: '0.9rem', color: 'black', lineHeight: 1.2 }}>
-//                     {title}
-//                   </Typography>
-                  
-//                   <Typography variant="caption" sx={{ color: 'black', fontWeight: 600, display: 'block', mb: 'auto', opacity: 0.7 }}>
-//                     {rabbiName}
-//                   </Typography>
-
-//                   {/* <Stack 
-//                     direction="row" 
-//                     justifyContent="center" 
-//                     alignItems="center" 
-//                     spacing={1} 
-//                     sx={{ color: '#555', mt: 1.5 }}
-//                   >
-//                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-//                        <Clock size={12} />
-//                        <Typography sx={{ fontSize: '0.65rem', fontWeight: 700 }}>01:03:05</Typography>
-//                     </Box>
-//                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-//                        <Calendar size={12} />
-//                        <Typography sx={{ fontSize: '0.65rem', fontWeight: 700 }}>{lesson_date_gregorian}</Typography>
-//                     </Box>
-//                   </Stack> */}
-//                   <Stack 
-//   direction="row" 
-//   justifyContent="center" 
-//   alignItems="center" 
-//   spacing={1} 
-//   sx={{ color: '#555', mt: 1.5 }}
-// >
-//   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-//      <Clock size={12} />
-//      <Typography sx={{ fontSize: '0.55rem', fontWeight: 700 }}>
-//        {duration || '00:00'}
-//      </Typography>
-//   </Box>
-//   <Typography sx={{ fontSize: '0.55rem', opacity: 0.5 }}>|</Typography>
-
-//   {/* תאריך עברי */}
-//   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-//      <Calendar size={12} />
-//      <Typography sx={{ fontSize: '0.55rem', fontWeight: 700 }}>
-//        {lesson_date_hebrew || '---'} 
-//      </Typography>
-//   </Box>
-
-//   {/* מפריד קטן בין התאריכים */}
-//   <Typography sx={{ fontSize: '0.55rem', opacity: 0.5 }}>|</Typography>
-
-//   {/* תאריך לועזי */}
-//   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-//      <Calendar size={12} />
-//      <Typography sx={{ fontSize: '0.55rem', fontWeight: 700 }}>
-//        {lesson_date_gregorian}
-//      </Typography>
-//   </Box>
-// </Stack>
-//                 </CardContent>
-
-//                 {/* כפתורי פעולה צפים (Play & Download) */}
-//                 <Box sx={{ 
-//                   position: 'absolute', 
-//                   bottom: '-22px', 
-//                   left: '50%', 
-//                   transform: 'translateX(-50%)', 
-//                   display: 'flex', 
-//                   gap: 1.5, 
-//                   zIndex: 2 
-//                 }}>
-//                   <IconButton 
-//                     onClick={() => onLessonSelect(lecture)} 
-//                     sx={{ 
-//                       borderRadius: '10px', 
-//                       backgroundColor: MAIN_BROWN, 
-//                       color: 'white', 
-//                       width: 42, 
-//                       height: 42, 
-//                       '&:hover': { backgroundColor: '#7d5236' } 
-//                     }}
-//                   >
-//                     <Play size={16} fill="white" />
-//                   </IconButton>
-
-//                   <IconButton 
-//                     sx={{ 
-//                       borderRadius: '10px', 
-//                       backgroundColor: 'black', 
-//                       color: 'white', 
-//                       width: 42, 
-//                       height: 42, 
-//                       '&:hover': { backgroundColor: '#222' } 
-//                     }}
-//                   >
-//                     <Download size={18} />
-//                   </IconButton>
-//                 </Box>
-//               </Card>
-//             </Grid>
-//           );
-//         })}
-//       </Grid>
-//     </Box>
-//   );
-// };
-
-// export default LecturesGrid;
-import React, { useState, useEffect, useRef } from 'react'; 
-// ייבוא Grid2 - חובה כדי שה-size={{ lg: 2.4 }} יעבוד
-import Grid from '@mui/material/Grid'; 
-import { 
-  Card, 
-  CardMedia, 
-  CardContent, 
-  Typography, 
-  IconButton, 
-  Box, 
-  Stack, 
-  Button, 
-  CircularProgress 
+import { useState, useEffect, useRef } from 'react';
+import Grid from '@mui/material/Grid';
+import {
+  Typography,
+  Box,
+  Stack,
+  Button,
+  CircularProgress
 } from "@mui/material";
-import { Download, Play, Clock, Calendar, RefreshCw } from 'lucide-react'; 
+import { Search, ChevronLeft } from 'lucide-react';
 import axios from 'axios';
+import { useNavigate } from "react-router-dom";
+import { colors, fonts } from '../src/theme/tokens';
+import SectionFlourish from './shared/SectionFlourish';
+import SectionArch from './shared/SectionArch';
+import LessonCard from './shared/LessonCard';
+
+/** כמה כרטיסים מוצגים ברשת — לפי העיצוב: 4 שווים בשורה */
+const VISIBLE_COUNT = 4;
 
 interface LecturesGridProps {
   onLessonSelect: (lesson: any) => void;
 }
 
-const LecturesGrid = ({ onLessonSelect }: LecturesGridProps) => {
+/* ----------  קישוטי הקטע  ----------
+ * "הקשת של ארון הקודש היא המוטיב החוזר — ... וכל כותרת קטע." (הערות העיצוב)
+ */
+
+const LecturesGrid = (_props: LecturesGridProps) => {
+  const navigate = useNavigate();
   const [lectures, setLectures] = useState<any[]>([]);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [filter, setFilter] = useState('חדשים'); 
-  
-  const hasFetched = useRef(false); 
-  const MAIN_BROWN = '#9c6644'; 
-  const LIGHT_BEIGE = '#fdfbe7';
-  const filterOptions = ['חדשים', 'תדמית הישיבה', 'נבחרים', 'קצרים'];
+  const [loading, setLoading] = useState(true);
+  const hasFetched = useRef(false);
 
-  // 1. פונקציה לשליפת שיעורים לפי הרב (עבור טאב "חדשים")
- const fetchLecturesByRabbi = async () => {
-  try {
-    // אנחנו משתמשים בדיוק באותו פורמט URL שעובד בקומפוננטה השנייה
-    // שימי לב שהורדתי את ה-pagination[limit]=1 כדי לקבל את כל השיעורים
-const url = `http://localhost:1337/api/lessons?filters[rabbi][name][$eq]=${encodeURIComponent('הרב מרדכי עטייה')}&sort=lesson_date_gregorian:desc&populate=*&pagination[pageSize]=10`;    
-    const response = await axios.get(url);
-
-    if (response.data.data) {
-      // מיפוי הנתונים בדיוק כפי שהגריד מצפה לקבל
-      const formatted = response.data.data.map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        youtube_id: item.youtube_id,
-        lesson_date_gregorian: item.lesson_date_gregorian,
-        lesson_date_hebrew: item.lesson_date_hebrew,
-        duration: item.duration,
-        // חילוץ שם הרב מתוך ה-populate
-        rabbi: item.rabbi 
-      }));
-
-      setLectures(formatted);
-      hasFetched.current = true;
-    }
-  } catch (error) {
-    console.error('Error fetching lectures:', error);
-  }
-};
-  // 2. פונקציה לשליפה מטבלת קטגוריה ראשית (עבור טאב "תדמית הישיבה")
-  const fetchByCategoryTable = async () => {
-  try {
-    const response = await axios.get('http://localhost:1337/api/categories-mains', {
-      params: {
-        'filters[name][$eq]': 'תדמית הישיבה',
-        'populate[lessons][populate]': '*', 
-        // הוספת המיון כאן:
-        'populate[lessons][sort]': 'lesson_date_gregorian:desc', 
-      }
-    });
-
-    const categoryLessons = response.data.data[0]?.lessons || [];
-    
-    // עדכון ה-State עם הרשימה הממוינת
-    setLectures(categoryLessons);
-  } catch (error) {
-    console.error('Error fetching category lessons:', error);
-  }
-};
-  // פונקציית ניהול הקליק על הטאבים
-  const handleFilterChange = (option: string) => {
-    setFilter(option);
-    if (option === 'תדמית הישיבה') {
-      fetchByCategoryTable();
-    } else {
-      // כרגע "חדשים", "נבחרים" ו"קצרים" יביאו את רשימת הרב הרגילה
-      fetchLecturesByRabbi();
+  const fetchLectures = async () => {
+    try {
+      setLoading(true);
+      const url = `${import.meta.env.VITE_API_URL}/api/lessons?filters[rabbi][name][$eq]=${encodeURIComponent('הרב מרדכי עטייה')}&sort=lesson_date_gregorian:desc&populate=*&pagination[pageSize]=9`;
+      const response = await axios.get(url);
+      setLectures(response.data.data || []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     if (!hasFetched.current) {
-      fetchLecturesByRabbi();
+      fetchLectures();
+      hasFetched.current = true;
     }
-  }, []); 
+  }, []);
 
-  const handleSync = async () => {
-    setIsSyncing(true);
-    try {
-      await axios.post('http://localhost:1337/api/lessons/sync');
-      if (filter === 'תדמית הישיבה') fetchByCategoryTable();
-      else fetchLecturesByRabbi();
-      alert('השיעורים עודכנו בהצלחה מיוטיוב!');
-    } catch (error) {
-      console.error('Sync error:', error);
-      alert('שגיאה בסנכרון.');
-    } finally {
-      setIsSyncing(false);
-    }
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', my: 10 }}><CircularProgress sx={{ color: colors.gold }} /></Box>;
+
+  /** השרת ממשיך להחזיר 9 — כאן רק נבחר כמה מהם מוצגים */
+  const visibleLessons = lectures.slice(0, VISIBLE_COUNT);
+
+  const getLessonData = (lesson: any) => {
+    const attrs = lesson.attributes || lesson;
+    return {
+      title: attrs.title,
+      youtubeId: attrs.youtube_id,
+      dateHebrew: attrs.lesson_date_hebrew,
+      dateGregorian: attrs.lesson_date_gregorian,
+      duration: attrs.duration || "00:00",
+      rabbiName: attrs.rabbi?.data?.attributes?.name || attrs.rabbi?.name || "הרב מרדכי עטייה",
+      audioFileName: attrs.AudioFileName || null,
+      audioDir: attrs.AudioDir || '',
+    };
+  };
+
+  const handleDownload = (audioDir: string, audioFileName: string, title?: string) => {
+    const cleanDir = (audioDir || '').replace(/^\/+|\/+$/g, '');
+    const file = `${cleanDir}/${audioFileName}`;
+    const params = new URLSearchParams({ key: 'ATERET_DL_2026', file, title: title || audioFileName });
+    const a = document.createElement('a');
+    a.href = `https://ateretmordechaifiles.com/download.php?${params}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
-    <Box sx={{ 
-      width: '100%', 
-      direction: 'rtl', 
-      boxSizing: 'border-box',
-      px: { xs: 2, sm: 3, md: 4, lg: 8 }, 
-      py: 6 
-    }}>
-      <Stack 
-        direction={{ xs: 'column', md: 'row' }} 
-        justifyContent="center"  
-        alignItems="center" 
-        spacing={2} 
-        sx={{ mb: 8, width: '100%' }}
-      >
-        <Box sx={{ 
-          backgroundColor: LIGHT_BEIGE, 
-          borderRadius: '20px', 
-          p: 0.8, 
-          display: 'flex', 
-          gap: 1.5, 
-          boxShadow: '0 4px 10px rgba(0,0,0,0.08)' 
-        }}>
-          {filterOptions.map((option) => (
-            <Button
-              key={option}
-              onClick={() => handleFilterChange(option)}
-              sx={{
-                borderRadius: '20px',
-                px: 5,
-                py: 1,
-                fontSize: '1rem',
-                fontWeight: 700,
-                color: filter === option ? 'white' : 'black',
-                backgroundColor: filter === option ? MAIN_BROWN : 'transparent',
-                '&:hover': {
-                  backgroundColor: filter === option ? MAIN_BROWN : 'rgba(156, 102, 68, 0.1)',
-                },
-                textTransform: 'none',
-                minWidth: '100px'
-              }}
-            >
-              {option}
-            </Button>
-          ))}
+    <Box sx={{ width: '100%', direction: 'rtl', bgcolor: colors.creamAlt, py: { xs: 6, md: 8 } }}>
+      <Box sx={{
+        width: '100%',
+        maxWidth: '1550px',
+        mx: 'auto',
+        px: { xs: 2, md: 4, lg: 5 }
+      }}>
+
+        {/* ----------  כותרת הקטע  ---------- */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 } }}>
+          <SectionArch />
+          <Typography
+            component="h2"
+            sx={{
+              fontFamily: `${fonts.heading} !important`,
+              fontSize: { xs: '2.2rem', md: '3.2rem' },
+              lineHeight: 1.35,
+              fontWeight: 400,
+              color: colors.wine,
+              m: 0,
+            }}
+          >
+            שיעורים אחרונים
+          </Typography>
+          <SectionFlourish mt={1.5} />
         </Box>
-      </Stack>
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 6 }}>
-        <Button
-          variant="contained"
-          onClick={handleSync}
-          disabled={isSyncing}
-          startIcon={isSyncing ? <CircularProgress size={18} color="inherit" /> : <RefreshCw size={18} />}
-          sx={{
-            backgroundColor: 'black',
-            color: 'white',
-            borderRadius: '10px',
-            px: 3,
-            fontWeight: 700,
-            '&:hover': { backgroundColor: '#333' },
-            '&.Mui-disabled': { backgroundColor: '#666', color: '#ccc' }
-          }}
-        >
-          {isSyncing ? 'מעדכן מיוטיוב...' : 'עדכן שיעורים'}
-        </Button>
-      </Box>
+        {/* ----------  רשת הכרטיסים  ---------- */}
+        <Grid container spacing={{ xs: 2, md: 2.5 }} alignItems="stretch">
+          {visibleLessons.map((lecture) => {
+            const data = getLessonData(lecture);
+            const hasDuration = Boolean(data.duration) && data.duration !== "00:00";
 
-      <Grid 
-        container 
-        spacing={3} 
-        sx={{ 
-          rowGap: { xs: 8, md: 10 }, 
-          margin: 0, 
-          width: '100%' 
-        }}
-        justifyContent="center"
-      > 
-        {lectures.map((lecture) => {
-          const { title, youtube_id, lesson_date_gregorian, lesson_date_hebrew, rabbi, duration } = lecture;
-          const rabbiName = rabbi?.name || "הרב מרדכי עטייה";
-          const thumbnailUrl = `https://img.youtube.com/vi/${youtube_id}/mqdefault.jpg`;
+            const goToLesson = () => navigate(`/AllLessons/${lecture.id}`);
 
-          return (
-            <Grid 
-              key={lecture.id} 
-              size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} 
-              sx={{ display: 'flex', justifyContent: 'center' }}
-            >
-              <Card 
-                elevation={0}
-                sx={{ 
-                  width: '100%', 
-                  borderRadius: '1rem', 
-                  backgroundColor: '#fdfbe7', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  position: 'relative', 
-                  overflow: 'visible', 
-                  minHeight: '280px'
-                }}
-              >
-                <Box sx={{ 
-                  position: 'relative', 
-                  width: '100%', 
-                  borderTopLeftRadius: '1rem', 
-                  borderTopRightRadius: '1rem', 
-                  overflow: 'hidden' 
-                }}>
-                  <CardMedia 
-                    component="img" 
-                    sx={{ aspectRatio: '16/9', objectFit: 'cover' }} 
-                    image={thumbnailUrl} 
+            return (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={lecture.id} sx={{ display: 'flex' }}>
+                <Box sx={{ width: '100%' }}>
+                  <LessonCard
+                    lesson={{
+                      id: lecture.id,
+                      title: data.title,
+                      rabbiName: data.rabbiName.includes('שליט"א') ? data.rabbiName : `${data.rabbiName} שליט"א`,
+                      dateHebrew: data.dateHebrew,
+                      youtubeId: data.youtubeId,
+                      duration: hasDuration ? data.duration : undefined,
+                    }}
+                    onSelect={goToLesson}
+                    onPlayVideo={data.youtubeId ? goToLesson : undefined}
+                    onPlayAudio={data.audioFileName ? goToLesson : undefined}
+                    onDownload={data.audioFileName ? () => handleDownload(data.audioDir, data.audioFileName, data.title) : undefined}
                   />
                 </Box>
+              </Grid>
+            );
+          })}
+        </Grid>
 
-                <CardContent sx={{ 
-                  pt: 2, 
-                  pb: 6, 
-                  px: 1.5, 
-                  textAlign: 'center', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  flexGrow: 1 
-                }}>
-                  <Typography variant="body1" sx={{ fontWeight: 700, mb: 1, fontSize: '0.9rem', color: 'black', lineHeight: 1.2 }}>
-                    {title}
-                  </Typography>
-                  
-                  <Typography variant="caption" sx={{ color: 'black', fontWeight: 600, display: 'block', mb: 'auto', opacity: 0.7 }}>
-                    {rabbiName}
-                  </Typography>
+        {/* ----------  חיפוש + ארכיון  ---------- */}
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={0}
+          justifyContent="center"
+          alignItems="center"
+          sx={{ mt: { xs: 4, md: 5 }, gap: '14px' }}
+        >
+          <Button
+            onClick={() => navigate('/AllLessons', { state: { focusSearch: true } })}
+            startIcon={<Search size={17} />}
+            sx={{
+              bgcolor: colors.inkWine,
+              color: colors.goldLight,
+              fontFamily: fonts.body,
+              fontSize: '1rem',
+              fontWeight: 500,
+              borderRadius: '6px',
+              height: '52px',
+              px: 3,
+              py: 0,
+              textTransform: 'none',
+              width: { xs: '100%', sm: '202px' },
+              '& .MuiButton-startIcon': { ml: 1, mr: -0.25 },
+              '&:hover': { bgcolor: colors.ink },
+            }}
+          >
+            חיפוש בשיעורים
+          </Button>
 
-                  <Stack 
-                    direction="row" 
-                    justifyContent="center" 
-                    alignItems="center" 
-                    spacing={1} 
-                    sx={{ color: '#555', mt: 1.5 }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-                       <Clock size={12} />
-                       <Typography sx={{ fontSize: '0.55rem', fontWeight: 700 }}>
-                         {duration || '00:00'}
-                       </Typography>
-                    </Box>
-                    <Typography sx={{ fontSize: '0.55rem', opacity: 0.5 }}>|</Typography>
+          <Button
+            onClick={() =>
+              document.getElementById('rabbis-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+            endIcon={<ChevronLeft size={17} />}
+            sx={{
+              bgcolor: 'transparent',
+              color: colors.goldText,
+              fontFamily: fonts.body,
+              fontSize: '1rem',
+              fontWeight: 500,
+              border: `1px solid ${colors.gold}`,
+              borderRadius: '6px',
+              height: '52px',
+              px: 3,
+              py: 0,
+              textTransform: 'none',
+              width: { xs: '100%', sm: '312px' },
+              '& .MuiButton-endIcon': { mr: 1, ml: -0.25 },
+              '&:hover': { bgcolor: `${colors.sand}66`, borderColor: colors.goldDeep },
+            }}
+          >
+            לשיעורי רבני הישיבה
+          </Button>
+        </Stack>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-                       <Calendar size={12} />
-                       <Typography sx={{ fontSize: '0.55rem', fontWeight: 700 }}>
-                         {lesson_date_hebrew || '---'} 
-                       </Typography>
-                    </Box>
-
-                    <Typography sx={{ fontSize: '0.55rem', opacity: 0.5 }}>|</Typography>
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-                       <Calendar size={12} />
-                       <Typography sx={{ fontSize: '0.55rem', fontWeight: 700 }}>
-                         {lesson_date_gregorian}
-                       </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-
-                <Box sx={{ 
-                  position: 'absolute', 
-                  bottom: '-22px', 
-                  left: '50%', 
-                  transform: 'translateX(-50%)', 
-                  display: 'flex', 
-                  gap: 1.5, 
-                  zIndex: 2 
-                }}>
-                  <IconButton 
-                    onClick={() => onLessonSelect(lecture)} 
-                    sx={{ 
-                      borderRadius: '10px', 
-                      backgroundColor: MAIN_BROWN, 
-                      color: 'white', 
-                      width: 42, 
-                      height: 42, 
-                      '&:hover': { backgroundColor: '#7d5236' } 
-                    }}
-                  >
-                    <Play size={16} fill="white" />
-                  </IconButton>
-
-                  <IconButton 
-                    sx={{ 
-                      borderRadius: '10px', 
-                      backgroundColor: 'black', 
-                      color: 'white', 
-                      width: 42, 
-                      height: 42, 
-                      '&:hover': { backgroundColor: '#222' } 
-                    }}
-                  >
-                    <Download size={18} />
-                  </IconButton>
-                </Box>
-              </Card>
-            </Grid>
-          );
-        })}
-      </Grid>
+      </Box>
     </Box>
   );
 };

@@ -1,7 +1,38 @@
+
+
+/* 2. הסגנון הקל (Light) - זה השלישי שחיפשת */
 @font-face {
-  font-family: 'YetziraCustom'; /* זה השם שבו נשתמש בקוד */
-  src: url('.//fonts/BA\ HaYetzira\ Choppy.woff2') format('woff2');
+  font-family: 'Yetzira-Light';
+  src: url('./fonts/BA HaYetzira Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 3. הסגנון המעוטר (Choppy) */
+@font-face {
+  font-family: 'Yetzira-Choppy';
+  src: url('./fonts/BA HaYetzira Choppy (2).woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
-  font-display: swap; /* מבטיח שהטקסט יופיע מיד */
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Yetzira-Regular';
+  src: url('./fonts/BA HaYetzira Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* גופן ברירת המחדל של המסמך. כל חריגה נקבעת בקומפוננטה עצמה, בלי !important. */
+html, body {
+  font-family: 'Heebo', sans-serif;
+  margin: 0;
 }

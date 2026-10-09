@@ -1,7 +1,3 @@
-@font-face {
-  font-family: 'YetziraCustom'; /* זה השם שבו נשתמש בקוד */
-  src: url('.//fonts/BA\ HaYetzira\ Choppy.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap; /* מבטיח שהטקסט יופיע מיד */
-}
+/* YetziraCustom הוסר — הפנה לקובץ גופן שלא קיים (BA HaYetzira Choppy.woff2, בלי "(2)").
+   הקובץ הזה ממילא לא היה מיובא משום מקום. המופעים הועברו ל-fonts.headingOrnate
+   (Yetzira-Choppy) ב-Component/BooksCarousel.tsx. */

@@ -5,10 +5,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 // אייקונים מהספריה של MUI - תואם לצילום המסך
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import FolderIcon from '@mui/icons-material/Folder';
-import PeopleIcon from '@mui/icons-material/People';
+import DraftsIcon from '@mui/icons-material/Drafts';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 
+import { colors } from '../src/theme/tokens';
 // הגדרת ה-Props עבור TypeScript
 interface AdminLayoutProps {
   children: ReactNode;
@@ -21,25 +23,27 @@ const AdminLayout = ({ children, token }: AdminLayoutProps) => {
 
   // הגדרת הצבעים המדויקת מהערות הקוד שלך
   const COLORS = {
-    SIDEBAR_BROWN: '#fdfbe7', // החום הכהה
-    GOLD_LIGHT: '#b48a66',    // זהב/ברונזה לאייקונים
+    SIDEBAR_BROWN: '#fff',
+    GOLD_LIGHT: colors.gold,
     TEXT_WHITE: '#000',
     BG_CONTENT: '#f4f6f8'
   };
 
   // רשימת פריטי התפריט
   const menuItems = [
-    { text: 'הוספת שיעור חדש', icon: <AddCircleOutlineIcon />, path: '/admin/AudioUploader' },
-    { text: 'הוספת קטגוריה', icon: <FolderIcon />, path: '/admin/AddNewCategory' },
-    { text: 'ניהול ארכיון', icon: <FolderIcon />, path: '/admin/archive' },
-    { text: 'ניהול רבני הישיבה', icon: <PeopleIcon />, path: '/admin/rabbis' },
-    { text: 'ניהול קטגוריות', icon: <FolderIcon />, path: '/admin/categories' },
-    { text: 'פרטים אישיים', icon: <PersonIcon />, path: '/admin/profile' },
+    { text: 'הוספת שיעור חדש', icon: <AddCircleOutlineIcon />, path: '/manager/AudioUploader' },
+    { text: 'ניהול שיעורים', icon: <FolderIcon />, path: '/manager/archive' },
+    { text: 'הוספת קטגוריה', icon: <FolderIcon />, path: '/manager/AddNewCategory' },
+    { text: 'ניהול קטגוריות', icon: <FolderIcon />, path: '/manager/categories' },
+    { text: 'ניהול רבנים', icon: <PersonIcon />, path: '/manager/rabbis' },
+    { text: 'ניהול ספרים', icon: <MenuBookIcon />, path: '/manager/books' },
+    { text: 'צפייה בטיוטות', icon: <DraftsIcon />, path: '/manager/drafts' },
+    { text: 'פרטים אישיים', icon: <PersonIcon />, path: '/manager/profile' },
   ];
 
   const handleLogout = () => {
     localStorage.removeItem('token'); // מחיקה מהזיכרון
-    window.location.href = '/admin/login'; // ריענון והפניה להתחברות
+    window.location.href = '/manager/login'; // ריענון והפניה להתחברות
   };
 
   // הגנה: אם אין טוקן, מציגים רק את התוכן (בדרך כלל דף התחברות)
@@ -65,11 +69,11 @@ const AdminLayout = ({ children, token }: AdminLayoutProps) => {
       }}>
         
         {/* לוגו / כותרת תפריט */}
-        <Box sx={{ p: 4, textAlign: 'center', bgcolor: '#fdfbe7' }}>
-          <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 1 }}>
+        <Box sx={{ p: 4, textAlign: 'center', bgcolor: '#fff', borderBottom: '1px solid #eee' }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', letterSpacing: 1, fontFamily: "'Yetzira-Regular', sans-serif", fontSize: '1rem', color: '#000' }}>
             תפריט מנהל
           </Typography>
-          <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 0.5 }}>
+          <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 0.5, fontFamily: "'Yetzira-Regular', sans-serif", fontSize: '1rem', color: '#000' }}>
 ישיבת עטרת מרדכי          </Typography>
         </Box>
 
@@ -82,13 +86,13 @@ const AdminLayout = ({ children, token }: AdminLayoutProps) => {
             return (
               <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
                 <ListItemButton 
+                  disableRipple
                   onClick={() => navigate(item.path)}
                   sx={{ 
                     borderRadius: '12px',
-                    bgcolor: isActive ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                    '&:hover': { 
-                      bgcolor: 'rgba(255, 255, 255, 0.12)',
-                    } 
+                    bgcolor: 'transparent',
+                    '&:hover': { bgcolor: 'transparent' },
+                    '&.Mui-focusVisible': { bgcolor: 'transparent' }
                   }}
                 >
                   <ListItemIcon sx={{ 
@@ -101,10 +105,12 @@ const AdminLayout = ({ children, token }: AdminLayoutProps) => {
                   <ListItemText 
                     primary={item.text} 
                     sx={{ 
-                      '& .MuiTypography-root': { 
+                    '& .MuiTypography-root': { 
                         fontWeight: isActive ? 700 : 500, 
                         textAlign: 'right',
-                        fontSize: '0.9rem'
+                        fontSize: '1rem',
+                        fontFamily: "'Yetzira-Regular', sans-serif",
+                        color: colors.gold
                       } 
                     }} 
                   />
@@ -120,14 +126,14 @@ const AdminLayout = ({ children, token }: AdminLayoutProps) => {
             onClick={handleLogout}
             sx={{ 
               borderRadius: '12px', 
-              color: '#ffccbc',
-              '&:hover': { bgcolor: 'rgba(255, 87, 34, 0.1)' } 
+              color: '#000',
+              '&:hover': { bgcolor: 'transparent' } 
             }}
           >
-            <ListItemIcon sx={{ color: '#ffccbc', minWidth: 40 }}>
+            <ListItemIcon sx={{ color: '#000', minWidth: 40 }}>
               <LogoutIcon />
             </ListItemIcon>
-            <ListItemText primary="ניתוק" sx={{ '& .MuiTypography-root': { fontWeight: 600, textAlign: 'right' } }} />
+            <ListItemText primary="ניתוק" sx={{ '& .MuiTypography-root': { fontWeight: 'bold', textAlign: 'right', fontFamily: "'Yetzira-Regular', sans-serif", fontSize: '1rem', color: colors.gold } }} />
           </ListItemButton>
         </Box>
       </Box>

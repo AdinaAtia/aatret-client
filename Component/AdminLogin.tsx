@@ -2,15 +2,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 
-import { 
-  Box, Paper, Typography, TextField, Button, 
-  InputAdornment, IconButton, Container, Stack
+import {
+  Box, Paper, Typography, TextField, Button,
+  InputAdornment, IconButton, Container, Stack,
+  Checkbox, FormControlLabel
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 
+import { colors } from '../src/theme/tokens';
 // --- תוספת קטנה עבור TypeScript כדי לפתור את השגיאה ב-App ---
 interface AdminLoginProps {
   setToken: React.Dispatch<React.SetStateAction<string | null>>;
@@ -18,9 +20,9 @@ interface AdminLoginProps {
 
 const COLORS = {
   BROWN_DARK: '#9c6644',
-  BROWN_LIGHT: '#b48a66',
-  BG_CREAM: '#fdfbe7',
-  BLACK: '#000000'
+  BROWN_LIGHT: colors.gold,
+  BG_CREAM: colors.gold,
+  BLACK: colors.gold
 };
 
 // הוספנו כאן את ה-setToken כ-Prop
@@ -31,7 +33,8 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ setToken }) => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [credentials, setCredentials] = useState({ identifier: '', password: '' });
-  const [loading, setLoading] = useState(false); // האם המערכת בתהליך שליחת הנתונים
+  const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false); // האם המערכת בתהליך שליחת הנתונים
 
   const handleLogin = async () => {
     // 1. בדיקת תקינות - האם השדות מלאים
@@ -46,7 +49,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ setToken }) => {
 
     try {
       // 3. שליחת בקשה ל-Strapi
-      const response = await fetch('http://localhost:1337/api/auth/local', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/local`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,12 +65,17 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ setToken }) => {
       }
 
       // 5. הצלחה - שמירת טוקן
-      localStorage.setItem('token', data.jwt);
+      if (rememberMe) {
+        const expiry = Date.now() + 14 * 24 * 60 * 60 * 1000;
+        localStorage.setItem('token', data.jwt);
+        localStorage.setItem('token_expiry', expiry.toString());
+      } else {
+        sessionStorage.setItem('token', data.jwt);
+      }
+
+      setToken(data.jwt);
       
-      // --- התיקון כאן: מעדכנים את הסטייט ב-App כדי שה-Sidebar יופיע ---
-      setToken(data.jwt); 
-      
-      navigate('/admin/manage'); // מעבר לדף הניהול
+      navigate('/manager/manage'); // מעבר לדף הניהול
 
     } catch (err: any) {
       // 6. טיפול בשגיאות
@@ -100,13 +108,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ setToken }) => {
             borderRadius: '18px', display: 'flex', alignItems: 'center', 
             justifyContent: 'center', mx: 'auto', mb: 2 
           }}>
-            <LockOutlinedIcon sx={{ color: COLORS.BROWN_DARK, fontSize: 30 }} />
+            <LockOutlinedIcon sx={{ color: '#fff', fontSize: 30 }} />
           </Box>
 
-          <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, fontFamily: "'Yetzira-Regular', sans-serif" }}>
             כניסת מנהל
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, fontFamily: "'Yetzira-Regular', sans-serif" }}>
             הזן פרטי גישה לניהול מערכת "עטרת מרדכי"
           </Typography>
 
@@ -132,6 +140,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ setToken }) => {
               label="שם משתמש / אימייל"
               variant="outlined"
               onChange={(e) => setCredentials({...credentials, identifier: e.target.value})}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused fieldset': { borderColor: colors.gold },
+                  '&:hover fieldset': { borderColor: colors.gold },
+                },
+                '& .MuiInputLabel-root.Mui-focused': { color: colors.gold },
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -147,6 +162,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ setToken }) => {
               label="סיסמה"
               type={showPassword ? 'text' : 'password'}
               onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused fieldset': { borderColor: colors.gold },
+                  '&:hover fieldset': { borderColor: colors.gold },
+                },
+                '& .MuiInputLabel-root.Mui-focused': { color: colors.gold },
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -164,26 +186,41 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ setToken }) => {
               }}
             />
 
-            <Button 
-              fullWidth 
-              variant="contained" 
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  sx={{ color: COLORS.BROWN_LIGHT, '&.Mui-checked': { color: COLORS.BROWN_LIGHT } }}
+                />
+              }
+              label="זכור אותי"
+              sx={{ alignSelf: 'flex-start', '& .MuiFormControlLabel-label': { fontSize: '0.9rem', color: 'text.secondary' } }}
+            />
+
+            <Button
+              fullWidth
+              variant="contained"
               size="large"
               disabled={loading} // מניעת לחיצות כפולות
               onClick={handleLogin}
               sx={{ 
-                bgcolor: COLORS.BLACK, 
+                bgcolor: '#000', 
+                color: colors.gold,
                 py: 1.5, 
-                borderRadius: '12px',
+                borderRadius: '8px',
                 fontWeight: 700,
                 fontSize: '1.1rem',
-                '&:hover': { bgcolor: COLORS.BROWN_DARK }
+                boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+                '&:hover': { bgcolor: colors.gold, color: '#000', transform: 'scale(1.05)', boxShadow: '0 10px 20px rgba(197, 160, 89, 0.4)' },
+                transition: '0.3s'
               }}
             >
               {loading ? 'מתחבר...' : 'התחברות למערכת'}
             </Button>
           </Stack>
 
-          <Typography variant="caption" sx={{ display: 'block', mt: 4, color: 'text.disabled' }}>
+          <Typography variant="caption" sx={{ display: 'block', mt: 4, color: 'text.disabled', fontFamily: "'Yetzira-Regular', sans-serif" }}>
             © {new Date().getFullYear()} ישיבת עטרת מרדכי - מערכת ניהול פנימית
           </Typography>
         </Paper>

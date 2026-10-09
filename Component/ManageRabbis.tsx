@@ -1,122 +1,523 @@
-import React from 'react';
-import { 
-  Box, Typography, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Paper, TextField, Stack, Button, Checkbox, 
-  Select, MenuItem, FormControl, IconButton
+import { useState, useEffect, useRef } from 'react';
+import { useRabbis } from '../src/context/RabbisContext';
+import axios from 'axios';
+import {
+  Box, Typography, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, TextField, IconButton, Tooltip,
+  Stack, Button, Avatar, Skeleton, Dialog, DialogTitle,
+  DialogContent, DialogActions, Checkbox
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import EditIcon from '@mui/icons-material/Edit';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import PublishIcon from '@mui/icons-material/Publish';
+import UnpublishedIcon from '@mui/icons-material/Unpublished';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import CircularProgress from '@mui/material/CircularProgress';
 
-// שימוש ב-COLORS המקוריים של האתר שלך
-const COLORS = {
-  SIDEBAR_BROWN: '#8c6644', // החום של הסיידבר
-  BROWN_DARK: '#5d4037',    // חום כהה לטקסט
-  GOLD_LIGHT: '#f4f1ee',    // רקע קרם בהיר לשורות
-  WHITE: '#ffffff'
+import { colors } from '../src/theme/tokens';
+const API = import.meta.env.VITE_API_URL;
+
+
+const editFieldStyle = {
+  '& .MuiOutlinedInput-root': {
+    direction: 'rtl' as const,
+    '& fieldset': { textAlign: 'right' as const },
+    '&.Mui-focused fieldset': { borderColor: colors.gold },
+    '&:hover fieldset': { borderColor: colors.gold },
+  },
+  '& .MuiInputLabel-root': {
+    right: 28, left: 'auto', transformOrigin: 'right',
+    '&.Mui-focused': { color: '#9c6644' },
+  },
+  '& .MuiInputLabel-shrink': {
+    transform: 'translate(0, -9px) scale(0.75)',
+    right: 10,
+  }
 };
 
 const ManageRabbis = () => {
-  // נתוני דמו
-  const dummyRabbis = [
-    { id: 16, name: 'הרב מרדכי מלכה', priority: 1, hits: 1450, lessons: 15, views: '3,254,128', hpl: 216 },
-    { id: 17, name: 'הרב אהרון לוי', priority: 2, hits: 890, lessons: 10, views: '45,000', hpl: 89 },
-  ];
+  const { refreshRabbis } = useRabbis();
+  const [rabbis, setRabbis] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPriority, setNewPriority] = useState('');
+  const [editRabbi, setEditRabbi] = useState<any | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null);
+  const [newPhotoPreview, setNewPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const addFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkLoading, setBulkLoading] = useState<'publish' | 'unpublish' | 'delete' | null>(null);
+  const [confirmBulk, setConfirmBulk] = useState<'publish' | 'unpublish' | 'delete' | null>(null);
+
+  const fetchRabbis = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API}/api/rabbis/admin/all`);
+      setRabbis((res.data.data || []).map((r: any) => {
+        const firstPhoto = r.photo_url?.[0] || null;
+        const photoPath = firstPhoto?.url || null;
+        return {
+          id: r.id,
+          documentId: r.documentId,
+          name: r.name || '',
+          priority: r.Priority ?? '',
+          publishedAt: r.publishedAt || null,
+          photoUrl: photoPath ? `${API}${photoPath}` : null,
+          totalLessons: r.totalLessons ?? 0,
+          totalViews: r.totalViews ?? 0,
+          viewedLessons: r.viewedLessons ?? 0,
+        };
+      }));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchRabbis(); }, []);
+
+  const handleBulkPublish = async () => {
+    setBulkLoading('publish');
+    try {
+      await Promise.all(selectedIds.map(docId =>
+        axios.post(`${API}/api/rabbis/${docId}/publish`)
+      ));
+      setSelectedIds([]);
+      setConfirmBulk(null);
+      await fetchRabbis();
+      await refreshRabbis();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBulkLoading(null);
+    }
+  };
+
+  const handleBulkUnpublish = async () => {
+    setBulkLoading('unpublish');
+    try {
+      await Promise.all(selectedIds.map(docId =>
+        axios.post(`${API}/api/rabbis/${docId}/unpublish`)
+      ));
+      setSelectedIds([]);
+      setConfirmBulk(null);
+      await fetchRabbis();
+      await refreshRabbis();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBulkLoading(null);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkLoading('delete');
+    try {
+      await Promise.all(selectedIds.map(docId =>
+        axios.delete(`${API}/api/rabbis/${docId}`)
+      ));
+      setSelectedIds([]);
+      setConfirmBulk(null);
+      await fetchRabbis();
+      await refreshRabbis();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBulkLoading(null);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editRabbi) return;
+    setSaving(true);
+    try {
+      await axios.put(`${API}/api/rabbis/${editRabbi.documentId}`, {
+        data: { name: editRabbi.name, Priority: Number(editRabbi.priority) }
+      });
+      await fetchRabbis();
+      await refreshRabbis();
+      setEditRabbi(null);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      const rabbiToDelete = rabbis.find(r => r.id === deleteId);
+      await axios.delete(`${API}/api/rabbis/${rabbiToDelete?.documentId || deleteId}`);
+      setRabbis(prev => prev.filter(r => r.id !== deleteId));
+      await refreshRabbis();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setDeleteId(null);
+    }
+  };
+
+  const handlePhotoUpload = async (file: File) => {
+    if (!editRabbi) return;
+    try {
+      const formData = new FormData();
+      formData.append('files', file);
+      const uploadRes = await axios.post(`${API}/api/upload`, formData);
+      const uploadedId = uploadRes.data[0]?.id;
+      const uploadedUrl = uploadRes.data[0]?.url;
+      if (!uploadedId) return;
+      await axios.put(`${API}/api/rabbis/${editRabbi.documentId}`, {
+        data: { photo_url: [uploadedId] }
+      });
+      setEditRabbi((prev: any) => ({ ...prev, photoUrl: `${API}${uploadedUrl}` }));
+      fetchRabbis();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleAdd = async () => {
+    if (!newName.trim()) return;
+    try {
+      let photoId: number | null = null;
+      if (newPhotoFile) {
+        const formData = new FormData();
+        formData.append('files', newPhotoFile);
+        const uploadRes = await axios.post(`${API}/api/upload`, formData);
+        photoId = uploadRes.data[0]?.id ?? null;
+      }
+      await axios.post(`${API}/api/rabbis`, {
+        data: {
+          name: newName.trim(),
+          Priority: Number(newPriority) || 99,
+          ...(photoId ? { photo_url: [photoId] } : {})
+        }
+      });
+      setAddOpen(false);
+      setNewName('');
+      setNewPriority('');
+      setNewPhotoFile(null);
+      setNewPhotoPreview(null);
+      fetchRabbis();
+      refreshRabbis();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const allSelected = rabbis.length > 0 && selectedIds.length === rabbis.length;
+  const someSelected = selectedIds.length > 0 && selectedIds.length < rabbis.length;
 
   return (
-    <Box sx={{ p: 4, direction: 'rtl', minHeight: '100vh', bgcolor: '#fbfbfb' }}>
-      
-      {/* כותרת מעוצבת בפונט האתר */}
-      <Typography variant="h4" sx={{ 
-        fontFamily: "'YetziraCustom', sans-serif", 
-        color: COLORS.SIDEBAR_BROWN,
-        mb: 4,
-        borderBottom: `2px solid ${COLORS.SIDEBAR_BROWN}`,
-        display: 'inline-block',
-        pb: 1
-      }}>
-        ניהול רבנים ומרצים
-      </Typography>
+    <Box sx={{ p: { xs: 2, md: 4 }, direction: 'rtl', bgcolor: '#f8f9fa', minHeight: '100vh' }}>
 
-      {/* כפתורי פעולה בסגנון האתר */}
-      <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-        <Button 
-          variant="contained" 
-          startIcon={<DeleteOutlineIcon sx={{ ml: 1 }} />}
-          sx={{ bgcolor: '#d32f2f', '&:hover': { bgcolor: '#b71c1c' }, borderRadius: '8px' }}
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 900, color: '#000', mb: 0.5 }}>
+            ניהול רבנים
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#5f6368' }}>
+            הוספה, עריכה וניהול של הרבנים באתר
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          onClick={() => setAddOpen(true)}
+          sx={{ bgcolor: '#000', color: colors.gold, borderRadius: '8px', height: '45px', px: 3, fontWeight: 'bold', '&:hover': { bgcolor: colors.gold, color: '#000' } }}
         >
-          מחיקה
-        </Button>
-        <Button 
-          variant="contained" 
-          startIcon={<PublishIcon sx={{ ml: 1 }} />}
-          sx={{ bgcolor: COLORS.SIDEBAR_BROWN, '&:hover': { bgcolor: COLORS.BROWN_DARK }, borderRadius: '8px' }}
-        >
-          פרסום מהיר
+          הוסף רב
         </Button>
       </Stack>
 
-      <TableContainer component={Paper} sx={{ borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-        <Table>
-          <TableHead sx={{ bgcolor: COLORS.SIDEBAR_BROWN }}>
+      {/* כפתורי פעולה מרובה */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+        <Tooltip title={selectedIds.length > 0 ? `פרסם ${selectedIds.length} נבחרים` : 'פרסם נבחרים'}>
+          <IconButton
+            onClick={() => selectedIds.length > 0 && setConfirmBulk('publish')}
+            sx={{ color: colors.gold, '&:hover': { bgcolor: 'rgba(197,160,89,0.1)' } }}
+          >
+            <PublishIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={selectedIds.length > 0 ? `העבר ${selectedIds.length} לטיוטה` : 'העבר לטיוטה'}>
+          <IconButton
+            onClick={() => selectedIds.length > 0 && setConfirmBulk('unpublish')}
+            sx={{ color: colors.gold, '&:hover': { bgcolor: 'rgba(197,160,89,0.1)' } }}
+          >
+            <UnpublishedIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={selectedIds.length > 0 ? `מחק ${selectedIds.length} נבחרים` : 'מחק נבחרים'}>
+          <IconButton
+            onClick={() => selectedIds.length > 0 && setConfirmBulk('delete')}
+            sx={{ color: '#d32f2f', '&:hover': { bgcolor: 'rgba(211,47,47,0.1)' } }}
+          >
+            <DeleteOutlineIcon />
+          </IconButton>
+        </Tooltip>
+        {selectedIds.length > 0 && !confirmBulk && (
+          <Typography variant="caption" sx={{ color: colors.gold, fontWeight: 600 }}>
+            {selectedIds.length} נבחרו
+          </Typography>
+        )}
+        {confirmBulk && (
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Typography variant="caption" sx={{ color: confirmBulk === 'delete' ? '#d32f2f' : colors.gold, fontWeight: 700 }}>
+              {confirmBulk === 'publish' ? `לפרסם ${selectedIds.length} רבנים?` : confirmBulk === 'unpublish' ? `להעביר ${selectedIds.length} לטיוטה?` : `למחוק ${selectedIds.length} רבנים לצמיתות?`}
+            </Typography>
+            <Button
+              size="small"
+              variant="contained"
+              disabled={bulkLoading !== null}
+              onClick={confirmBulk === 'publish' ? handleBulkPublish : confirmBulk === 'unpublish' ? handleBulkUnpublish : handleBulkDelete}
+              sx={{ bgcolor: '#000', color: colors.gold, fontSize: '0.7rem', px: 1, py: 0.3, minWidth: 0, '&:hover': { bgcolor: colors.gold, color: '#000' } }}
+            >
+              {bulkLoading ? <CircularProgress size={14} color="inherit" /> : 'כן'}
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => setConfirmBulk(null)}
+              sx={{ color: '#000', borderColor: '#000', fontSize: '0.7rem', px: 1, py: 0.3, minWidth: 0 }}
+            >
+              ביטול
+            </Button>
+          </Stack>
+        )}
+      </Box>
+
+      <TableContainer component={Paper} sx={{ borderRadius: 0, overflow: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+        <Table size="small">
+          <TableHead>
             <TableRow>
-              <TableCell padding="checkbox"><Checkbox sx={{ color: 'white', '&.Mui-checked': { color: 'white' } }} /></TableCell>
-              <TableCell align="right" sx={{ color: 'white', fontWeight: 'bold', fontFamily: "'YetziraCustom', sans-serif" }}>שם הרב</TableCell>
-              <TableCell align="center" sx={{ color: 'white', fontWeight: 'bold' }}>קדימות</TableCell>
-              <TableCell align="center" sx={{ color: 'white', fontWeight: 'bold' }}>שיעורים</TableCell>
-              <TableCell align="center" sx={{ color: 'white', fontWeight: 'bold' }}>צפיות</TableCell>
-              <TableCell align="center" sx={{ color: 'white', fontWeight: 'bold' }}>מצב</TableCell>
-              <TableCell align="center" sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
+              <TableCell sx={{ bgcolor: colors.gold, width: 40 }}>
+                <Checkbox
+                  size="small"
+                  sx={{ color: '#000', '&.Mui-checked': { color: '#000' }, '&.MuiCheckbox-indeterminate': { color: '#000' }, p: 0 }}
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onChange={(e) => {
+                    if (e.target.checked) setSelectedIds(rabbis.map(r => r.documentId));
+                    else setSelectedIds([]);
+                  }}
+                />
+              </TableCell>
+              <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>תמונה</TableCell>
+              <TableCell align="right" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>שם</TableCell>
+              <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>עדיפות</TableCell>
+              <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>שיעורים</TableCell>
+              <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>כניסות</TableCell>
+<TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>hits per lesson</TableCell>
+              <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>פרסום</TableCell>
+              <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>פעולות</TableCell>
             </TableRow>
           </TableHead>
-          
           <TableBody>
-            {dummyRabbis.map((rabbi) => (
-              <TableRow key={rabbi.id} sx={{ '&:nth-of-type(even)': { bgcolor: COLORS.GOLD_LIGHT } }}>
-                <TableCell padding="checkbox"><Checkbox size="small" sx={{ color: COLORS.SIDEBAR_BROWN }} /></TableCell>
-                <TableCell align="right">
-                  <Typography sx={{ fontWeight: 800, color: COLORS.BROWN_DARK, fontSize: '1.1rem' }}>
-                    {rabbi.name}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <TextField 
-                    size="small" 
-                    defaultValue={rabbi.priority}
-                    sx={{ 
-                      width: 50, 
-                      '& .MuiOutlinedInput-root': { borderRadius: '8px' },
-                      '& .MuiInputBase-input': { textAlign: 'center', fontWeight: 'bold' } 
-                    }} 
+            {loading ? (
+              [1, 2, 3].map(i => (
+                <TableRow key={i}>
+                  <TableCell colSpan={6}><Skeleton variant="rectangular" height={60} /></TableCell>
+                </TableRow>
+              ))
+            ) : rabbis.map(rabbi => (
+              <TableRow key={rabbi.id} hover>
+                <TableCell sx={{ width: 40, py: 0 }}>
+                  <Checkbox
+                    size="small"
+                    sx={{ p: 0, color: colors.gold, '&.Mui-checked': { color: colors.gold } }}
+                    checked={selectedIds.includes(rabbi.documentId)}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedIds(prev => [...prev, rabbi.documentId]);
+                      else setSelectedIds(prev => prev.filter(x => x !== rabbi.documentId));
+                    }}
                   />
                 </TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600 }}>{rabbi.lessons}</TableCell>
-                <TableCell align="center" sx={{ color: '#2e7d32', fontWeight: 'bold' }}>{rabbi.views}</TableCell>
+
                 <TableCell align="center">
-                  <Box sx={{ 
-                    bgcolor: '#e8f5e9', color: '#2e7d32', px: 2, py: 0.5, borderRadius: '20px', 
-                    display: 'inline-block', fontSize: '0.8rem', fontWeight: 'bold' 
-                  }}>
-                    מפורסם
-                  </Box>
+                  <Avatar src={rabbi.photoUrl || ''} sx={{ width: 52, height: 52, mx: 'auto' }} />
                 </TableCell>
-                <TableCell align="center" sx={{ color: '#999' }}>{rabbi.id}</TableCell>
+
+                <TableCell align="right">
+                  <Typography fontWeight={700}>{rabbi.name}</Typography>
+                  <Typography variant="caption" sx={{ color: colors.gold }}>ID: {rabbi.id}</Typography>
+                </TableCell>
+
+                <TableCell align="center">
+                  <Typography fontWeight={600}>{rabbi.priority}</Typography>
+                </TableCell>
+
+                <TableCell align="center">
+                  <Typography fontWeight={600}>{rabbi.totalLessons}</Typography>
+                </TableCell>
+
+                <TableCell align="center">
+                  <Typography fontWeight={600}>{rabbi.totalViews.toLocaleString()}</Typography>
+                </TableCell>
+
+                <TableCell align="center">
+                  <Typography fontWeight={600}>
+                    {rabbi.totalLessons > 0 ? Math.round(rabbi.totalViews / rabbi.totalLessons).toLocaleString() : 0}
+                  </Typography>
+                </TableCell>
+
+                <TableCell align="center">
+                  {rabbi.publishedAt
+                    ? <CheckCircleIcon sx={{ color: colors.gold, fontSize: 22 }} />
+                    : <RemoveCircleOutlineIcon sx={{ color: '#bdbdbd', fontSize: 22 }} />
+                  }
+                </TableCell>
+
+                <TableCell align="center">
+                  <Stack direction="row" justifyContent="center" spacing={1}>
+                    <Tooltip title="ערוך פרטים">
+                      <IconButton onClick={() => setEditRabbi({ ...rabbi })} sx={{ color: '#000', '&:hover': { color: colors.gold } }}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="מחק">
+                      <IconButton onClick={() => setDeleteId(rabbi.id)} sx={{ color: '#d32f2f', '&:hover': { color: '#b71c1c' } }}>
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
+                </TableCell>
+
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
 
-      {/* שליטה בכמות מוצגת */}
-      <Stack direction="row" justifyContent="flex-end" sx={{ mt: 3, px: 2 }}>
-        <Typography sx={{ alignSelf: 'center', ml: 2, fontSize: '0.9rem', color: '#666' }}>הצג רבנים:</Typography>
-        <FormControl size="small">
-          <Select defaultValue={20} sx={{ borderRadius: '8px', bgcolor: 'white' }}>
-            <MenuItem value={10}>10</MenuItem>
-            <MenuItem value={20}>20</MenuItem>
-            <MenuItem value={50}>50</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
+      {/* דיאלוג עריכה */}
+      <Dialog open={editRabbi !== null} onClose={() => setEditRabbi(null)} dir="rtl" fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '20px' } }}>
+        <DialogTitle sx={{ fontWeight: 900, color: colors.gold, textAlign: 'center', pt: 3 }}>
+          עריכת פרטי רב
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ mt: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              <Avatar src={editRabbi?.photoUrl || ''} sx={{ width: 80, height: 80 }} />
+              <Button
+                size="small"
+                startIcon={<PhotoCameraIcon />}
+                onClick={() => fileInputRef.current?.click()}
+                sx={{ color: colors.gold, fontWeight: 700, '& .MuiButton-startIcon': { ml: 1.5 } }}
+              >
+                החלף תמונה
+              </Button>
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                ref={fileInputRef}
+                onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f); }}
+              />
+            </Box>
+            <TextField
+              label="שם הרב"
+              value={editRabbi?.name || ''}
+              onChange={e => setEditRabbi((prev: any) => ({ ...prev, name: e.target.value }))}
+              fullWidth
+              sx={editFieldStyle}
+            />
+            <TextField
+              label="עדיפות (סדר הופעה)"
+              type="number"
+              value={editRabbi?.priority || ''}
+              onChange={e => setEditRabbi((prev: any) => ({ ...prev, priority: e.target.value }))}
+              fullWidth
+              sx={editFieldStyle}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
+          <Button onClick={() => setEditRabbi(null)} variant="outlined" sx={{ borderRadius: '8px', color: '#000', borderColor: '#000' }}>
+            ביטול
+          </Button>
+          <Button
+            onClick={handleSaveEdit}
+            disabled={saving}
+            variant="contained"
+            sx={{ bgcolor: '#000', color: colors.gold, borderRadius: '8px', px: 4, fontWeight: 'bold', boxShadow: '0 8px 16px rgba(0,0,0,0.2)', '&:hover': { bgcolor: colors.gold, color: '#000', transform: 'scale(1.05)', boxShadow: '0 10px 20px rgba(197,160,89,0.4)' }, transition: '0.3s' }}
+          >
+            {saving ? 'שומר...' : 'שמור שינויים'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* דיאלוג אישור מחיקה */}
+      <Dialog open={deleteId !== null} onClose={() => setDeleteId(null)} PaperProps={{ sx: { borderRadius: '20px', width: '300px', p: 0.5 } }}>
+        <Box sx={{ p: 2, textAlign: 'center', direction: 'rtl' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 900, color: colors.gold, mb: 0.5 }}>
+            מחיקת רב
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#5f6368', mb: 2 }}>
+            האם את בטוחה שברצונך למחוק את<br />
+            <strong>"{rabbis.find(r => r.id === deleteId)?.name}"</strong>?
+          </Typography>
+          <Box sx={{ bgcolor: 'rgba(197,160,89,0.08)', p: 1.5, borderRadius: '10px', mb: 2.5, border: '1px solid rgba(197,160,89,0.3)' }}>
+            <Typography variant="caption" sx={{ fontSize: '11px', color: colors.gold, lineHeight: 1.4 }}>
+              פעולה זו אינה הפיכה. הרב יימחק לצמיתות מהמערכת.
+            </Typography>
+          </Box>
+          <Stack spacing={1.5}>
+            <Button fullWidth variant="contained" onClick={handleDelete}
+              sx={{ bgcolor: '#000', color: colors.gold, fontWeight: 'bold', borderRadius: '8px', py: 1, boxShadow: '0 8px 16px rgba(0,0,0,0.2)', '&:hover': { bgcolor: colors.gold, color: '#000', transform: 'scale(1.05)', boxShadow: '0 10px 20px rgba(197,160,89,0.4)' }, transition: '0.3s' }}>
+              מחק לצמיתות
+            </Button>
+            <Button onClick={() => setDeleteId(null)} variant="outlined"
+              sx={{ color: '#000', borderColor: '#000', borderRadius: '8px', fontSize: '0.75rem' }}>
+              ביטול וחזרה
+            </Button>
+          </Stack>
+        </Box>
+      </Dialog>
+
+      {/* דיאלוג הוספת רב */}
+      <Dialog open={addOpen} onClose={() => setAddOpen(false)}>
+        <DialogTitle sx={{ direction: 'rtl', color: colors.gold, fontWeight: 900, textAlign: 'center' }}>הוספת רב חדש</DialogTitle>
+        <DialogContent sx={{ direction: 'rtl', pt: 2 }}>
+          <Stack spacing={2} sx={{ mt: 1, minWidth: 300 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              <Avatar src={newPhotoPreview || ''} sx={{ width: 80, height: 80 }} />
+              <Button
+                size="small"
+                startIcon={<PhotoCameraIcon />}
+                onClick={() => addFileInputRef.current?.click()}
+                sx={{ color: colors.gold, fontWeight: 700, '& .MuiButton-startIcon': { ml: 1.5 } }}
+              >
+                העלה תמונה
+              </Button>
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                ref={addFileInputRef}
+                onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (f) { setNewPhotoFile(f); setNewPhotoPreview(URL.createObjectURL(f)); }
+                }}
+              />
+            </Box>
+            <TextField label="שם הרב" value={newName} onChange={e => setNewName(e.target.value)} fullWidth autoFocus sx={editFieldStyle} />
+            <TextField label="עדיפות (סדר הופעה)" type="number" value={newPriority} onChange={e => setNewPriority(e.target.value)} fullWidth sx={editFieldStyle} />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
+          <Button onClick={() => setAddOpen(false)} variant="outlined" sx={{ borderRadius: '8px', color: '#000', borderColor: '#000' }}>ביטול</Button>
+          <Button onClick={handleAdd} variant="contained" sx={{ bgcolor: '#000', color: colors.gold, borderRadius: '8px', px: 4, fontWeight: 'bold', boxShadow: '0 8px 16px rgba(0,0,0,0.2)', '&:hover': { bgcolor: colors.gold, color: '#000', transform: 'scale(1.05)', boxShadow: '0 10px 20px rgba(197,160,89,0.4)' }, transition: '0.3s' }}>שמור</Button>
+        </DialogActions>
+      </Dialog>
+
     </Box>
   );
 };

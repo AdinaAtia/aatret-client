@@ -1,25 +1,30 @@
 
 import React, { useState, useEffect  } from 'react';
-import { 
-  Box, Typography, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Paper, TextField, IconButton, Tooltip, 
-  InputAdornment,  Stack, Button, 
-
+import {
+  Box, Typography, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, TextField, IconButton, Tooltip,
+  Stack, Button, MenuItem, Pagination, Checkbox, Select, Snackbar, Alert
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import YouTubeIcon from '@mui/icons-material/YouTube';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarTodayIcon from '@mui/icons-material/CalendarTodayOutlined';
+import SearchIcon from '@mui/icons-material/Search';
 import axios from 'axios';
 import EditIcon from '@mui/icons-material/Edit';
 import EditLessonDialog from './EditLessonDialog';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'; // הגרסה עם הקווי מתאר, דומה מאוד לצילום
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import DeleteActionPopover from './DeleteActionPopover';
+
+import { colors } from '../src/theme/tokens';
 const COLORS = {
-  SIDEBAR_BROWN: '#8c6644', 
-  BROWN_DARK: '#9c6644',    
-  BROWN_LIGHT: '#b48a66',   
-  BG_CREAM: '#fdfbe7',
+  SIDEBAR_BROWN: '#000', 
+  BROWN_DARK: colors.gold,    
+  BROWN_LIGHT: colors.gold,   
+  BG_CREAM: '#fff',
   TEXT_GRAY: '#5f6368'
 };
 
@@ -29,20 +34,112 @@ const ManageLessons = () => {
   const [loadingLessons, setLoadingLessons] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const pageSize = 30;
+  const [pageSize, setPageSize] = useState(30);
  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
 const [selectedLesson, setSelectedLesson] = React.useState<any>(null);
 const [openEdit, setOpenEdit] = useState(false);//אחראי על הדילוג
 const handleEditClick = (lesson: any) => {
-  console.log("נתוני השיעור שנלחץ:", lesson); // תבדקי בקונסול מה השם של השדה (id, id_מספר, documentId?)
   const attributes = lesson.attributes || lesson;
-  
+
+  const rabbiName = attributes.rabbi?.data?.attributes?.name || attributes.rabbi?.name;
+  const matchedLecturer = lecturers.find(
+    l => (l.name || l.attributes?.name) === rabbiName
+  );
+
+  const enrichedRabbi = matchedLecturer
+    ? { ...attributes.rabbi, documentId: matchedLecturer.documentId }
+    : attributes.rabbi;
+
   setSelectedLesson({
     ...attributes,
-    // חשוב: ב-Strapi 5 המזהה לעדכון נמצא בשדה documentId
-    id: lesson.documentId || lesson.id 
+    rabbi: enrichedRabbi,
+    id: lesson.documentId || lesson.id
   });
   setOpenEdit(true);
+};
+const [isSyncing, setIsSyncing] = useState(false);
+const [isSyncingViews, setIsSyncingViews] = useState(false);
+const [isScanningAudio, setIsScanningAudio] = useState(false);
+const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+const [playingAudio, setPlayingAudio] = useState<{ url: string; title: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [rabbiSelectValue, setRabbiSelectValue] = useState('');
+  const [selectedRabbiDocId, setSelectedRabbiDocId] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+
+  const handleRabbiFilter = (rabbiDocId: string) => {
+    setSelectedRabbiDocId(rabbiDocId);
+    fetchLessons(1, searchQuery, rabbiDocId);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+    fetchLessons(1, searchQuery, selectedRabbiDocId, newSize);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+const handleSync = async () => {
+  // הפעלת מצב טעינה בכפתור
+  setIsSyncing(true);
+  
+  try {
+    // שליחת בקשה לשרת לביצוע סנכרון מול יוטיוב
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/lessons/sync`);
+    console.log("response",response);
+    
+    
+    // רענן את הטבלה לאחר הסנכרון
+    await fetchLessons(currentPage);
+    
+    alert(`הנתונים עודכנו בהצלחה! נוספו ${response.data.added} שיעורים, דולגו ${response.data.skipped}`);
+  } catch (error) {
+    console.error('Sync error:', error);
+    alert('שגיאה בעדכון הנתונים.');
+  } finally {
+    // כיבוי מצב הטעינה בסיום (גם במקרה של הצלחה וגם בשגיאה)
+    setIsSyncing(false);
+  }
+};
+const handleSyncViews = async () => {
+  setIsSyncingViews(true);
+  try {
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/lessons/sync-views`);
+    alert(`עדכון צפיות הסתיים! עודכנו ${response.data.updated} מתוך ${response.data.total} שיעורים`);
+  } catch (error) {
+    console.error('Sync views error:', error);
+    alert('שגיאה בעדכון הצפיות.');
+  } finally {
+    setIsSyncingViews(false);
+  }
+};
+
+const getAudioUrl = (attr: any) => {
+  const cleanDir = (attr.AudioDir || '').startsWith('/')
+    ? attr.AudioDir.slice(1)
+    : (attr.AudioDir || '');
+  return `/api/lessons/download-file?audioDir=${encodeURIComponent(cleanDir)}&audioFileName=${encodeURIComponent(attr.AudioFileName)}`;
+};
+
+const getPdfUrl = (attr: any) => {
+  const cleanDir = (attr.PdfDir || '').startsWith('/')
+    ? attr.PdfDir.slice(1)
+    : (attr.PdfDir || '');
+  return `/api/lessons/download-file?audioDir=${encodeURIComponent(cleanDir)}&audioFileName=${encodeURIComponent(attr.PdfFileName)}`;
+};
+
+const handleScanAudio = async () => {
+  setIsScanningAudio(true);
+  try {
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/lessons/scan-audio`, { limit: 3 });
+    setSnackbar({ open: true, message: `סריקת שמע הסתיימה! נסרקו: ${response.data.scanned} קבצים, נוספו: ${response.data.added} שיעורים חדשים (Draft)`, severity: 'success' });
+    await fetchLessons(currentPage);
+  } catch (error) {
+    console.error('Scan audio error:', error);
+    setSnackbar({ open: true, message: 'שגיאה בסריקת קבצי שמע.', severity: 'error' });
+  } finally {
+    setIsScanningAudio(false);
+  }
 };
 
 const handleOpenPopover = (event: React.MouseEvent<HTMLButtonElement>, lesson: any) => {
@@ -55,35 +152,60 @@ const handleClosePopover = () => {
   setSelectedLesson(null);
 };
 
- const fetchLessons = async (page: number) => {
+const downloadLesson = (attr: any) => {
+  const cleanDir = (attr.AudioDir || '').replace(/^\/+|\/+$/g, '');
+  const file = `${cleanDir}/${attr.AudioFileName}`;
+  const params = new URLSearchParams({ key: 'ATERET_DL_2026', file, title: attr.title || attr.AudioFileName });
+  const a = document.createElement('a');
+  a.href = `https://ateretmordechaifiles.com/download.php?${params}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+
+const handleBulkDownload = () => {
+  const toDownload = lessons.filter(lesson => {
+    const id = lesson.documentId || String(lesson.id);
+    const attr = lesson.attributes || lesson;
+    return selectedIds.includes(id) && attr.AudioFileName;
+  });
+  toDownload.forEach((lesson, index) => {
+    setTimeout(() => downloadLesson(lesson.attributes || lesson), index * 3000);
+  });
+};
+
+const handleBulkDelete = async () => {
+  try {
+    await Promise.all(
+      selectedIds.map(id =>
+        axios.delete(`${import.meta.env.VITE_API_URL}/api/lessons/${id}`)
+      )
+    );
+    setSelectedIds([]);
+    setConfirmBulkDelete(false);
+    fetchLessons(currentPage);
+  } catch (error) {
+    console.error('שגיאה במחיקה מרובה:', error);
+    alert('חלה שגיאה במחיקה. נסי שוב.');
+  }
+};
+
+ const fetchLessons = async (page: number, query = searchQuery, rabbiId = selectedRabbiDocId, size = pageSize) => {
   try {
     setLoadingLessons(true);
-
-    // 1. קריאה ל-Endpoint המהיר עם פרמטרים של עמוד וגודל עמוד
-    // ה-URL כעת קצר ונקי משמעותית
-    const url = `http://localhost:1337/api/lessons/fast?page=${page}&pageSize=${pageSize}`;
-    
+    const searchParam = query ? `&search=${encodeURIComponent(query)}` : '';
+    const rabbiFilter = rabbiId ? `&rabbiDocId=${rabbiId}` : '';
+    const url = `${import.meta.env.VITE_API_URL}/api/lessons/fast?page=${page}&pageSize=${size}${rabbiFilter}${searchParam}`;
     const response = await axios.get(url);
-
-    // 2. עדכון רשימת השיעורים
-    // מכיוון שה-Controller מחזיר עכשיו { data: [...] }, אנחנו ניגשים ל-response.data.data
-    // האובייקטים כאן הם "שטוחים" (ללא attributes), למשל: lesson.title
     const lessonsData = response.data.data || [];
     setLessons(lessonsData);
-
-    // 3. עדכון מערכת הדיפדוף (Pagination)
-    // ה-Controller מחזיר אובייקט meta זהה למבנה של סטרפי
     const pagination = response.data.meta?.pagination;
     if (pagination) {
-      setTotalPages(pagination.pageCount); // סך כל הדפים
-      setCurrentPage(page);                // העמוד הנוכחי
+      setTotalPages(pagination.pageCount);
+      setCurrentPage(page);
     }
-
-    console.log("נתוני SQL מהירים שהתקבלו:", lessonsData);
-    console.log("מידע על דיפדוף:", pagination);
-
   } catch (error) {
-    console.error('שגיאה בשליפת שיעורים מה-SQL המהיר:', error);
+    console.error('שגיאה בשליפת שיעורים:', error);
   } finally {
     setLoadingLessons(false);
   }
@@ -94,31 +216,23 @@ const getCategoryDisplay = (row: any) => {
 
   const names: string[] = [];
 
-  // 1. הוספת הקטגוריה הראשית (השורש)
   if (attr.main_category?.data?.attributes?.name) {
     names.push(attr.main_category.data.attributes.name);
   }
 
-  // 2. פונקציה פנימית לאיסוף שמות מהתת-קטגוריות (אבא, סבא וכו')
   const collectSubNames = (subData: any) => {
     const currentAttr = subData?.attributes;
     if (!currentAttr) return;
-
-    // אם יש הורה (Parent), נלך אליו קודם כדי לשמור על סדר היררכי
     if (currentAttr.parent_sub?.data) {
       collectSubNames(currentAttr.parent_sub.data);
     }
-    
-    // הוספת השם של הקטגוריה הנוכחית
     if (currentAttr.name) {
       names.push(currentAttr.name);
     }
   };
 
-  // הפעלת האיסוף מהתת-קטגוריה שמשויכת לשיעור
   collectSubNames(attr.sub_category?.data);
 
-  // 3. ניקוי כפילויות (במקרה ששם ה"ראשית" זהה לשם ה"אבא") וחיבור בחיצים
   const uniqueNames = names.filter((name, index) => names.indexOf(name) === index);
 
   return uniqueNames.length > 0 ? uniqueNames.join(" » ") : "ללא קטגוריה";
@@ -126,8 +240,15 @@ const getCategoryDisplay = (row: any) => {
 
 const fetchLecturers = async () => {
     try {
-      const response = await axios.get('http://localhost:1337/api/rabbis?fields[0]=name');
-      setLecturers(response.data.data || []);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/rabbis?fields[0]=name`);
+      const data: any[] = response.data.data || [];
+      setLecturers(data.sort((a, b) => {
+        const na = a.name || a.attributes?.name || '';
+        const nb = b.name || b.attributes?.name || '';
+        if (na.includes('מרדכי עטייה')) return -1;
+        if (nb.includes('מרדכי עטייה')) return 1;
+        return na.localeCompare(nb, 'he');
+      }));
     } catch (error) {
       console.error("Error fetching lecturers:", error);
     } finally {
@@ -151,25 +272,10 @@ const fetchLecturers = async () => {
     fetchLessons(1);
     fetchLecturers()
   }, []);
-const editFieldStyle = {
-  '& .MuiOutlinedInput-root': {
-    direction: 'rtl' as const,
-    '& fieldset': { textAlign: 'right' as const },
-    '&.Mui-focused fieldset': { borderColor: COLORS.BROWN_DARK },
-  },
-  '& .MuiInputLabel-root': {
-    right: 16,
-    left: 'auto',
-    transformOrigin: 'right',
-    '&.Mui-focused': { color: COLORS.BROWN_DARK },
-  },
-  '& .MuiInputLabel-shrink': {
-    transform: 'translate(0, -9px) scale(0.75)',
-    right: 10,
-  }
-};
+
   return (
-  <Box sx={{ 
+  <>
+  <Box sx={{
     p: { xs: 2, md: 4 }, 
     direction: 'rtl', 
     bgcolor: '#f8f9fa', 
@@ -180,39 +286,225 @@ const editFieldStyle = {
   }}>
     
     {/* קונטיינר פנימי שמגביל את הרוחב המקסימלי ויוצר רווחים בצדדים */}
-    <Box sx={{ width: '100%', maxWidth: '1400px' }}>  
-      <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS.SIDEBAR_BROWN, mb: 4 }}>
-        ניהול שיעורים
-      </Typography>
+    <Box sx={{ width: '100%', maxWidth: '100%' }}>  
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 900, color: '#000', mb: 0.5 }}>
+          ניהול שיעורים
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#5f6368' }}>
+          הוספה, עריכה וניהול של השיעורים באתר
+        </Typography>
+      </Box>
 
-      {/* שורת חיפוש עם מרווח */}
-      <Paper elevation={0} sx={{ p: 2, mb: 4, borderRadius: '16px', bgcolor: COLORS.BG_CREAM }}>
-        <TextField 
-          fullWidth
-          placeholder="חפשי לפי כותרת או רב..."
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ color: COLORS.BROWN_DARK }} />
-              </InputAdornment>
-            ),
-            sx: { borderRadius: '12px', bgcolor: '#fff' }
+      <Stack direction="row" gap={2} sx={{ mb: 2, width: '100%' }}>
+        <Box sx={{ width: '50%', display: 'flex', bgcolor: 'white', borderRadius: '8px', height: '35px', overflow: 'hidden', border: '1px solid #eee' }}>
+          <input
+            type="text"
+            placeholder="חפש שיעור..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              fetchLessons(1, e.target.value, selectedRabbiDocId);
+            }}
+            style={{ flex: 1, border: 'none', outline: 'none', padding: '0 16px', fontSize: '0.9rem', direction: 'rtl', fontFamily: 'inherit', background: 'transparent' }}
+          />
+          <Box sx={{ width: '35px', height: '35px', bgcolor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', flexShrink: 0 }}>
+            <SearchIcon sx={{ color: '#fff', fontSize: 18 }} />
+          </Box>
+        </Box>
+
+        <TextField
+          select
+          size="small"
+          value={rabbiSelectValue}
+          onChange={(e) => { setRabbiSelectValue(e.target.value); handleRabbiFilter(e.target.value); }}
+          label="סנן לפי רב"
+          sx={{
+            width: '25%', bgcolor: 'white', borderRadius: '8px',
+            '& .MuiOutlinedInput-root': { borderRadius: '8px', height: '35px', '& fieldset': { borderColor: 'transparent' }, '&:hover fieldset': { borderColor: colors.gold }, '&.Mui-focused fieldset': { borderColor: colors.gold } },
+            '& .MuiInputLabel-root': { right: 14, left: 'auto', transformOrigin: 'right', color: '#000', '&.Mui-focused': { color: colors.gold } },
+            '& .MuiInputLabel-shrink': { right: 14, left: 'auto', transform: 'translate(0, -9px) scale(0.75)' },
+            '& .MuiSelect-icon': { left: 7, right: 'auto' },
+            '& .MuiSelect-select': { paddingRight: '16px !important', paddingLeft: '32px !important', textAlign: 'right', display: 'flex', alignItems: 'center' },
           }}
-        />
-      </Paper>
-<TableContainer component={Paper} sx={{ borderRadius: '20px', overflow: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-        <Table sx={{ minWidth: 1000 }}> {/* מבטיח שהטבלה לא תימחץ מדי */}
+        >
+          <MenuItem value="">כל הרבנים</MenuItem>
+          {lecturers.map((l) => (
+            <MenuItem key={l.id} value={l.documentId || l.id}>{l.name || l.attributes?.name}</MenuItem>
+          ))}
+        </TextField>
+
+        <Button
+          onClick={() => { setSelectedRabbiDocId(''); setRabbiSelectValue(''); setSearchQuery(''); fetchLessons(1, '', ''); }}
+          variant="outlined"
+          sx={{ height: '35px', borderColor: colors.gold, color: colors.gold, borderRadius: '8px', whiteSpace: 'nowrap', '&:hover': { bgcolor: colors.gold, color: '#000' } }}
+        >
+          נקה סינון
+        </Button>
+
+        <Button
+          variant="contained"
+          onClick={handleSync}
+          disabled={isSyncing}
+          sx={{
+            bgcolor: '#000',
+            color: colors.gold,
+            borderRadius: '8px',
+            height: '35px',
+            px: 4,
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+            '&:hover': { bgcolor: colors.gold, color: '#000', transform: 'scale(1.05)', boxShadow: '0 10px 20px rgba(197,160,89,0.4)' },
+            transition: '0.3s',
+            '&.Mui-disabled': { backgroundColor: '#666', color: '#ccc' }
+          }}
+        >
+          {isSyncing ? 'מעדכן מיוטיוב...' : 'עדכן שיעורים'}
+        </Button>
+
+        <Button
+          variant="outlined"
+          onClick={handleSyncViews}
+          disabled={isSyncingViews}
+          sx={{
+            borderColor: colors.gold,
+            color: colors.gold,
+            borderRadius: '8px',
+            height: '35px',
+            px: 3,
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap',
+            '&:hover': { bgcolor: colors.gold, color: '#000' },
+            transition: '0.3s',
+            '&.Mui-disabled': { borderColor: '#666', color: '#666' }
+          }}
+        >
+          {isSyncingViews ? 'מעדכן צפיות...' : 'עדכן צפיות יוטיוב'}
+        </Button>
+
+        <Button
+          variant="outlined"
+          onClick={handleScanAudio}
+          disabled={isScanningAudio}
+          sx={{
+            borderColor: '#4a90d9',
+            color: '#4a90d9',
+            borderRadius: '8px',
+            height: '35px',
+            px: 3,
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap',
+            '&:hover': { bgcolor: '#4a90d9', color: '#fff' },
+            transition: '0.3s',
+            '&.Mui-disabled': { borderColor: '#666', color: '#666' }
+          }}
+        >
+          {isScanningAudio ? 'סורק שמע...' : 'סנכרן שמע מהשרת'}
+        </Button>
+
+        <Button
+          variant="outlined"
+          onClick={() => fetchLessons(currentPage)}
+          sx={{
+            borderColor: colors.gold,
+            color: colors.gold,
+            borderRadius: '8px',
+            height: '35px',
+            px: 3,
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap',
+            '&:hover': { bgcolor: colors.gold, color: '#000' },
+            transition: '0.3s',
+          }}
+        >
+          רענן
+        </Button>
+      </Stack>
+<Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center', gap: 1 }}>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Tooltip title={selectedIds.length > 0 ? `מחק ${selectedIds.length} שיעורים נבחרים` : 'מחק נבחרים'}>
+      <IconButton onClick={() => selectedIds.length > 0 && setConfirmBulkDelete(true)} sx={{ color: '#d32f2f', '&:hover': { bgcolor: 'rgba(211,47,47,0.1)' } }}>
+        <DeleteOutlineIcon />
+      </IconButton>
+    </Tooltip>
+    <Tooltip title={selectedIds.length > 0 ? `הורד ${selectedIds.length} שיעורים נבחרים` : 'הורד נבחרים'}>
+      <IconButton onClick={handleBulkDownload} sx={{ color: colors.gold, '&:hover': { bgcolor: 'rgba(197,160,89,0.1)' } }}>
+        <FileDownloadOutlinedIcon />
+      </IconButton>
+    </Tooltip>
+    {selectedIds.length > 0 && !confirmBulkDelete && (
+      <Typography variant="caption" sx={{ color: colors.gold, fontWeight: 600 }}>
+        {selectedIds.length} נבחרו
+      </Typography>
+    )}
+    {confirmBulkDelete && (
+      <Stack direction="row" alignItems="center" gap={1}>
+        <Typography variant="caption" sx={{ color: colors.gold, fontWeight: 700 }}>
+          למחוק {selectedIds.length} שיעורים?
+        </Typography>
+        <Button size="small" variant="contained" onClick={handleBulkDelete}
+          sx={{ bgcolor: '#000', color: colors.gold, fontSize: '0.7rem', px: 1, py: 0.3, minWidth: 0, '&:hover': { bgcolor: colors.gold, color: '#000' } }}>
+          כן
+        </Button>
+        <Button size="small" variant="outlined" onClick={() => setConfirmBulkDelete(false)}
+          sx={{ color: '#000', borderColor: '#000', fontSize: '0.7rem', px: 1, py: 0.3, minWidth: 0 }}>
+          ביטול
+        </Button>
+      </Stack>
+    )}
+  </Box>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Typography sx={{ fontSize: '0.78rem', color: '#888', fontWeight: 500 }}>שיעורים בעמוד:</Typography>
+    <Select
+      value={pageSize}
+      onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+      size="small"
+      sx={{
+        fontSize: '0.78rem',
+        height: '28px',
+        color: colors.gold,
+        fontWeight: 700,
+        '.MuiOutlinedInput-notchedOutline': { borderColor: colors.gold },
+        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: colors.gold },
+        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: colors.gold },
+        '.MuiSvgIcon-root': { color: colors.gold },
+      }}
+    >
+      {[10, 20, 30, 50, 100].map(n => (
+        <MenuItem key={n} value={n} sx={{ fontSize: '0.78rem' }}>{n}</MenuItem>
+      ))}
+    </Select>
+  </Box>
+</Box>
+
+<TableContainer component={Paper} sx={{ borderRadius: 0, overflow: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+        <Table size="small" sx={{ minWidth: 1000 }}>
    
           <TableHead>
-            <TableRow >
-              {/* שינוי צבע הכתב ללבן (#ffffff) כדי שתראי את הכותרות */}
-              <TableCell align="center"   sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700 }}>פרטי השיעור</TableCell>
-              <TableCell align="center"  sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700 }}>תאריכים</TableCell>
-             <TableCell align="right" sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700 , textAlign: 'center' }}>קטגוריה</TableCell>
-              <TableCell align="center" sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700 }}>משך</TableCell>
-              <TableCell align="center" sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700, textAlign: 'center' }}>צפיות</TableCell>
-              <TableCell align="center" sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700 }}>נתוני אודיו</TableCell>
-              <TableCell align="center" sx={{ bgcolor: COLORS.SIDEBAR_BROWN, color: '#ffffff', fontWeight: 700, textAlign: 'center' }}>פעולות</TableCell>
+            <TableRow>
+              <TableCell sx={{ bgcolor: colors.gold, width: 40 }}>
+                <Checkbox
+                  size="small"
+                  sx={{ color: '#000', '&.Mui-checked': { color: '#000' }, '&.MuiCheckbox-indeterminate': { color: '#000' }, p: 0 }}
+                  checked={lessons.length > 0 && selectedIds.length === lessons.length}
+                  indeterminate={selectedIds.length > 0 && selectedIds.length < lessons.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(lessons.map(l => l.documentId || String(l.id)));
+                    } else {
+                      setSelectedIds([]);
+                    }
+                  }}
+                />
+              </TableCell>
+              <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>פרטי השיעור</TableCell>
+              <TableCell align="center"  sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>תאריכים</TableCell>
+             <TableCell align="right" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 , textAlign: 'center' }}>קטגוריה</TableCell>
+              <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>משך</TableCell>
+              <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700, textAlign: 'center' }}>צפיות</TableCell>
+              <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>סוגים</TableCell>
+              <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700, textAlign: 'center' }}>פעולות</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -222,20 +514,35 @@ const editFieldStyle = {
               lessons.map((lesson) => {
                const attr = lesson.attributes || lesson;
                const realDbId = lesson.id;
-                const { title, youtube_id, lesson_date_gregorian, lesson_date_hebrew, rabbi,duration } = attr;
-   const rabbiName = rabbi?.data?.attributes?.name || rabbi?.name || "הרב מרדכי עטייה";
+const { rabbi } = attr;   const rabbiName = rabbi?.data?.attributes?.name || rabbi?.name || "הרב מרדכי עטייה";
                 // חילוץ נתוני הרב כפי שעשית בקוד ה-AllLessons
 // console.log(`Original ID: ${lesson.id}, Title: ${attr.title}`);
                 return (
-                  <TableRow key={lesson.id} hover>
-                    <TableCell  sx={{textAlign: 'justify'}}>
-                      <Typography alignItems="center" sx={{textAlign: 'justify',fontWeight: 700 }}>{attr.title || `שיעור ${lesson.id}`}</Typography>
+                  <TableRow key={lesson.id} id={`row-${lesson.id}`} hover onClick={() => handleEditClick(lesson)} sx={{ cursor: 'pointer' }}>
+                    <TableCell sx={{ width: 40, py: 0 }}>
+                      <Checkbox
+                        size="small"
+                        sx={{ p: 0, color: colors.gold, '&.Mui-checked': { color: colors.gold } }}
+                        checked={selectedIds.includes(lesson.documentId || String(lesson.id))}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const id = lesson.documentId || String(lesson.id);
+                          if (e.target.checked) {
+                            setSelectedIds(prev => [...prev, id]);
+                          } else {
+                            setSelectedIds(prev => prev.filter(x => x !== id));
+                          }
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ textAlign: 'justify', py: 0 }}>
+                      <Typography variant="body2" alignItems="center" sx={{textAlign: 'justify',fontWeight: 700 }}>{attr.title || `שיעור ${lesson.id}`}</Typography>
                       <Typography variant="caption" sx={{textAlign: 'justify', color: COLORS.BROWN_LIGHT, fontWeight: 600 }}>
                         {rabbiName} | ID: {realDbId}
                       </Typography>
                     </TableCell>
-<TableCell sx={{ py: 2 }}> {/* צמצום הגובה של כל השורה בטבלה */}
-  <Stack spacing={0.8}> {/* ריווח כמעט אפסי בין שתי שורות התאריכים */}
+<TableCell sx={{ py: 0 }}> {/* צמצום הגובה של כל השורה בטבלה */}
+  <Stack spacing={1}>
     
     {/* שורה 1: תאריך עברי */}
     <Stack direction="row"  alignItems="center" gap={1}>
@@ -286,131 +593,54 @@ const editFieldStyle = {
                       <Typography sx={{ fontWeight: 800, color: COLORS.BROWN_DARK }}>{attr.views || 0}</Typography>
                     </TableCell>
 
-                 <TableCell sx={{ textAlign: 'justify' }}>
-  <Stack spacing={1}>
-<TextField 
-  size="small" 
-  label="תיקייה" 
-  defaultValue={attr.AudioDir || ''} 
-  InputProps={{
-    readOnly: true,
-  }}
-  sx={{ 
-    width: 130,
-    // הגדרות עבור תיבת הקלט והמסגרת
-    '& .MuiOutlinedInput-root': {
-      direction: 'rtl', // קריטי כדי שהחיתוך במסגרת יהיה בצד ימין
-      '& input': {
-        textAlign: 'right', // יישור הטקסט שבפנים לימין
-      },
-      '& fieldset': {
-        textAlign: 'right', // הצמדת החיתוך (החור) במסגרת לימין
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: COLORS.BROWN_DARK, // צבע חום בפוקוס
-      },
-    },
-    // הגדרות עבור הלייבל (המילה "תיקייה")
-    '& .MuiInputLabel-root': {
-      right: 20, // מיקום התחלתי בצד ימין
-      left: 'auto',
-      transformOrigin: 'right', // האנימציה תתכווץ לימין
-    //   fontSize: '0.85rem',
-      '&.Mui-focused': {
-        color: COLORS.BROWN_DARK,
-      },
-    },
-    // תיקון מיקום הלייבל כשהוא במצב "מכווץ" (למעלה)
-    '& .MuiInputLabel-shrink': {
-      right: 20, 
-      transform: 'translate(0, -9px) scale(0.75)', // מוודא שהוא יושב בדיוק בתוך החיתוך
-    },
-  }} 
-/>
-<TextField 
-  size="small" 
-  label="קובץ" 
-  defaultValue={attr.AudioFileName || ''} 
-  InputProps={{
-    readOnly: true,
-  }}
-  //dir="rtl" // חשוב מאוד ליישור ראשוני
-  sx={{ 
-    width: 130,
-    '& .MuiOutlinedInput-root': {
-      direction: 'rtl', // מעביר את כל הרכיב למצב ימין לשמאל
-      '& fieldset': {
-        textAlign: 'right', // מעביר את ה"חור" במסגרת לצד ימין
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: COLORS.BROWN_DARK,
-      },
-    },
-    '& .MuiInputLabel-root': {
-      right: 20, // מיקום התחלתי של המילה בימין
-      left: 'auto',
-      transformOrigin: 'right', // מבטיח שהאנימציה תהיה לכיוון ימין
-      '&.Mui-focused': {
-        color: COLORS.BROWN_DARK,
-      },
-    },
-    '& .MuiInputLabel-shrink': {
-      // תיקון המיקום כשהמילה למעלה כדי שלא תתנגש בקו
-      transform: 'translate(0, -9px) scale(0.75)', 
-      right: 10,
-    }
-  }} 
-/>
-<TextField 
-  size="small" 
-  label="קובץ PDF" 
-  defaultValue={attr.AudioFileName || ''} 
-  InputProps={{
-    readOnly: true,
-  }}
-  //dir="rtl" // חשוב מאוד ליישור ראשוני
-  sx={{ 
-    width: 130,
-    '& .MuiOutlinedInput-root': {
-      direction: 'rtl', // מעביר את כל הרכיב למצב ימין לשמאל
-      '& fieldset': {
-        textAlign: 'right', // מעביר את ה"חור" במסגרת לצד ימין
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: COLORS.BROWN_DARK,
-      },
-    },
-    '& .MuiInputLabel-root': {
-      right: 20, // מיקום התחלתי של המילה בימין
-      left: 'auto',
-      transformOrigin: 'right', // מבטיח שהאנימציה תהיה לכיוון ימין
-      '&.Mui-focused': {
-        color: COLORS.BROWN_DARK,
-      },
-    },
-    '& .MuiInputLabel-shrink': {
-      // תיקון המיקום כשהמילה למעלה כדי שלא תתנגש בקו
-      transform: 'translate(0, -9px) scale(0.75)', 
-      right: 10,
-    }
-  }} 
-/>
+                 <TableCell align="center">
+  <Stack direction="row" justifyContent="center" alignItems="center" spacing={0.5}>
+    {attr.youtube_id && (
+      <Tooltip title="פתח ביוטיוב">
+        <IconButton size="small" onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(`https://youtube.com/watch?v=${attr.youtube_id}`, '_blank'); }}>
+          <YouTubeIcon sx={{ color: '#FF0000', fontSize: 20 }} />
+        </IconButton>
+      </Tooltip>
+    )}
+    {attr.AudioFileName && (
+      <Tooltip title="נגן שמע">
+        <IconButton size="small" onClick={(e) => { e.stopPropagation(); e.preventDefault(); setPlayingAudio({ url: getAudioUrl(attr), title: attr.title || 'שיעור' }); }}>
+          <VolumeUpIcon sx={{ color: '#333', fontSize: 20 }} />
+        </IconButton>
+      </Tooltip>
+    )}
+    {attr.PdfFileName && (
+      <Tooltip title="פתח PDF">
+        <IconButton size="small" onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(getPdfUrl(attr), '_blank'); }}>
+          <PictureAsPdfIcon sx={{ color: '#d32f2f', fontSize: 20 }} />
+        </IconButton>
+      </Tooltip>
+    )}
   </Stack>
 </TableCell>
 
                     <TableCell align="center">
                       <Stack direction="row" justifyContent="center" alignItems="center" spacing={1}>
                       <Tooltip title="מחיקת שיעור">
- <IconButton onClick={(e) => handleOpenPopover(e, lesson)}>
+ <IconButton onClick={(e) => { e.stopPropagation(); handleOpenPopover(e, lesson); }}>
   <DeleteOutlineIcon sx={{ color: '#d32f2f' }} />
 </IconButton>
 </Tooltip>
-                        <IconButton 
-                          onClick={() => attr.youtube_id && window.open(`https://youtube.com/watch?v=${attr.youtube_id}`, '_blank')}
+                        <IconButton
+                          onClick={(e) => { e.stopPropagation(); attr.youtube_id && window.open(`https://youtube.com/watch?v=${attr.youtube_id}`, '_blank'); }}
                           disabled={!attr.youtube_id}
                         >
                           <OpenInNewIcon fontSize="small" />
                         </IconButton>
+                        <Tooltip title="הורד שמע">
+  <IconButton
+    disabled={!attr.AudioFileName}
+    onClick={(e) => { e.stopPropagation(); downloadLesson(attr); }}
+    sx={{ color: attr.AudioFileName ? colors.gold : '#ccc' }}
+  >
+    <FileDownloadOutlinedIcon fontSize="small" />
+  </IconButton>
+</Tooltip>
                         <Tooltip title="ערוך פרטים">
   <IconButton 
   onClick={() => {
@@ -436,11 +666,21 @@ handleEditClick(lesson)
     </Box>
 
       {/* כפתורי ניווט (Pagination) - כדי שתוכלי לעבור בין 14,000 השיעורים */}
-      <Stack direction="row" justifyContent="center" alignItems="center" gap={2} sx={{ mt: 4 }}>
-        <Button disabled={currentPage <= 1} onClick={() => fetchLessons(currentPage - 1)} variant="outlined" sx={{ color: COLORS.BROWN_DARK, borderColor: COLORS.BROWN_DARK }}>הקודם</Button>
-        <Typography fontWeight="bold">עמוד {currentPage} מתוך {totalPages}</Typography>
-        <Button disabled={currentPage >= totalPages} onClick={() => fetchLessons(currentPage + 1)} variant="outlined" sx={{ color: COLORS.BROWN_DARK, borderColor: COLORS.BROWN_DARK }}>הבא</Button>
-      </Stack>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, direction: 'ltr' }}>
+        <Pagination
+          count={totalPages}
+          page={currentPage}
+          onChange={(_e, value) => {
+            fetchLessons(value);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          sx={{
+            '& .MuiPaginationItem-root': { color: '#000000', fontWeight: 'bold' },
+            '& .Mui-selected': { backgroundColor: `${colors.gold} !important`, color: '#fff !important' },
+            '& .MuiPaginationItem-root:hover': { backgroundColor: 'rgba(197,160,89,0.1)' }
+          }}
+        />
+      </Box>
   <DeleteActionPopover
   open={Boolean(anchorEl)}
   anchorEl={anchorEl}
@@ -456,6 +696,56 @@ handleEditClick(lesson)
   onSaveSuccess={() => fetchLessons(currentPage)} // מעביר פונקציה שמרעננת את הטבלה אחרי שמירה
 />
     </Box>
+
+    {playingAudio && (
+      <Box sx={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
+        bgcolor: '#000', color: colors.gold,
+        px: 3, py: 1.5,
+        display: 'flex', alignItems: 'center', gap: 2,
+        boxShadow: '0 -4px 20px rgba(0,0,0,0.4)',
+        direction: 'rtl'
+      }}>
+        <VolumeUpIcon sx={{ color: colors.gold, flexShrink: 0 }} />
+        <Typography variant="body2" sx={{ color: colors.gold, fontWeight: 700, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+          {playingAudio.title}
+        </Typography>
+        <audio
+          key={playingAudio.url}
+          autoPlay
+          controls
+          style={{ flex: 2, minWidth: 200, height: 36, direction: 'ltr' }}
+          src={playingAudio.url}
+        />
+        <IconButton size="small" onClick={() => setPlayingAudio(null)} sx={{ color: colors.gold, ml: 1 }}>
+          ✕
+        </IconButton>
+      </Box>
+    )}
+
+    <Snackbar
+      open={snackbar.open}
+      autoHideDuration={4000}
+      onClose={() => setSnackbar({ ...snackbar, open: false })}
+      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+    >
+      <Alert
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        severity={snackbar.severity}
+        variant="filled"
+        icon={false}
+        sx={{
+          boxShadow: '0px 4px 20px rgba(0,0,0,0.3)',
+          bgcolor: '#000',
+          color: colors.gold,
+          '& .MuiAlert-action': { color: colors.gold, alignItems: 'center', paddingLeft: '0' },
+          '& .MuiAlert-message': { paddingLeft: '20px' }
+        }}
+      >
+        {snackbar.message}
+      </Alert>
+    </Snackbar>
+  </>
   );
 };
 

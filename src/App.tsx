@@ -267,12 +267,14 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Box, createTheme, ThemeProvider } from '@mui/material';
+import { HelmetProvider } from 'react-helmet-async';
 import { RabbisProvider } from './context/RabbisContext';
 import { fonts } from './theme/tokens';
 
 import Header from '../Component/Header';
 import Footer from '../Component/Footer';
 import About from '../Component/About';
+import RouteSeo from '../Component/shared/RouteSeo';
 
 const CategoryManager = lazy(() => import('../Component/CategoryManager'));
 const Home = lazy(() => import('../Component/Home'));
@@ -333,10 +335,12 @@ function App() {
   }, []);
 
   return (
+    <HelmetProvider>
     <ThemeProvider theme={theme}>
       <RabbisProvider>
         <BrowserRouter>
           <ScrollToTop />
+          <RouteSeo />
           <Box sx={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', m: 0, p: 0 }}>
             <Header />
             <Box sx={{ flex: 1, width: '100%' }}>
@@ -386,6 +390,7 @@ function App() {
         </BrowserRouter>
       </RabbisProvider>
     </ThemeProvider>
+    </HelmetProvider>
   );
 }
 

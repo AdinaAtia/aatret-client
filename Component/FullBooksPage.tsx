@@ -1,1018 +1,32 @@
-// import React, { useState, useEffect } from 'react';
-// import axios from 'axios';
-// import { useNavigate } from "react-router-dom"; // הוספתי רק את זה
-// import Grid from '@mui/material/Grid'; 
-// import { 
-//   Box, Typography, Card, CardMedia, CardContent, 
-//   Button, TextField, Checkbox, 
-//   FormControlLabel, FormGroup, CircularProgress, Chip 
-// } from '@mui/material';
 
-// const FullBooksPage = () => {
-//   const navigate = useNavigate(); // הגדרתי את הניווט כאן
-//   const [books, setBooks] = useState<any[]>([]);
-//   const [loading, setLoading] = useState(true);
-  
-//   const MAIN_BROWN = '#9c6644';
-//   const STRAPI_BASE_URL = 'http://localhost:1337';
-
-//   useEffect(() => {
-//     const fetchBooks = async () => {
-//       try {
-//         const response = await axios.get(`${STRAPI_BASE_URL}/api/rabbi-books?populate=*`);
-//         if (response.data?.data) {
-//           setBooks(response.data.data);
-//         }
-//       } catch (error) {
-//         console.error("Error:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchBooks();
-//   }, []);
-
-//   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
-
-//   return (
-//     <Box sx={{ p: { xs: 2, md: 10 }, direction: 'rtl', backgroundColor: '#fff', minHeight: '100vh' }}>
-      
-//       <Box sx={{ textAlign: 'center', mb: 10 }}>
-//         <Typography variant="h3" sx={{ fontWeight: 900, fontFamily: 'serif', mb: 1 }}>ספרים</Typography>
-//         <Typography variant="subtitle1" sx={{ opacity: 0.8 }}>הסבר קצר על חנות הספרים</Typography>
-//       </Box>
-
-//       {/* חזרה ל-Grid container המקורי שלך */}
-//       <Grid container spacing={8}>
-        
-//         <Grid size={{ xs: 12, md: 3 }}>
-//           <Box sx={{ 
-//             p: 4, 
-//             borderRadius: '24px', 
-//             backgroundColor: '#fdfbe7', 
-//             border: '1px solid #f0f0f0',
-//             position: 'sticky',
-//             top: '20px'
-//           }}>
-//             <Typography variant="h6" sx={{ mb: 3, fontWeight: 800 }}>סינון ספרים</Typography>
-//             <TextField fullWidth label="ספרי ראש הישיבה" select sx={{ mb: 3 }} size="small" />
-//             <TextField fullWidth label="חיפוש לפי מחבר" sx={{ mb: 3 }} size="small" />
-//             <Typography sx={{ mt: 2, mb: 2, fontWeight: 800, fontSize: '0.9rem' }}>פרשות שבוע</Typography>
-//             <FormGroup>
-//               {['בראשית', 'נח', 'לך לך', 'וירא'].map((parsha) => (
-//                 <FormControlLabel 
-//                   key={parsha} 
-//                   control={<Checkbox size="small" sx={{ color: MAIN_BROWN }} />} 
-//                   label={<Typography sx={{ fontSize: '0.9rem' }}>{parsha}</Typography>} 
-//                 />
-//               ))}
-//             </FormGroup>
-//           </Box>
-//         </Grid>
-
-//         <Grid size={{ xs: 12, md: 9 }}>
-//           <Grid container columnSpacing={6} rowSpacing={12}>
-//             {books.map((book: any) => (
-//               <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={book.id} sx={{ display: 'flex', justifyContent: 'center' }}>
-//                 <Card 
-//                   elevation={0} 
-//                   sx={{ 
-//                     backgroundColor: '#fdfbe7', 
-//                     borderRadius: '2.5rem', 
-//                     p: 3, pt: 4, pb: 8,
-//                     textAlign: 'center',
-//                     position: 'relative',
-//                     overflow: 'visible',
-//                     maxWidth: '250px', 
-//                     width: '100%',
-//                     height: '100%',
-//                     display: 'flex',
-//                     flexDirection: 'column',
-//                     alignItems: 'center'
-//                   }}
-//                 >
-//                   <Chip 
-//                     label="עטרת מרדכי" 
-//                     size="small"
-//                     sx={{ 
-//                       position: 'absolute', top: 20, right: 20,
-//                       backgroundColor: 'rgba(156, 102, 68, 0.08)', color: MAIN_BROWN, fontWeight: 700, fontSize: '0.65rem'
-//                     }} 
-//                   />
-
-//                   <Box sx={{ width: '100%', height: '160px', mb: 3, mt: 2, display: 'flex', justifyContent: 'center' }}>
-//                     <CardMedia
-//                       component="img"
-//                       image={book.image?.[0]?.url ? `${STRAPI_BASE_URL}${book.image[0].url}` : ''}
-//                       sx={{ height: '100%', width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0px 8px 12px rgba(0,0,0,0.1))' }}
-//                     />
-//                   </Box>
-
-//                   <CardContent sx={{ p: 0, textAlign: 'center', flexGrow: 1 }}>
-//                     <Typography sx={{ fontWeight: 900, fontSize: '1.1rem', mb: 1, lineHeight: 1.2 }}>
-//                       {book.book_name}
-//                     </Typography>
-//                     <Typography sx={{ fontSize: '0.85rem', opacity: 0.6 }}>
-//                       {book.rabbi}
-//                     </Typography>
-//                   </CardContent>
-                  
-//                   <Button 
-//                     variant="contained" 
-//                     onClick={() => navigate('/BookDetailsPage', { state: { book: book } })}
-//                     sx={{ 
-//                       backgroundColor: MAIN_BROWN, 
-//                       borderRadius: '12px', px: 5,
-//                       position: 'absolute', bottom: '-22px', 
-//                       left: '50%', transform: 'translateX(-50%)',
-//                       boxShadow: '0 8px 16px rgba(156, 102, 68, 0.3)',
-//                       fontWeight: 700,
-//                       '&:hover': { backgroundColor: '#7d5236' } 
-//                     }}
-//                   >
-//                     לפרטים
-//                   </Button>
-//                 </Card>
-//               </Grid>
-//             ))}
-//           </Grid>
-//         </Grid>
-
-//       </Grid>
-//     </Box>
-//   );
-// };
-
-// export default FullBooksPage;
-// import React, { useState, useEffect } from 'react';
-// import axios from 'axios';
-// import { useNavigate } from "react-router-dom";
-// import Grid from '@mui/material/Grid'; 
-// import { 
-//   Box, Typography, Card, CardMedia, CardContent, 
-//   Button, TextField, Checkbox, 
-//   FormControlLabel, FormGroup, CircularProgress, Chip 
-// } from '@mui/material';
-
-// const FullBooksPage = () => {
-//   const navigate = useNavigate();
-//   const [books, setBooks] = useState<any[]>([]);
-//   const [loading, setLoading] = useState(true);
-  
-//   // State לניהול החיפוש
-//   const [searchTerm, setSearchTerm] = useState('');
-
-//   const MAIN_BROWN = '#9c6644';
-//   const STRAPI_BASE_URL = 'http://localhost:1337';
-
-//   useEffect(() => {
-//     const fetchBooks = async () => {
-//       try {
-//         const response = await axios.get(`${STRAPI_BASE_URL}/api/rabbi-books?populate=*`);
-//         if (response.data?.data) {
-//           setBooks(response.data.data);
-//         }
-//       } catch (error) {
-//         console.error("Error:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchBooks();
-//   }, []);
-
-//   // לוגיקת הסינון בזמן אמת לפי שם המחבר
-//   const filteredBooks = books.filter((book) => 
-//     (book.rabbi || "").toLowerCase().includes(searchTerm.toLowerCase())
-//   );
-
-//   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
-
-//   return (
-//     <Box sx={{ p: { xs: 2, md: 10 }, direction: 'rtl', backgroundColor: '#fff', minHeight: '100vh' }}>
-      
-//       <Box sx={{ textAlign: 'center', mb: 10 }}>
-//         <Typography variant="h3" sx={{ fontWeight: 900, fontFamily: 'serif', mb: 1 }}>ספרים</Typography>
-//         <Typography variant="subtitle1" sx={{ opacity: 0.8 }}>הסבר קצר על חנות הספרים</Typography>
-//       </Box>
-
-//       {/* שמירה על Grid container המקורי שלך */}
-//       <Grid container spacing={8}>
-        
-//         <Grid size={{ xs: 12, md: 3 }}>
-//           <Box sx={{ 
-//             p: 4, 
-//             borderRadius: '24px', 
-//             backgroundColor: '#fdfbe7', 
-//             border: '1px solid #f0f0f0',
-//             position: 'sticky',
-//             top: '20px'
-//           }}>
-//             <Typography variant="h6" sx={{ mb: 3, fontWeight: 800 }}>סינון ספרים</Typography>
-//             <TextField fullWidth label="ספרי ראש הישיבה" select sx={{ mb: 3 }} size="small" />
-            
-//             {/* שדה חיפוש מעודכן: צבע חום ולוגיקת onChange */}
-//             <TextField 
-//               fullWidth 
-//               label="חיפוש לפי מחבר" 
-//               sx={{ 
-//                 mb: 3,
-//                 '& .MuiOutlinedInput-root': {
-//                   '&.Mui-focused fieldset': { borderColor: MAIN_BROWN },
-//                 },
-//                 '& .MuiInputLabel-root.Mui-focused': { color: MAIN_BROWN },
-//               }} 
-//               size="small" 
-//               value={searchTerm}
-//               onChange={(e) => setSearchTerm(e.target.value)}
-//             />
-
-//             <Typography sx={{ mt: 2, mb: 2, fontWeight: 800, fontSize: '0.9rem' }}>פרשות שבוע</Typography>
-//             <FormGroup>
-//               {['בראשית', 'נח', 'לך לך', 'וירא'].map((parsha) => (
-//                 <FormControlLabel 
-//                   key={parsha} 
-//                   control={<Checkbox size="small" sx={{ color: MAIN_BROWN, '&.Mui-checked': { color: MAIN_BROWN } }} />} 
-//                   label={<Typography sx={{ fontSize: '0.9rem' }}>{parsha}</Typography>} 
-//                 />
-//               ))}
-//             </FormGroup>
-//           </Box>
-//         </Grid>
-
-//         <Grid size={{ xs: 12, md: 9 }}>
-//           <Grid container columnSpacing={6} rowSpacing={12}>
-//             {/* מעבר על הרשימה המסוננת במקום הרשימה המלאה */}
-//             {filteredBooks.map((book: any) => (
-//               <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={book.id} sx={{ display: 'flex', justifyContent: 'center' }}>
-//                 <Card 
-//                   elevation={0} 
-//                   sx={{ 
-//                     backgroundColor: '#fdfbe7', 
-//                     borderRadius: '2.5rem', 
-//                     p: 3, pt: 4, pb: 8,
-//                     textAlign: 'center',
-//                     position: 'relative',
-//                     overflow: 'visible',
-//                     maxWidth: '250px', 
-//                     width: '100%',
-//                     height: '100%',
-//                     display: 'flex',
-//                     flexDirection: 'column',
-//                     alignItems: 'center'
-//                   }}
-//                 >
-//                   <Chip 
-//                     label="עטרת מרדכי" 
-//                     size="small"
-//                     sx={{ 
-//                       position: 'absolute', top: 20, right: 20,
-//                       backgroundColor: 'rgba(156, 102, 68, 0.08)', color: MAIN_BROWN, fontWeight: 700, fontSize: '0.65rem'
-//                     }} 
-//                   />
-
-//                   <Box sx={{ width: '100%', height: '160px', mb: 3, mt: 2, display: 'flex', justifyContent: 'center' }}>
-//                     <CardMedia
-//                       component="img"
-//                       image={book.image?.[0]?.url ? `${STRAPI_BASE_URL}${book.image[0].url}` : ''}
-//                       sx={{ height: '100%', width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0px 8px 12px rgba(0,0,0,0.1))' }}
-//                     />
-//                   </Box>
-
-//                   <CardContent sx={{ p: 0, textAlign: 'center', flexGrow: 1 }}>
-//                     <Typography sx={{ fontWeight: 900, fontSize: '1.1rem', mb: 1, lineHeight: 1.2 }}>
-//                       {book.book_name}
-//                     </Typography>
-//                     <Typography sx={{ fontSize: '0.85rem', opacity: 0.6 }}>
-//                       {book.rabbi}
-//                     </Typography>
-//                   </CardContent>
-                  
-//                   <Button 
-//                     variant="contained" 
-//                     onClick={() => navigate('/BookDetailsPage', { state: { book: book } })}
-//                     sx={{ 
-//                       backgroundColor: MAIN_BROWN, 
-//                       borderRadius: '12px', px: 5,
-//                       position: 'absolute', bottom: '-22px', 
-//                       left: '50%', transform: 'translateX(-50%)',
-//                       boxShadow: '0 8px 16px rgba(156, 102, 68, 0.3)',
-//                       fontWeight: 700,
-//                       '&:hover': { backgroundColor: '#7d5236' } 
-//                     }}
-//                   >
-//                     לפרטים
-//                   </Button>
-//                 </Card>
-//               </Grid>
-//             ))}
-//           </Grid>
-//         </Grid>
-
-//       </Grid>
-//     </Box>
-//   );
-// };
-
-// export default FullBooksPage;
-// import React, { useState, useEffect } from 'react';
-// import axios from 'axios';
-// import { useNavigate } from "react-router-dom";
-// import Grid from '@mui/material/Grid'; 
-// import { 
-//   Box, Typography, Card, CardMedia, CardContent, 
-//   Button, TextField, Checkbox, 
-//   FormControlLabel, FormGroup, CircularProgress, Chip, MenuItem
-// } from '@mui/material';
-
-// const FullBooksPage = () => {
-//   const navigate = useNavigate();
-//   const [books, setBooks] = useState<any[]>([]);
-//   const [categories, setCategories] = useState<any[]>([]); 
-//   const [loading, setLoading] = useState(true);
-  
-//   const [searchTerm, setSearchTerm] = useState('');
-//   const [selectedCategory, setSelectedCategory] = useState('הכל');
-
-//   const MAIN_BROWN = '#9c6644';
-//   const STRAPI_BASE_URL = 'http://localhost:1337';
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         // שליפת הספרים עם ה-Relation של הקטגוריה
-//         const booksRes = await axios.get(`${STRAPI_BASE_URL}/api/rabbi-books?populate=*`);
-//         if (booksRes.data?.data) {
-//           setBooks(booksRes.data.data);
-//         }
-        
-//         // שליפת הקטגוריות מטבלת book-categories
-//         const categoriesRes = await axios.get(`${STRAPI_BASE_URL}/api/book-categories`);
-//         if (categoriesRes.data?.data) {
-//           setCategories(categoriesRes.data.data);
-//         }
-//       } catch (error) {
-//         console.error("Error fetching data:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchData();
-//   }, []);
-
-//   const filteredBooks = books.filter((book: any) => {
-//     const item = book.attributes || book;
-    
-//     // חיפוש לפי מחבר
-//     const matchesAuthor = (item.rabbi || "").toLowerCase().includes(searchTerm.toLowerCase());
-    
-//     // סינון לפי קטגוריה - גישה לפי המבנה של Strapi (book_categorie -> data -> attributes -> name)
-//     const bookCatName = item.book_categorie?.data?.attributes?.name;
-//     const matchesCategory = selectedCategory === 'הכל' || bookCatName === selectedCategory;
-
-//     return matchesAuthor && matchesCategory;
-//   });
-
-//   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
-
-//   return (
-//     <Box sx={{ p: { xs: 2, md: 10 }, direction: 'rtl', backgroundColor: '#fff', minHeight: '100vh' }}>
-      
-//       <Box sx={{ textAlign: 'center', mb: 10 }}>
-//         <Typography variant="h3" sx={{ fontWeight: 900, fontFamily: 'serif', mb: 1 }}>ספרים</Typography>
-//         <Typography variant="subtitle1" sx={{ opacity: 0.8 }}>הסבר קצר על חנות הספרים</Typography>
-//       </Box>
-
-//       <Grid container spacing={8}>
-        
-//         <Grid size={{ xs: 12, md: 3 }}>
-//           <Box sx={{ 
-//             p: 4, 
-//             borderRadius: '24px', 
-//             backgroundColor: '#fdfbe7', 
-//             border: '1px solid #f0f0f0',
-//             position: 'sticky',
-//             top: '20px'
-//           }}>
-//             <Typography variant="h6" sx={{ mb: 3, fontWeight: 800 }}>סינון ספרים</Typography>
-            
-//             <TextField 
-//               fullWidth 
-//               label="ספרי ראש הישיבה" 
-//               select 
-//               sx={{ 
-//                 mb: 3,
-//                 '& .MuiOutlinedInput-root': {
-//                   '&.Mui-focused fieldset': { borderColor: MAIN_BROWN },
-//                 },
-//                 '& .MuiInputLabel-root.Mui-focused': { color: MAIN_BROWN },
-//               }} 
-//               size="small"
-//               value={selectedCategory}
-//               onChange={(e) => setSelectedCategory(e.target.value)}
-//             >
-//               <MenuItem value="הכל">הכל</MenuItem>
-//               {categories.map((cat: any) => {
-//                 const name = cat.attributes?.name || cat.name;
-//                 return (
-//                   <MenuItem key={cat.id} value={name}>{name}</MenuItem>
-//                 );
-//               })}
-//             </TextField>
-            
-//             <TextField 
-//               fullWidth 
-//               label="חיפוש לפי מחבר" 
-//               sx={{ 
-//                 mb: 3,
-//                 '& .MuiOutlinedInput-root': {
-//                   '&.Mui-focused fieldset': { borderColor: MAIN_BROWN },
-//                 },
-//                 '& .MuiInputLabel-root.Mui-focused': { color: MAIN_BROWN },
-//               }} 
-//               size="small" 
-//               value={searchTerm}
-//               onChange={(e) => setSearchTerm(e.target.value)}
-//             />
-
-//             <Typography sx={{ mt: 2, mb: 2, fontWeight: 800, fontSize: '0.9rem' }}>פרשות שבוע</Typography>
-//             <FormGroup>
-//               {['בראשית', 'נח', 'לך לך', 'וירא'].map((parsha) => (
-//                 <FormControlLabel 
-//                   key={parsha} 
-//                   control={<Checkbox size="small" sx={{ color: MAIN_BROWN, '&.Mui-checked': { color: MAIN_BROWN } }} />} 
-//                   label={<Typography sx={{ fontSize: '0.9rem' }}>{parsha}</Typography>} 
-//                 />
-//               ))}
-//             </FormGroup>
-//           </Box>
-//         </Grid>
-
-//         <Grid size={{ xs: 12, md: 9 }}>
-//           <Grid container columnSpacing={6} rowSpacing={12}>
-//             {filteredBooks.map((book: any) => {
-//               const item = book.attributes || book;
-//               // נתיב התמונה המקורי שלך
-//               const imageUrl = item.image?.[0]?.url || item.image?.data?.[0]?.attributes?.url || '';
-              
-//               return (
-//                 <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={book.id} sx={{ display: 'flex', justifyContent: 'center' }}>
-//                   <Card 
-//                     elevation={0} 
-//                     sx={{ 
-//                       backgroundColor: '#fdfbe7', 
-//                       borderRadius: '2.5rem', 
-//                       p: 3, pt: 4, pb: 8,
-//                       textAlign: 'center',
-//                       position: 'relative',
-//                       overflow: 'visible',
-//                       maxWidth: '250px', 
-//                       width: '100%',
-//                       height: '100%',
-//                       display: 'flex',
-//                       flexDirection: 'column',
-//                       alignItems: 'center'
-//                     }}
-//                   >
-//                     <Chip 
-//                       label="עטרת מרדכי" 
-//                       size="small"
-//                       sx={{ 
-//                         position: 'absolute', top: 20, right: 20,
-//                         backgroundColor: 'rgba(156, 102, 68, 0.08)', color: MAIN_BROWN, fontWeight: 700, fontSize: '0.65rem'
-//                       }} 
-//                     />
-
-//                     <Box sx={{ width: '100%', height: '160px', mb: 3, mt: 2, display: 'flex', justifyContent: 'center' }}>
-//                       <CardMedia
-//                         component="img"
-//                         image={imageUrl ? `${STRAPI_BASE_URL}${imageUrl}` : ''}
-//                         sx={{ height: '100%', width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0px 8px 12px rgba(0,0,0,0.1))' }}
-//                       />
-//                     </Box>
-
-//                     <CardContent sx={{ p: 0, textAlign: 'center', flexGrow: 1 }}>
-//                       <Typography sx={{ fontWeight: 900, fontSize: '1.1rem', mb: 1, lineHeight: 1.2 }}>
-//                         {item.book_name}
-//                       </Typography>
-//                       <Typography sx={{ fontSize: '0.85rem', opacity: 0.6 }}>
-//                         {item.rabbi}
-//                       </Typography>
-//                     </CardContent>
-                    
-//                     <Button 
-//                       variant="contained" 
-//                       onClick={() => navigate('/BookDetailsPage', { state: { book: book } })}
-//                       sx={{ 
-//                         backgroundColor: MAIN_BROWN, 
-//                         borderRadius: '12px', px: 5,
-//                         position: 'absolute', bottom: '-22px', 
-//                         left: '50%', transform: 'translateX(-50%)',
-//                         boxShadow: '0 8px 16px rgba(156, 102, 68, 0.3)',
-//                         fontWeight: 700,
-//                         '&:hover': { backgroundColor: '#7d5236' } 
-//                       }}
-//                     >
-//                       לפרטים
-//                     </Button>
-//                   </Card>
-//                 </Grid>
-//               );
-//             })}
-//           </Grid>
-//         </Grid>
-
-//       </Grid>
-//     </Box>
-//   );
-// };
-
-// export default FullBooksPage;
-
-// import React, { useState, useEffect } from 'react';
-// import axios from 'axios';
-// import { useNavigate } from "react-router-dom";
-// import Grid from '@mui/material/Grid'; 
-// import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
-// import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-// import CalendarTodayIcon from '@mui/icons-material/CalendarTodayOutlined';
-// import AccessTimeIcon from '@mui/icons-material/AccessTime';
-// import SearchOffIcon from '@mui/icons-material/SearchOff';
-// import RestartAltIcon from '@mui/icons-material/RestartAlt';
-// import { 
-//   Box, Typography, Card, CardMedia, CardContent, 
-//   Button, TextField, Checkbox, 
-//   FormControlLabel, FormGroup, CircularProgress, Chip, MenuItem,
-//   Accordion,
-//   AccordionSummary,
-  
-//   AccordionDetails
-// } from '@mui/material';
-
-// const FullBooksPage = () => {
-//   const navigate = useNavigate();
-//   const [books, setBooks] = useState<any[]>([]);
-//   const [categories, setCategories] = useState<any[]>([]); 
-//   const [loading, setLoading] = useState(true);
-  
-//   const [searchTerm, setSearchTerm] = useState('');
-//   const [selectedCategory, setSelectedCategory] = useState('הכל');
-//     const MAIN_BROWN = '#9c6644';
-// const SquareIcon = ({ isSelected }: { isSelected: boolean }) => (
-//   <Box
-//     sx={{
-//       width: 12,
-//       height: 12,
-//       border: '2px solid #9c6644',
-//       borderRadius: '3px',
-//       backgroundColor: isSelected ? '#9c6644' : 'transparent',
-//       transition: 'all 0.2s ease',
-//       flexShrink: 0
-//     }}
-//   />
-// );
-// const commonFieldStyle = {
-//   mb: 3,
-//   '& .MuiOutlinedInput-root': {
-//     '& fieldset': { borderColor: 'rgba(156, 102, 68, 0.3)' }, // חום עדין
-//     '&.Mui-focused fieldset': { borderColor: MAIN_BROWN },     // מונע כחול - הופך לחום בפוקוס
-//   },
-//   '& .MuiInputLabel-root.Mui-focused': { color: MAIN_BROWN },  // טקסט תווית חום
-//   '& .MuiSvgIcon-root': { color: MAIN_BROWN },                 // חץ של ה-Select חום
-// };
-//   const STRAPI_BASE_URL = 'http://localhost:1337';
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         // שליפת הספרים עם populate עמוק יותר
-//         const booksRes = await axios.get(`${STRAPI_BASE_URL}/api/rabbi-books?populate[book_categorie][populate]=*&populate[image][populate]=*`);
-//         if (booksRes.data?.data) {
-//           setBooks(booksRes.data.data);
-//         }
-        
-//         // שליפת הקטגוריות
-//         const categoriesRes = await axios.get(`${STRAPI_BASE_URL}/api/book-categories`);
-//         if (categoriesRes.data?.data) {
-//           setCategories(categoriesRes.data.data);
-//         }
-//       } catch (error) {
-//         console.error("Error fetching data:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchData();
-//   }, []);
-
-//   const filteredBooks = books.filter((book: any) => {
-//     const item = book.attributes || book;
-    
-//     // סינון לפי מחבר
-//     const matchesAuthor = (item.rabbi || "").toLowerCase().includes(searchTerm.toLowerCase());
-    
-//     // חילוץ שם הקטגוריה - בדיקה של כל האופציות האפשריות מ-Strapi
-//     const bookCatName = 
-//       item.book_categorie?.data?.attributes?.name || 
-//       item.book_categorie?.name || 
-//       item.book_categorie?.data?.name;
-    
-//     // אם בחרנו "הכל", אל תסנן. אם בחרנו קטגוריה, תשווה לשם שחילצנו
-//     const matchesCategory = selectedCategory === 'הכל' || bookCatName === selectedCategory;
-
-//     return matchesAuthor && matchesCategory;
-//   });
-
-//   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
-
-//   return (
-//     <Box sx={{ p: { xs: 2, md: 10 }, direction: 'rtl', backgroundColor: '#fff', minHeight: '100vh' }}>
-      
-//       <Box sx={{ textAlign: 'center', mb: 10 }}>
-//         <Typography variant="h3" sx={{ fontWeight: 900, fontFamily: 'serif', mb: 1 }}>ספרים</Typography>
-//         <Typography variant="subtitle1" sx={{ opacity: 0.8 }}>הסבר קצר על חנות הספרים</Typography>
-//       </Box>
-
-// <Grid size={{ xs: 12, md: 3 }}>
-//   <Box sx={{ 
-//     p: 1, // צמצום הפדינג שיהיה עדין כמו הראשון
-//     bgcolor: '#fdfbe6', 
-//     borderRadius: '1.25rem', 
-//     border: '1px solid #f0edcf',
-//     position: 'sticky',
-//     top: '20px'
-//   }}>
-    
-//     {/* כותרת ראשית של הסינון */}
-//     <Typography variant="h6" sx={{ p: 1.5, pb: 0.5, fontWeight: 'bold', fontSize: '1.1rem', color: '#9c6644' }}>
-//       סינון ספרים
-//     </Typography>
-
-//     {/* כפתור נקה סינון - מופיע רק אם נבחרה קטגוריה או הוקלד חיפוש */}
-//     {(selectedCategory !== "הכל" || searchTerm) && (
-//       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, px: 1 }}>
-//         <Button 
-//           onClick={() => { setSelectedCategory("הכל"); setSearchTerm(""); }}
-//           variant="contained"
-//           startIcon={<RestartAltIcon sx={{ fontSize: '1.1rem !important' }} />} 
-//           sx={{ 
-//             bgcolor:'#9c6644', color: '#fff', borderRadius: '50px', px: 2, py: 0.5, fontSize: '0.75rem', fontWeight: 'bold',
-//             '&:hover': { bgcolor: '#8b5a3c' }, textTransform: 'none', gap: 0.5
-//           }}
-//         >
-//           נקה סינון
-//         </Button>
-//       </Box>
-//     )}
-
-//     {/* אקורדיון קטגוריות ספרים */}
-//     <Accordion defaultExpanded elevation={0} sx={{ bgcolor: 'white', borderRadius: '0.8rem !important', border: '1px solid #e0e0e0', mb: 1, '&:before': { display: 'none' } }}>
-//       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-//         <Typography fontSize="1rem" fontWeight="bold">ספרי ראש הישיבה</Typography>
-//       </AccordionSummary>
-//       <AccordionDetails sx={{ pt: 0 }}>
-//         {/* אופציית "הכל" */}
-//         <Typography 
-//           onClick={() => setSelectedCategory("הכל")}
-//           sx={{ 
-//             fontSize: '0.85rem', py: 0.8, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer',
-//             fontWeight: selectedCategory === "הכל" ? 'bold' : 'normal',
-//             color: '#9c6644',
-//           }}
-//         >
-//           <SquareIcon isSelected={selectedCategory === "הכל"} />
-//           הכל
-//         </Typography>
-
-//         {/* רשימת הקטגוריות מה-API */}
-//         {categories.map((cat: any) => {
-//           const name = cat.attributes?.name || cat.name;
-//           const isSelected = selectedCategory === name;
-//           return (
-//             <Typography 
-//               key={cat.id} 
-//               onClick={() => setSelectedCategory(name)}
-//               sx={{ 
-//                 fontSize: '0.85rem', py: 0.8, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer',
-//                 fontWeight: isSelected ? 'bold' : 'normal',
-//                 color: '#9c6644',
-//               }}
-//             >
-//               <SquareIcon isSelected={isSelected} />
-//               {name}
-//             </Typography>
-//           );
-//         })}
-//       </AccordionDetails>
-//     </Accordion>
-
-//     {/* אקורדיון חיפוש חופשי (במקום TextField) */}
-//     <Accordion elevation={0} sx={{ bgcolor: 'white', borderRadius: '0.8rem !important', border: '1px solid #e0e0e0', '&:before': { display: 'none' } }}>
-//       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-//         <Typography fontSize="1rem" fontWeight="bold">חיפוש לפי שם</Typography>
-//       </AccordionSummary>
-//       <AccordionDetails>
-//         <TextField 
-//           fullWidth 
-//           placeholder="הקלד שם מחבר או ספר..." 
-//           size="small" 
-//           value={searchTerm}
-//           onChange={(e) => setSearchTerm(e.target.value)}
-//           sx={{ 
-//             '& .MuiOutlinedInput-root': { borderRadius: '10px' },
-//             '& .MuiInputBase-input': { fontSize: '0.85rem' }
-//           }}
-//         />
-//       </AccordionDetails>
-//     </Accordion>
-
-//   </Box>
-// </Grid>
-
-//         <Grid size={{ xs: 12, md: 9 }}>
-//           <Grid container columnSpacing={6} rowSpacing={12}>
-//             {filteredBooks.map((book: any) => {
-//               const item = book.attributes || book;
-//               const imageUrl = item.image?.[0]?.url || item.image?.data?.[0]?.attributes?.url || '';
-              
-//               return (
-//                 <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={book.id} sx={{ display: 'flex', justifyContent: 'center' }}>
-//                   <Card 
-//                     elevation={0} 
-//                     sx={{ 
-//                       backgroundColor: '#fdfbe7', 
-//                       borderRadius: '2.5rem', 
-//                       p: 3, pt: 4, pb: 8,
-//                       textAlign: 'center',
-//                       position: 'relative',
-//                       overflow: 'visible',
-//                       maxWidth: '250px', 
-//                       width: '100%',
-//                       height: '100%',
-//                       display: 'flex',
-//                       flexDirection: 'column',
-//                       alignItems: 'center'
-//                     }}
-//                   >
-//                     <Chip 
-//                       label="עטרת מרדכי" 
-//                       size="small"
-//                       sx={{ 
-//                         position: 'absolute', top: 20, right: 20,
-//                         backgroundColor: 'rgba(156, 102, 68, 0.08)', color: MAIN_BROWN, fontWeight: 700, fontSize: '0.65rem'
-//                       }} 
-//                     />
-
-//                     <Box sx={{ width: '100%', height: '160px', mb: 3, mt: 2, display: 'flex', justifyContent: 'center' }}>
-//                       <CardMedia
-//                         component="img"
-//                         image={imageUrl ? `${STRAPI_BASE_URL}${imageUrl}` : ''}
-//                         sx={{ height: '100%', width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0px 8px 12px rgba(0,0,0,0.1))' }}
-//                       />
-//                     </Box>
-
-//                     <CardContent sx={{ p: 0, textAlign: 'center', flexGrow: 1 }}>
-//                       <Typography sx={{ fontWeight: 900, fontSize: '1.1rem', mb: 1, lineHeight: 1.2 }}>
-//                         {item.book_name}
-//                       </Typography>
-//                       <Typography sx={{ fontSize: '0.85rem', opacity: 0.6 }}>
-//                         {item.rabbi}
-//                       </Typography>
-//                     </CardContent>
-                    
-//                     <Button 
-//                       variant="contained" 
-//                       onClick={() => navigate('/BookDetailsPage', { state: { book: book } })}
-//                       sx={{ 
-//                         backgroundColor: MAIN_BROWN, 
-//                         borderRadius: '12px', px: 5,
-//                         position: 'absolute', bottom: '-22px', 
-//                         left: '50%', transform: 'translateX(-50%)',
-//                         boxShadow: '0 8px 16px rgba(156, 102, 68, 0.3)',
-//                         fontWeight: 700,
-//                         '&:hover': { backgroundColor: '#7d5236' } 
-//                       }}
-//                     >
-//                       לפרטים
-//                     </Button>
-//                   </Card>
-//                 </Grid>
-//               );
-//             })}
-//           </Grid>
-//         </Grid>
-
-//       </Grid>
-//     </Box>
-//   );
-// };
-
-// export default FullBooksPage;
-// import React, { useState, useEffect } from 'react';
-// import axios from 'axios';
-// import { useNavigate } from "react-router-dom";
-// import Grid from '@mui/material/Grid'; 
-// import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-// import RestartAltIcon from '@mui/icons-material/RestartAlt';
-// import { 
-//   Box, Typography, Card, CardMedia, CardContent, 
-//   Button, TextField, CircularProgress, Chip,
-//   Accordion, AccordionSummary, AccordionDetails
-// } from '@mui/material';
-
-// // רכיב הריבוע לסינון
-// const SquareIcon = ({ isSelected }: { isSelected: boolean }) => (
-//   <Box
-//     sx={{
-//       width: 12,
-//       height: 12,
-//       border: '2px solid #9c6644',
-//       borderRadius: '3px',
-//       backgroundColor: isSelected ? '#9c6644' : 'transparent',
-//       transition: 'all 0.2s ease',
-//       flexShrink: 0
-//     }}
-//   />
-// );
-
-// const FullBooksPage = () => {
-//   const navigate = useNavigate();
-//   const [books, setBooks] = useState<any[]>([]);
-//   const [categories, setCategories] = useState<any[]>([]); 
-//   const [loading, setLoading] = useState(true);
-//   const [searchTerm, setSearchTerm] = useState('');
-//   const [selectedCategory, setSelectedCategory] = useState('הכל');
-//   const MAIN_BROWN = '#9c6644';
-//   const STRAPI_BASE_URL = 'http://localhost:1337';
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         const booksRes = await axios.get(`${STRAPI_BASE_URL}/api/rabbi-books?populate[book_categorie][populate]=*&populate[image][populate]=*`);
-//         if (booksRes.data?.data) setBooks(booksRes.data.data);
-//         const categoriesRes = await axios.get(`${STRAPI_BASE_URL}/api/book-categories`);
-//         if (categoriesRes.data?.data) setCategories(categoriesRes.data.data);
-//       } catch (error) {
-//         console.error("Error fetching data:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchData();
-//   }, []);
-
-//   const filteredBooks = books.filter((book: any) => {
-//     const item = book.attributes || book;
-//     const matchesSearch = (item.rabbi || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
-//                           (item.book_name || "").toLowerCase().includes(searchTerm.toLowerCase());
-//     const bookCatName = item.book_categorie?.data?.attributes?.name || item.book_categorie?.name;
-//     const matchesCategory = selectedCategory === 'הכל' || bookCatName === selectedCategory;
-//     return matchesSearch && matchesCategory;
-//   });
-
-//   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
-
-//   return (
-//     <Box sx={{ p: { xs: 2, md: 10 }, direction: 'rtl', backgroundColor: '#fff', minHeight: '100vh' }}>
-      
-//       <Box sx={{ textAlign: 'center', mb: 10 }}>
-//         <Typography variant="h3" sx={{     fontFamily: "'YetziraCustom', sans-serif !important", // השם שהגדרנו ב-CSS
-// fontWeight: 900, mb: 1 }}>ספרי הישיבה</Typography>
-//       </Box>
-
-//       <Grid container spacing={3}>
-//         {/* סרגל צדי */}
-//         <Grid size={{ xs: 12, md: 3 }}>
-//           <Box sx={{ p: 1, bgcolor: '#fdfbe6', borderRadius: '1.25rem', border: '1px solid #f0edcf', position: 'sticky', top: '20px' }}>
-//             <Typography variant="h6" sx={{ p: 1.5, pb: 0.5, fontWeight: 'bold', fontSize: '1.1rem', color: MAIN_BROWN }}>סינון ספרים</Typography>
-
-//             {(selectedCategory !== "הכל" || searchTerm) && (
-//               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, px: 1 }}>
-//                 <Button 
-//                   onClick={() => { setSelectedCategory("הכל"); setSearchTerm(""); }}
-//                   variant="contained"
-//                   startIcon={<RestartAltIcon sx={{ fontSize: '1.1rem !important' }} />} 
-//                   sx={{ bgcolor: MAIN_BROWN, color: '#fff', borderRadius: '50px', px: 2, py: 0.5, fontSize: '0.75rem', fontWeight: 'bold', '&:hover': { bgcolor: '#8b5a3c' }, textTransform: 'none' }}
-//                 >
-//                   נקה סינון
-//                 </Button>
-//               </Box>
-//             )}
-
-//             <Accordion defaultExpanded elevation={0} sx={{ bgcolor: 'white', borderRadius: '0.8rem !important', border: '1px solid #e0e0e0', mb: 1, '&:before': { display: 'none' } }}>
-//               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-//                 <Typography fontSize="1rem" fontWeight="bold">ספרי ראש הישיבה</Typography>
-//               </AccordionSummary>
-//               <AccordionDetails sx={{ pt: 0 }}>
-//                 <Typography 
-//                   onClick={() => setSelectedCategory("הכל")}
-//                   sx={{ fontSize: '0.85rem', py: 0.8, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', fontWeight: selectedCategory === "הכל" ? 'bold' : 'normal', color: MAIN_BROWN }}
-//                 >
-//                   <SquareIcon isSelected={selectedCategory === "הכל"} /> הכל
-//                 </Typography>
-//                 {categories.map((cat: any) => {
-//                   const name = cat.attributes?.name || cat.name;
-//                   return (
-//                     <Typography 
-//                       key={cat.id} 
-//                       onClick={() => setSelectedCategory(name)}
-//                       sx={{ fontSize: '0.85rem', py: 0.8, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', fontWeight: selectedCategory === name ? 'bold' : 'normal', color: MAIN_BROWN }}
-//                     >
-//                       <SquareIcon isSelected={selectedCategory === name} /> {name}
-//                     </Typography>
-//                   );
-//                 })}
-//               </AccordionDetails>
-//             </Accordion>
-
-//             <Accordion elevation={0} sx={{ bgcolor: 'white', borderRadius: '0.8rem !important', border: '1px solid #e0e0e0', '&:before': { display: 'none' } }}>
-//               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-//                 <Typography fontSize="1rem" fontWeight="bold">חיפוש לפי שם</Typography>
-//               </AccordionSummary>
-//               <AccordionDetails>
-//                 <TextField fullWidth placeholder="חיפוש..." size="small" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-//               </AccordionDetails>
-//             </Accordion>
-//           </Box>
-//         </Grid>
-
-//         {/* הצגת הספרים - העיצוב המקורי שלך */}
-//         <Grid size={{ xs: 12, md: 9 }}>
-//           <Grid container columnSpacing={6} rowSpacing={12}>
-//             {filteredBooks.map((book: any) => {
-//               const item = book.attributes || book;
-//               const imageUrl = item.image?.data?.[0]?.attributes?.url || item.image?.[0]?.url || '';
-//               return (
-//                 <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={book.id} sx={{ display: 'flex', justifyContent: 'center' }}>
-//                   <Card 
-//                     elevation={0} 
-//                     sx={{ 
-//                       backgroundColor: '#fdfbe7', borderRadius: '2.5rem', p: 3, pt: 4, pb: 8, textAlign: 'center', position: 'relative', overflow: 'visible', maxWidth: '250px', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' 
-//                     }}
-//                   >
-//                     <Chip label="עטרת מרדכי" size="small" sx={{ position: 'absolute', top: 20, right: 20, backgroundColor: 'rgba(156, 102, 68, 0.08)', color: MAIN_BROWN, fontWeight: 700, fontSize: '0.65rem' }} />
-//                     <Box sx={{ width: '100%', height: '160px', mb: 3, mt: 2, display: 'flex', justifyContent: 'center' }}>
-//                       <CardMedia component="img" image={imageUrl ? `${STRAPI_BASE_URL}${imageUrl}` : ''} sx={{ height: '100%', width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0px 8px 12px rgba(0,0,0,0.1))' }} />
-//                     </Box>
-//                     <CardContent sx={{ p: 0, textAlign: 'center', flexGrow: 1 }}>
-//                       <Typography sx={{ fontWeight: 900, fontSize: '1.1rem', mb: 1, lineHeight: 1.2 }}>{item.book_name}</Typography>
-//                       <Typography sx={{ fontSize: '0.85rem', opacity: 0.6 }}>{item.rabbi}</Typography>
-//                     </CardContent>
-//                     <Button 
-//                       variant="contained" 
-//                       onClick={() => navigate('/BookDetailsPage', { state: { book } })}
-//                       sx={{ backgroundColor: MAIN_BROWN, borderRadius: '12px', px: 5, position: 'absolute', bottom: '-22px', left: '50%', transform: 'translateX(-50%)', boxShadow: '0 8px 16px rgba(156, 102, 68, 0.3)', fontWeight: 700, '&:hover': { backgroundColor: '#7d5236' } }}
-//                     >
-//                       לפרטים
-//                     </Button>
-//                   </Card>
-//                 </Grid>
-//               );
-//             })}
-//           </Grid>
-//         </Grid>
-//       </Grid>
-//     </Box>
-//   );
-// };
-
-// export default FullBooksPage;
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
-import Grid from '@mui/material/Grid'; 
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Grid from '@mui/material/Grid';
+import SearchIcon from '@mui/icons-material/Search';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import { 
-  Box, Typography, Card, CardMedia, CardContent, 
-  Button, TextField, CircularProgress, Chip,
-  Accordion, AccordionSummary, AccordionDetails
+import {
+  Box, Typography, CardMedia,
+  Button, Skeleton
 } from '@mui/material';
+import PageHeader from './shared/PageHeader';
+import { Crown } from './Header';
+import { colors, fonts, fontSize, gradients, goldButtonStyle, goldTextFill, radius, bookCard, bookPurchaseCard } from '../src/theme/tokens';
 
-// רכיב הריבוע לסינון
-const SquareIcon = ({ isSelected }: { isSelected: boolean }) => (
-  <Box
-    sx={{
-      width: 12,
-      height: 12,
-      border: '2px solid #9c6644',
-      borderRadius: '3px',
-      backgroundColor: isSelected ? '#9c6644' : 'transparent',
-      transition: 'all 0.2s ease',
-      flexShrink: 0
-    }}
-  />
-);
+const CHIP_ACTIVE_TEXT = colors.goldLight;
 
 const FullBooksPage = () => {
   const navigate = useNavigate();
   const [books, setBooks] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]); 
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('הכל');
-  const MAIN_BROWN = '#9c6644';
-  const STRAPI_BASE_URL = 'http://localhost:1337';
+  const STRAPI_BASE_URL = `${import.meta.env.VITE_API_URL}`;
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -1020,7 +34,7 @@ const FullBooksPage = () => {
         setLoading(true);
         // שיפור מהירות: טעינה במקביל
         const [booksRes, categoriesRes] = await Promise.all([
-          axios.get(`${STRAPI_BASE_URL}/api/rabbi-books?populate[book_categorie][populate]=*&populate[image][populate]=*`),
+          axios.get(`${STRAPI_BASE_URL}/api/rabbi-books?populate[book_categorie][populate]=*&populate[image][populate]=*&sort[0]=Priority:asc`),
           axios.get(`${STRAPI_BASE_URL}/api/book-categories`)
         ]);
 
@@ -1039,7 +53,7 @@ const FullBooksPage = () => {
   const filteredBooks = useMemo(() => {
     return books.filter((book: any) => {
       const item = book.attributes || book;
-      const matchesSearch = (item.rabbi || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+      const matchesSearch = (item.rabbi || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (item.book_name || "").toLowerCase().includes(searchTerm.toLowerCase());
       const bookCatName = item.book_categorie?.data?.attributes?.name || item.book_categorie?.name;
       const matchesCategory = selectedCategory === 'הכל' || bookCatName === selectedCategory;
@@ -1047,107 +61,277 @@ const FullBooksPage = () => {
     });
   }, [books, searchTerm, selectedCategory]);
 
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
+  const hasActiveFilter = selectedCategory !== 'הכל' || !!searchTerm;
+  const categoryNames = categories.map((cat: any) => cat.attributes?.name || cat.name).filter(Boolean);
 
   return (
-    <Box sx={{ p: { xs: 2, md: 10 }, direction: 'rtl', backgroundColor: '#fff', minHeight: '100vh' }}>
-      
-      <Box sx={{ textAlign: 'center', mb: 10 }}>
-        <Typography variant="h3" sx={{color:'#9c6644',fontSize:100, fontFamily: "'YetziraCustom', sans-serif !important", fontWeight: 450, mb: 1 }}>ספרי הישיבה</Typography>
-      </Box>
+    <Box sx={{ direction: 'rtl', backgroundColor: colors.creamAlt, minHeight: '100vh' }}>
+      <PageHeader eyebrow="אחד־עשר כרכים" title="ספרי הישיבה" />
 
-      <Grid container spacing={3}>
-        {/* סרגל צדי - חזרה לפורמט size שלך */}
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Box sx={{ p: 1, bgcolor: '#fdfbe6', borderRadius: '1.25rem', border: '1px solid #f0edcf', position: 'sticky', top: '20px' }}>
-            <Typography variant="h6" sx={{ p: 1.5, pb: 0.5, fontWeight: 'bold', fontSize: '1.1rem', color: MAIN_BROWN }}>סינון ספרים</Typography>
+      <Box sx={{ maxWidth: '1200px', mx: 'auto', p: { xs: 2, md: 4 } }}>
 
-            {(selectedCategory !== "הכל" || searchTerm) && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, px: 1 }}>
-                <Button 
-                  onClick={() => { setSelectedCategory("הכל"); setSearchTerm(""); }}
-                  variant="contained"
-                  startIcon={<RestartAltIcon sx={{ fontSize: '1.1rem !important' }} />} 
-                  sx={{ bgcolor: MAIN_BROWN, color: '#fff', borderRadius: '50px', px: 2, py: 0.5, fontSize: '0.75rem', fontWeight: 'bold', '&:hover': { bgcolor: '#8b5a3c' }, textTransform: 'none' }}
-                >
-                  נקה סינון
-                </Button>
+        {/* שורת סינון לפי קטגוריה */}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '10px', mb: 5 }}>
+          {['הכל', ...categoryNames].map((name) => {
+            const isActive = selectedCategory === name;
+            return (
+              <Box
+                key={name}
+                component="button"
+                type="button"
+                onClick={() => setSelectedCategory(name)}
+                sx={{
+                  minHeight: '42px',
+                  px: '22px',
+                  borderRadius: radius.pill,
+                  border: `1px solid ${colors.gold}`,
+                  bgcolor: isActive ? colors.wine : colors.cream,
+                  color: isActive ? CHIP_ACTIVE_TEXT : colors.goldText,
+                  fontFamily: fonts.body,
+                  fontSize: fontSize.sm,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: '0.2s',
+                  '&:hover': { bgcolor: isActive ? colors.wine : `${colors.gold}1F` },
+                }}
+              >
+                {name}
               </Box>
-            )}
+            );
+          })}
 
-            <Accordion defaultExpanded elevation={0} sx={{ bgcolor: 'white', borderRadius: '0.8rem !important', border: '1px solid #e0e0e0', mb: 1, '&:before': { display: 'none' } }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography fontSize="1rem" fontWeight="bold">ספרי ראש הישיבה</Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ pt: 0 }}>
-                <Typography 
-                  onClick={() => setSelectedCategory("הכל")}
-                  sx={{ fontSize: '0.85rem', py: 0.8, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', fontWeight: selectedCategory === "הכל" ? 'bold' : 'normal', color: MAIN_BROWN }}
-                >
-                  <SquareIcon isSelected={selectedCategory === "הכל"} /> הכל
-                </Typography>
-                {categories.map((cat: any) => {
-                  const name = cat.attributes?.name || cat.name;
-                  return (
-                    <Typography 
-                      key={cat.id} 
-                      onClick={() => setSelectedCategory(name)}
-                      sx={{ fontSize: '0.85rem', py: 0.8, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', fontWeight: selectedCategory === name ? 'bold' : 'normal', color: MAIN_BROWN }}
+          {hasActiveFilter && (
+            <Box
+              component="button"
+              type="button"
+              onClick={() => { setSelectedCategory('הכל'); setSearchTerm(''); }}
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                minHeight: '42px',
+                px: '22px',
+                borderRadius: radius.pill,
+                border: `1px solid ${colors.gold}`,
+                bgcolor: colors.cream,
+                color: colors.goldText,
+                fontFamily: fonts.body,
+                fontSize: fontSize.sm,
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: '0.2s',
+                '&:hover': { bgcolor: `${colors.gold}1F` },
+              }}
+            >
+              <RestartAltIcon sx={{ fontSize: '1.1rem' }} />
+              נקה סינון
+            </Box>
+          )}
+        </Box>
+
+        <Grid container spacing={4}>
+          {/* רשת הספרים */}
+          <Grid size={{ xs: 12, md: 9 }} sx={{ order: { xs: 2, md: 1 } }}>
+            <Grid container spacing={3}>
+              {loading ? (
+                [1, 2, 3, 4, 5, 6].map(i => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
+                    <Skeleton variant="rounded" height={380} sx={{ borderRadius: `${bookCard.radius}px` }} />
+                  </Grid>
+                ))
+              ) : filteredBooks.length > 0 ? filteredBooks.map((book: any) => {
+                const item = book.attributes || book;
+                const imageUrl = item.image?.data?.[0]?.attributes?.url || item.image?.[0]?.url || '';
+                return (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={book.id}>
+                    <Box
+                      onClick={() => navigate('/BookDetailsPage', { state: { book } })}
+                      sx={{
+                        bgcolor: bookCard.bg,
+                        border: `1px solid ${bookCard.border}`,
+                        borderRadius: `${bookCard.radius}px`,
+                        p: '9px',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        cursor: 'pointer',
+                        transition: '0.25s',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                        '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 10px 28px rgba(74,15,20,.14)' },
+                      }}
                     >
-                      <SquareIcon isSelected={selectedCategory === name} /> {name}
-                    </Typography>
-                  );
-                })}
-              </AccordionDetails>
-            </Accordion>
+                      <Box sx={{
+                        border: `1px solid ${bookCard.innerBorder}`,
+                        borderRadius: `${bookCard.innerRadius}px`,
+                        bgcolor: '#fff',
+                        height: `${bookCard.imageHeight}px`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        overflow: 'hidden', mb: '16px',
+                      }}>
+                        <CardMedia
+                          component="img"
+                          image={imageUrl ? `${STRAPI_BASE_URL}${imageUrl}` : ''}
+                          alt={`כריכת הספר ${item.book_name || ''}`}
+                          sx={{ height: '88%', width: 'auto', maxWidth: '85%', objectFit: 'contain', mixBlendMode: 'multiply' }}
+                        />
+                      </Box>
 
-            <Accordion elevation={0} sx={{ bgcolor: 'white', borderRadius: '0.8rem !important', border: '1px solid #e0e0e0', '&:before': { display: 'none' } }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography fontSize="1rem" fontWeight="bold">חיפוש לפי שם</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <TextField fullWidth placeholder="חיפוש..." size="small" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-              </AccordionDetails>
-            </Accordion>
-          </Box>
-        </Grid>
+                      <Box sx={{ flex: 1, textAlign: 'center', px: '6px' }}>
+                        <Typography sx={{
+                          fontFamily: fonts.heading, fontWeight: 700, fontSize: fontSize.lg,
+                          color: bookCard.titleColor, lineHeight: 1.3, mb: '6px',
+                        }}>
+                          {item.book_name}
+                        </Typography>
+                        <Typography sx={{ color: bookCard.rabbiColor, fontFamily: fonts.body, fontSize: fontSize.sm, fontWeight: 600 }}>
+                          {item.rabbi}
+                        </Typography>
+                      </Box>
 
-        {/* הצגת הספרים - חזרה לפורמט size שלך */}
-        <Grid size={{ xs: 12, md: 9 }}>
-          <Grid container columnSpacing={6} rowSpacing={12}>
-            {filteredBooks.map((book: any) => {
-              const item = book.attributes || book;
-              const imageUrl = item.image?.data?.[0]?.attributes?.url || item.image?.[0]?.url || '';
-              return (
-                <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={book.id} sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <Card 
-                    elevation={0} 
-                    sx={{ 
-                      backgroundColor: '#fdfbe7', borderRadius: '2.5rem', p: 3, pt: 4, pb: 8, textAlign: 'center', position: 'relative', overflow: 'visible', maxWidth: '250px', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' 
+                      <Button
+                        onClick={(e) => { e.stopPropagation(); navigate('/BookDetailsPage', { state: { book } }); }}
+                        sx={{
+                          ...goldButtonStyle,
+                          fontFamily: fonts.body,
+                          fontWeight: 600,
+                          fontSize: fontSize.sm,
+                          borderRadius: radius.control,
+                          minHeight: '44px',
+                          width: '100%',
+                          mt: '14px',
+                        }}
+                      >
+                        לפרטים
+                      </Button>
+                    </Box>
+                  </Grid>
+                );
+              }) : (
+                <Grid size={12}>
+                  <Box sx={{ textAlign: 'center', py: 10, bgcolor: colors.cream, borderRadius: '1.5rem', border: `1px dashed ${colors.goldText}` }}>
+                    <Typography sx={{ color: bookCard.titleColor, fontWeight: 'bold' }}>לא נמצאו ספרים</Typography>
+                  </Box>
+                </Grid>
+              )}
+            </Grid>
+          </Grid>
+
+          {/* סרגל צדי */}
+          <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 1, md: 2 } }}>
+            <Box sx={{ position: { md: 'sticky' }, top: { md: '120px' } }}>
+
+              {/* כרטיס רכישה */}
+              <Box sx={{
+                bgcolor: bookPurchaseCard.bg,
+                border: `1px solid ${bookPurchaseCard.border}`,
+                borderRadius: `${bookPurchaseCard.radius}px`,
+                p: '28px 24px',
+                textAlign: 'center',
+                mb: 3,
+                boxShadow: '0 10px 30px rgba(74,15,20,.25)',
+              }}>
+                <Crown width={44} height={37} />
+
+                <Typography sx={{
+                  ...goldTextFill,
+                  fontFamily: fonts.headingOrnate,
+                  fontSize: '28px',
+                  fontWeight: 700,
+                  mt: '10px',
+                  mb: '4px',
+                }}>
+                  רכישת ספרים
+                </Typography>
+
+                <Typography sx={{
+                  fontFamily: fonts.body,
+                  fontSize: '15px',
+                  color: bookPurchaseCard.subTextColor,
+                  mb: '18px',
+                }}>
+                  להזמנה טלפונית ולפרטים על משלוח
+                </Typography>
+
+                <Box
+                  component="a"
+                  href="tel:+97236815542"
+                  sx={{
+                    display: 'block',
+                    background: gradients.goldButton,
+                    color: bookPurchaseCard.buttonTextColor,
+                    fontFamily: fonts.heading,
+                    fontWeight: 700,
+                    fontSize: '22px',
+                    borderRadius: radius.control,
+                    py: '14px',
+                    mb: '16px',
+                    textDecoration: 'none',
+                    transition: '0.2s',
+                    '&:hover': { filter: 'brightness(1.06)' },
+                  }}
+                >
+                  03-6815542
+                </Box>
+
+                <Typography sx={{ fontFamily: fonts.body, fontSize: fontSize.sm, fontWeight: 700, color: bookPurchaseCard.mutedTextColor, mb: '4px' }}>
+                  ברזני יעקב
+                </Typography>
+                <Typography sx={{ fontFamily: fonts.body, fontSize: fontSize.sm, color: bookPurchaseCard.mutedTextColor, mb: '2px' }}>
+                  פקס: 03-6823013
+                </Typography>
+                <Typography sx={{ fontFamily: fonts.body, fontSize: fontSize.sm, color: bookPurchaseCard.mutedTextColor }}>
+                  העליה 8, תל אביב יפו 6606107
+                </Typography>
+              </Box>
+
+              {/* כרטיס חיפוש */}
+              <Box sx={{
+                bgcolor: colors.cream,
+                border: `1px solid ${colors.gold}`,
+                borderRadius: '12px',
+                p: '20px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              }}>
+                <Typography sx={{ fontFamily: fonts.heading, fontWeight: 700, fontSize: fontSize.lg, color: bookCard.titleColor, mb: '8px' }}>
+                  חיפוש לפי שם
+                </Typography>
+                <Box sx={{ width: '30px', height: '1px', bgcolor: colors.goldButtonBorder, ml: 'auto', mr: 0, mb: '14px' }} />
+                <Box sx={{
+                  display: 'flex', flexDirection: 'row', alignItems: 'stretch',
+                  border: `1px solid ${colors.gold}`, borderRadius: radius.control, overflow: 'hidden', height: '46px',
+                }}>
+                  <Box
+                    component="button"
+                    type="button"
+                    aria-label="חיפוש"
+                    sx={{
+                      width: '46px', border: 'none', cursor: 'default',
+                      bgcolor: colors.sand,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}
                   >
-                    <Chip label="עטרת מרדכי" size="small" sx={{ position: 'absolute', top: 20, right: 20, backgroundColor: 'rgba(156, 102, 68, 0.08)', color: MAIN_BROWN, fontWeight: 700, fontSize: '0.65rem' }} />
-                    <Box sx={{ width: '100%', height: '160px', mb: 3, mt: 2, display: 'flex', justifyContent: 'center' }}>
-                      <CardMedia component="img" image={imageUrl ? `${STRAPI_BASE_URL}${imageUrl}` : ''} sx={{ height: '100%', width: 'auto', objectFit: 'contain' ,mixBlendMode: 'multiply'}} />
-                    </Box>
-                    <CardContent sx={{ p: 0, textAlign: 'center', flexGrow: 1 }}>
-                      <Typography sx={{ fontWeight: 900, fontSize: '1.1rem', mb: 1, lineHeight: 1.2 }}>{item.book_name}</Typography>
-                      <Typography sx={{ fontSize: '0.85rem', opacity: 0.6 }}>{item.rabbi}</Typography>
-                    </CardContent>
-                    <Button 
-                      variant="contained" 
-                      onClick={() => navigate('/BookDetailsPage', { state: { book } })}
-                      sx={{ backgroundColor: MAIN_BROWN, borderRadius: '12px', px: 5, position: 'absolute', bottom: '-22px', left: '50%', transform: 'translateX(-50%)', boxShadow: '0 8px 16px rgba(156, 102, 68, 0.3)', fontWeight: 700, '&:hover': { backgroundColor: '#7d5236' } }}
-                    >
-                      לפרטים
-                    </Button>
-                  </Card>
-                </Grid>
-              );
-            })}
+                    <SearchIcon sx={{ color: colors.goldDeep, fontSize: 18 }} />
+                  </Box>
+                  <input
+                    type="text"
+                    placeholder="שם הספר..."
+                    aria-label="חיפוש ספר לפי שם"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{
+                      flex: 1, minWidth: 0, border: 'none', outline: 'none',
+                      padding: '0 14px', fontSize: fontSize.sm, direction: 'rtl',
+                      textAlign: 'right', fontFamily: fonts.body, background: 'transparent',
+                    }}
+                  />
+                </Box>
+              </Box>
+            </Box>
           </Grid>
         </Grid>
-      </Grid>
+      </Box>
     </Box>
   );
 };

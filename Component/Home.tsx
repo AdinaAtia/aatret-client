@@ -22,6 +22,7 @@ import LessonPlayer from './LessonPlayer'; // ייבוא הנגן
 import BooksCarousel from './BooksCarousel'; // ודאי שהנתיב לקובץ נכון
 import { Crown } from './Header';
 import founderContent from './founderContent.json';
+import { site } from '../src/content/site';
 import weeklyLesson from './weeklyLesson.json';
 
 const MEDIA_BASE_URL = `${import.meta.env.VITE_MEDIA_URL}/About`;
@@ -131,6 +132,7 @@ const Home: React.FC = () => {
           imageSrc,
           priority: Number(attr.Priority) ?? 999,
           schedule: attr.schedule || [],
+          phoneOnly: Boolean(attr.phoneOnly),
         };
       });
 
@@ -263,7 +265,7 @@ const Home: React.FC = () => {
       ישיבת
     </Typography>
 
-    <Typography sx={{
+    <Typography component="h1" sx={{
       fontFamily: 'var(--font-heading-ornate)',
       fontSize: 'clamp(2.75rem, 7.5vw, 6rem)',
       fontWeight: 400,
@@ -369,7 +371,7 @@ const Home: React.FC = () => {
     <Typography sx={{
       fontFamily: 'var(--font-heading)',
       fontSize: { xs: `var(--weekly-bar-title-mobile)`, lg: `var(--weekly-bar-title-desktop)` },
-      fontWeight: 700,
+      fontWeight: 400,
       color: 'var(--wine)',
       lineHeight: 1.2,
       whiteSpace: 'nowrap',
@@ -524,10 +526,10 @@ const Home: React.FC = () => {
     }}>ראש הישיבה</Typography>
 
     {/* השם */}
-    <Typography sx={{
+    <Typography component="h2" sx={{
       fontFamily: 'var(--font-heading)',
       fontSize: { xs: 'var(--t5)', md: '40px', lg: '56px' }, /* PDF: 56px */
-      fontWeight: 700,
+      fontWeight: 400,
       lineHeight: 1.15,
       color: 'var(--wine)',
     }}>הרב מרדכי עטייה</Typography>
@@ -594,7 +596,7 @@ const Home: React.FC = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: '32px', md: '48px' } }}>
             <SectionArch mb="16px" />
 
-            <Typography sx={{
+            <Typography component="h2" sx={{
               fontFamily: 'var(--font-heading-ornate)',
               fontSize: { xs: 'var(--t5)', md: 'var(--t6)' },
               fontWeight: 400,
@@ -716,12 +718,23 @@ const Home: React.FC = () => {
                       <Box sx={{ flexGrow: 1, minHeight: `var(--rabbi-card-pad-rule-bottom)` }} />
 
                       {/* הכפתור: מסגרת 1px זהב ללא מילוי, רדיוס 6px */}
-                      <AppButton
-                        onClick={(e) => { e.stopPropagation(); navigate('/AllLessons', { state: { rabbiId: rabbi.id } }); }}
-                        sx={{ width: '100%', flexShrink: 0, minWidth: 0 }}
-                      >
-                        לשיעורי הרב
-                      </AppButton>
+                      {rabbi.phoneOnly ? (
+                        // רב במרחב הקולי בלבד — אין לו שיעורים באתר, לכן חיוג לקו
+                        <AppButton
+                          href={`tel:+972${site.phones.lessonsArchive.replace(/^0/, '').replace(/-/g, '')}`}
+                          onClick={(e) => e.stopPropagation()}
+                          sx={{ width: '100%', flexShrink: 0, minWidth: 0 }}
+                        >
+                          למרחב הקולי
+                        </AppButton>
+                      ) : (
+                        <AppButton
+                          onClick={(e) => { e.stopPropagation(); navigate('/AllLessons', { state: { rabbiId: rabbi.id } }); }}
+                          sx={{ width: '100%', flexShrink: 0, minWidth: 0 }}
+                        >
+                          לשיעורי הרב
+                        </AppButton>
+                      )}
                     </Box>
                   </Box>
                 </Box>
@@ -1016,7 +1029,7 @@ const Home: React.FC = () => {
           <Typography sx={{
             fontFamily: 'var(--font-heading)',
             fontSize: 'var(--donation-section-letter-name-size)',
-            fontWeight: 700,
+            fontWeight: 400,
             color: 'var(--ink-wine)',
           }}>הרב מרדכי עטייה</Typography>
           <Typography sx={{

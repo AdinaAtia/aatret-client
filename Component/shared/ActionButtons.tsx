@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, IconButton } from '@mui/material';
+import { Box, IconButton, Tooltip } from '@mui/material';
 import { Play, Volume2, ArrowDownToLine } from 'lucide-react';
 
 interface ActionButtonsProps {
@@ -60,10 +60,12 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ onPlayVideo, onPlayAudio,
         <Volume2 fill="currentColor" size={14} />
       </IconButton>
 
-  <IconButton
+  <Tooltip title="הורדת קובץ השמע בלבד. הסרטון זמין לצפייה ביוטיוב">
+      <span>
+      <IconButton
         onClick={stopRow(onDownload)}
         disabled={!onDownload || downloadDisabled}
-        aria-label="הורדת השיעור"
+        aria-label="הורדת שמע"
         sx={{
           ...circleSx,
           border: `1px solid var(--gold)`,
@@ -74,6 +76,8 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ onPlayVideo, onPlayAudio,
       >
         <ArrowDownToLine size={14} />
       </IconButton>
+      </span>
+      </Tooltip>
   </Box>
 );
 

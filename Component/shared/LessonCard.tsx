@@ -79,7 +79,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onSelect, onPlayVideo, 
         <Typography
           onClick={onSelect}
           sx={{
-            fontFamily: 'var(--font-heading)', fontSize: '17px', fontWeight: 700,
+            fontFamily: 'var(--font-body)', fontSize: '17px', fontWeight: 700,
             color: 'var(--ink-wine)', cursor: 'pointer',
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
             overflow: 'hidden', overflowWrap: 'anywhere', mb: '6px',

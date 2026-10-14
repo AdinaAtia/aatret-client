@@ -8,6 +8,7 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CloseIcon from '@mui/icons-material/Close';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import axios from 'axios';
+import { getPdfList } from './shared/pdfFiles';
 import { HDate, gematriyaStrToNum } from '@hebcal/core';
 
 import { colors } from '../src/theme/tokens';
@@ -278,6 +279,7 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
         AudioDir: attrs.AudioDir || attrs.audioDir || '',
         AudioFileName: attrs.AudioFileName || attrs.audioFileName || '',
         PdfFileName: attrs.PdfFileName || attrs.pdfFileName || '',
+        PdfFiles: getPdfList(attrs),
         youtube_id: attrs.youtube_id ? `https://www.youtube.com/watch?v=${attrs.youtube_id}` : '',
         duration: attrs.duration || '',
         lesson_date_gregorian: attrs.lesson_date_gregorian
@@ -301,8 +303,8 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
       }
 
       // שיעור שכבר מלא בתיקייה וב-PDF לא נבדק אוטומטית — רק ב"בדוק שוב"
-      const pdfName = attrs.PdfFileName || attrs.pdfFileName || '';
-      if (attrs.youtube_id && (!audioDir || !pdfName)) loadLinkInfo(attrs.youtube_id);
+      const hasPdf = getPdfList(attrs).length > 0;
+      if (attrs.youtube_id && (!audioDir || !hasPdf)) loadLinkInfo(attrs.youtube_id);
     }
   }, [lesson, open]);
 
@@ -455,7 +457,8 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
           lesson_date_gregorian: editedLesson.lesson_date_gregorian,
           AudioDir: editedLesson.AudioDir,
           AudioFileName: editedLesson.AudioFileName,
-          PdfFileName: editedLesson.PdfFileName || null,
+          PdfFileName: getPdfList(editedLesson)[0] || null,
+          PdfFiles: getPdfList(editedLesson),
           youtube_id: youtubeId,
           rabbi: editedLesson.rabbi?.documentId || editedLesson.rabbi?.id || null,
           main_category: mainCatId,
@@ -556,10 +559,10 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
   }
 
   // --- הצעות PDF (רק כשהתיקייה ידועה) ---
-  const curPdf: string = editedLesson.PdfFileName || '';
+  const curPdfs: string[] = getPdfList(editedLesson);
   const latestForDir = pdfLatest && normPath(pdfLatest.dir) === normPath(curDir) ? pdfLatest : null;
   let pdfOptions: HintOption[] = [];
-  if (curDir && (!curPdf || hintsForced)) {
+  if (curDir && (curPdfs.length === 0 || hintsForced)) {
     const cands: HintOption[] = [];
     // שם הקובץ מהקישור שייך לתיקייה שבקישור — לא מציעים אותו אם נבחרה תיקייה אחרת
     if (linkInfo?.pdfFileName && (!linkDir || normPath(linkDir) === normPath(curDir))) {
@@ -577,7 +580,7 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
       if (same) same.label = 'מהקישור ביוטיוב (תואם לאחרון בתיקייה)';
       else cands.push({ label: `האחרון שהוכנס לתיקייה${when}`, value: latest.fileName });
     }
-    if (!cands.every(c => normName(c.value) === normName(curPdf))) pdfOptions = cands;
+    pdfOptions = cands.filter(c => !curPdfs.some(f => normName(f) === normName(c.value)));
   }
 
   const applyDirHint = (value: string) => {
@@ -785,13 +788,16 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
               freeSolo
               sx={{ flex: 1 }}
               options={suggestedPdfs}
-              value={editedLesson.PdfFileName || ''}
-              onInputChange={(_, val) => setEditedLesson({ ...editedLesson, PdfFileName: val })}
+              multiple
+              filterSelectedOptions
+              autoSelect
+              value={curPdfs}
+              onChange={(_, val) => setEditedLesson({ ...editedLesson, PdfFiles: (val as string[]).map(v => v.trim()).filter(Boolean) })}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   fullWidth
-                  label="שם קובץ PDF"
+                  label="קבצי PDF (אפשר כמה)"
                   sx={editFieldStyle}
                   inputProps={{ ...params.inputProps, dir: 'ltr' }}
                 />
@@ -810,7 +816,7 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
             <HintCard
               title={pdfOptions.length > 1 ? 'קובץ ה-PDF לא תואם בין הבדיקות — בחרי' : 'הצעה לקובץ PDF'}
               options={pdfOptions}
-              onPick={(v) => { setEditedLesson((prev: any) => ({ ...prev, PdfFileName: v })); setDismissedPdf(true); }}
+              onPick={(v) => { setEditedLesson((prev: any) => ({ ...prev, PdfFiles: [...getPdfList(prev), v] })); setDismissedPdf(true); }}
               onClose={() => setDismissedPdf(true)}
             />
           )}

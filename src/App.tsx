@@ -293,9 +293,9 @@ const theme = createTheme({
   direction: 'rtl',
   typography: {
     fontFamily: 'var(--font-body)',
-    h1: { fontFamily: 'var(--font-heading)' },
-    h2: { fontFamily: 'var(--font-heading)' },
-    h3: { fontFamily: 'var(--font-heading)' },
+    h1: { fontFamily: 'var(--font-heading)', fontWeight: 400 },
+    h2: { fontFamily: 'var(--font-heading)', fontWeight: 400 },
+    h3: { fontFamily: 'var(--font-heading)', fontWeight: 400 },
   },
 });
 

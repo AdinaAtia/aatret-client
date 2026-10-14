@@ -184,7 +184,7 @@ const FullBooksPage = () => {
 
                       <Box sx={{ flex: 1, textAlign: 'center', px: '6px' }}>
                         <Typography sx={{
-                          fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--t4)',
+                          fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--t4)',
                           color: 'var(--ink-wine)', lineHeight: 1.3, mb: '6px',
                         }}>
                           {item.book_name}
@@ -233,7 +233,7 @@ const FullBooksPage = () => {
                   background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent',
                   fontFamily: 'var(--font-heading-ornate)',
                   fontSize: '28px',
-                  fontWeight: 700,
+                  fontWeight: 400,
                   mt: '10px',
                   mb: '4px',
                 }}>
@@ -257,7 +257,7 @@ const FullBooksPage = () => {
                     background: 'var(--gradient-gold-button)',
                     color: 'var(--ink-dark)',
                     fontFamily: 'var(--font-heading)',
-                    fontWeight: 700,
+                    fontWeight: 400,
                     fontSize: '22px',
                     borderRadius: 'var(--radius-control)',
                     py: '14px',
@@ -294,7 +294,7 @@ const FullBooksPage = () => {
                 p: '20px',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
               }}>
-                <Typography sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--t4)', color: 'var(--ink-wine)', mb: '8px' }}>
+                <Typography sx={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--t4)', color: 'var(--ink-wine)', mb: '8px' }}>
                   חיפוש לפי שם
                 </Typography>
                 <Box sx={{ width: '30px', height: '1px', bgcolor: 'var(--gold-button-border)', ml: 'auto', mr: 0, mb: '14px' }} />

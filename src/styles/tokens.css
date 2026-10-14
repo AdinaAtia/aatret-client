@@ -125,7 +125,7 @@
   --rabbi-card-crown-w: 46px;
   --rabbi-card-crown-h: 39px;
   --rabbi-card-name-size: 16px;   /* נמדד מהווקטור: ateret-mordechai-design.pdf, דף הבית — 16px מודגש */
-  --rabbi-card-name-weight: 700;
+  --rabbi-card-name-weight: 400;
   --rabbi-card-rule-w: 34px;
   --rabbi-card-rule-h: 1px;
   --rabbi-card-button-w: 122px;
@@ -153,7 +153,7 @@
   --page-header-eyebrow-letter-spacing: .28em;
   --page-header-eyebrow-weight: 700;
   --page-header-title-size: 32px;
-  --page-header-title-weight: 700;
+  --page-header-title-weight: 400;
   --page-header-flourish-line-w: 96px;
   --page-header-flourish-diamond: 6px;
 
@@ -229,7 +229,7 @@
   --footer-cols: 335px 248px 248px 1fr;         /* קצוות ימניים של העמודות: 1388 / 1005 / 709 / 413 */
   --footer-gap: 48px;
   --footer-heading-size: 18px;                  /* #C5A059, מודגש */
-  --footer-heading-weight: 700;
+  --footer-heading-weight: 400;
   --footer-text-size: 15px;
   --footer-text-color: var(--book-purchase-card-muted-text-color); /* #C4B396 — קישורים, רבנים, צור קשר */
   --footer-contact-strong-size: 16px;           /* טלפון ווטסאפ: 16px */
@@ -252,7 +252,7 @@
   --book-details-hero-cover-bg: #FFFCF4;
   --book-details-hero-cover-inner-bg: #FFFFFF;
   --book-details-hero-title-size: 46px;
-  --book-details-hero-title-weight: 700;
+  --book-details-hero-title-weight: 400;
   --book-details-hero-author-size: 19px;
   --book-details-hero-description-size: 18px;
   --book-details-hero-description-line-height: 1.95;
@@ -302,9 +302,9 @@
   --contact-card-icon-circle-size: 48px;
   --contact-card-label-size: 13px;
   --contact-card-label-letter-spacing: .14em;
-  --contact-card-label-weight: 700;
+  --contact-card-label-weight: 400;
   --contact-card-value-size: 24px;
-  --contact-card-value-weight: 700;
+  --contact-card-value-weight: 400;
   --contact-card-sub-text-size: 14px;
 
   /* ───── contactMap ───── */
@@ -322,3 +322,6 @@
   --contact-form-textarea-height: 150px;
   --contact-form-submit-button-min-height: 56px;
 }
+
+/* מונע הדגשה מזויפת של גופני יצירה (קיימים במשקל 400 בלבד) */
+html { font-synthesis: none; }

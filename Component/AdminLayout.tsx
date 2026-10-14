@@ -42,7 +42,10 @@ const AdminLayout = ({ children, token }: AdminLayoutProps) => {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem('token'); // מחיקה מהזיכרון
+    // מחיקה מכל מקום שבו ההתחברות עלולה להישמר ("זכור אותי" = localStorage, אחרת sessionStorage)
+    localStorage.removeItem('token');
+    localStorage.removeItem('token_expiry');
+    sessionStorage.removeItem('token');
     window.location.href = '/manager/login'; // ריענון והפניה להתחברות
   };
 

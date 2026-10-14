@@ -130,13 +130,24 @@ const Footer: React.FC = () => {
             </Typography>
             <Stack spacing="14px">
               {rabbis.map((rabbi) => (
-                <Typography
-                  key={rabbi.id}
-                  onClick={() => navigate('/AllLessons', { state: { rabbiId: rabbi.id } })}
-                  sx={{ ...listItemSx, cursor: 'pointer' }}
-                >
-                  {rabbi.name}
-                </Typography>
+                rabbi.phoneOnly ? (
+                  // רב במרחב הקולי בלבד — אין לו שיעורים באתר, לכן חיוג לקו במקום מעבר לרשימה ריקה
+                  <Link
+                    key={rabbi.id}
+                    href={toTelHref(site.phones.lessonsArchive)}
+                    sx={listItemSx}
+                  >
+                    {rabbi.name} · מרחב קולי
+                  </Link>
+                ) : (
+                  <Typography
+                    key={rabbi.id}
+                    onClick={() => navigate('/AllLessons', { state: { rabbiId: rabbi.id } })}
+                    sx={{ ...listItemSx, cursor: 'pointer' }}
+                  >
+                    {rabbi.name}
+                  </Typography>
+                )
               ))}
             </Stack>
           </Box>

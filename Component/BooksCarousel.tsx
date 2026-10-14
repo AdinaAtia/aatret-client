@@ -68,7 +68,7 @@ const BooksCarousel = () => {
         {/* כותרת הקטע */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: '32px', md: '48px' } }}>
           <SectionArch mb="16px" />
-          <Typography sx={{
+          <Typography component="h2" sx={{
             fontFamily: 'var(--font-heading-ornate)',
             fontSize: { xs: 'var(--t5)', md: 'var(--t6)' },
             fontWeight: 400,
@@ -169,7 +169,7 @@ const BooksCarousel = () => {
 
                     <Box sx={{ flex: 1, textAlign: 'center' }}>
                       <Typography sx={{
-                        fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--t4)',
+                        fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--t4)',
                         color: 'var(--ink-wine)', lineHeight: 1.3, mt: '2px', mb: '8px',
                       }}>
                         {book.book_name}
@@ -221,7 +221,7 @@ const BooksCarousel = () => {
             textAlign: 'center',
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: '24px' }, flexDirection: { xs: 'column', md: 'row' } }}>
-              <Typography sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '23px', color: '#fff' }}>
+              <Typography sx={{ fontFamily: 'var(--font-heading)', fontWeight: 400, fontSize: '23px', color: '#fff' }}>
                 לרכישת הספרים
               </Typography>
               <Typography

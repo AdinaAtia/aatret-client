@@ -262,7 +262,7 @@ const BookDetailsPage = () => {
                     display: 'block',
                     fontFamily: 'var(--font-heading)',
                     fontSize: `var(--order-block-number-size)`,
-                    fontWeight: 700,
+                    fontWeight: 400,
                     color: 'var(--order-block-number-color)',
                     textDecoration: 'none',
                     direction: 'ltr',
@@ -315,7 +315,7 @@ const BookDetailsPage = () => {
             sx={{
               fontFamily: 'var(--font-heading-ornate)',
               fontSize: '2em',
-              fontWeight: 700,
+              fontWeight: 400,
               textAlign: 'center',
               mb: 4,
             }}
@@ -365,7 +365,7 @@ const BookDetailsPage = () => {
 
                       <CardContent sx={{ flex: 1, textAlign: 'center', p: '0 6px' }}>
                         <Typography sx={{
-                          fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--t4)',
+                          fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--t4)',
                           color: 'var(--ink-wine)', lineHeight: 1.3, mb: '6px',
                         }}>
                           {item.book_name}

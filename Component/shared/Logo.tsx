@@ -22,7 +22,7 @@ export const Crown: React.FC<{ width: number | string; height: number | string }
   return (
     <Box
       component="svg"
-      viewBox="0 0 184 156"
+      viewBox="0 0 184 154"
       sx={{ width: typeof width === 'number' ? `${width}px` : width, height: typeof height === 'number' ? `${height}px` : height, flexShrink: 0, display: 'block' }}
       aria-hidden="true"
     >
@@ -35,7 +35,7 @@ export const Crown: React.FC<{ width: number | string; height: number | string }
           />
         </filter>
         <mask id={mid}>
-          <image href="/logo.png" x="0" y="0" width="184" height="156" filter={`url(#${fid})`} />
+          <image href="/logo.png?v=2" x="0" y="0" width="184" height="154" filter={`url(#${fid})`} />
         </mask>
         <linearGradient id={gid} x1="0" y1="0" x2="0.35" y2="1">
           <stop offset="0%" stopColor="#D9BC7F" />
@@ -43,7 +43,7 @@ export const Crown: React.FC<{ width: number | string; height: number | string }
           <stop offset="100%" stopColor={'var(--gold-deep)'} />
         </linearGradient>
       </defs>
-      <rect width="184" height="156" fill={`url(#${gid})`} mask={`url(#${mid})`} />
+      <rect width="184" height="154" fill={`url(#${gid})`} mask={`url(#${mid})`} />
     </Box>
   );
 };
@@ -112,7 +112,7 @@ const Logo: React.FC<LogoProps> = ({ variant = 'horizontal', onClick, gap }) => 
     return (
       <Stack direction="row" alignItems="center" sx={{ gap: gap ?? 1 }}>
         <Crown width="var(--header-controls-crown-md-w)" height="var(--header-controls-crown-md-h)" />
-        <Wordmark withSubtitle={false} titleSize="23px" titleWeight={700} />
+        <Wordmark withSubtitle={false} titleSize="23px" titleWeight={400} />
       </Stack>
     );
   }

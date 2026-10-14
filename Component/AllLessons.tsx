@@ -114,6 +114,7 @@ const AllLessons = () => {
   }, [location.state]);
   const loaderRef = useRef<HTMLDivElement>(null);
   const loadMoreFnRef = useRef<() => void>(() => {});
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -148,8 +149,10 @@ const AllLessons = () => {
     query = searchQuery,
     size = pageSize
   ) => {
+    // עמוד 1 מתחיל "דור" חדש של תוצאות; תשובות ישנות מדור קודם נזרקות
+    const reqId = page === 1 ? ++requestIdRef.current : requestIdRef.current;
     try {
-      if (page === 1) setLoadingLessons(true);
+      if (page === 1) { setLoadingLessons(true); setLoadingMore(false); }
       else setLoadingMore(true);
       let url = `${import.meta.env.VITE_API_URL}/api/lessons/fast?page=${page}&pageSize=${size}`;
       if (rabbiIds.length > 0) url += `&rabbiId=${rabbiIds.join(',')}`;
@@ -161,6 +164,7 @@ const AllLessons = () => {
       if (sortRef.current !== DEFAULT_SORT) url += `&sortBy=${sortBy}&sortDir=${sortDir}`;
 
       const response = await axios.get(url);
+      if (reqId !== requestIdRef.current) return;
       const newData = response.data.data || [];
       setLessons(prev => page === 1 ? newData : [...prev, ...newData]);
 
@@ -172,8 +176,10 @@ const AllLessons = () => {
     } catch (error) {
       console.error('Error fetching lessons:', error);
     } finally {
-      if (page === 1) setLoadingLessons(false);
-      else setLoadingMore(false);
+      if (reqId === requestIdRef.current) {
+        if (page === 1) setLoadingLessons(false);
+        else setLoadingMore(false);
+      }
     }
   };
 
@@ -192,7 +198,8 @@ const AllLessons = () => {
     try {
       setLoadingLecturers(true);
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/rabbis?fields[0]=name&populate[photo_url][fields][0]=url`);
-      setLecturers(response.data.data);
+      // רב של המרחב הקולי בלבד אין לו שיעורים באתר — לא מציגים אותו בסינון
+      setLecturers((response.data.data || []).filter((r: any) => !r.phoneOnly));
     } catch (error) {
       console.error("Error fetching lecturers:", error);
     } finally {
@@ -288,6 +295,8 @@ const AllLessons = () => {
     };
   });
 
+  // observer חדש בכל שינוי ברשימה/מצב טעינה: observe() בודק מיד אם הסוף כבר בתצוגה
+  // (אחרת, אם הוא נשאר גלוי אחרי טעינה — למשל בסינון — אין אירוע חדש והטעינה נעצרת)
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => { if (entries[0].isIntersecting) loadMoreFnRef.current(); },
@@ -295,7 +304,7 @@ const AllLessons = () => {
     );
     if (loaderRef.current) observer.observe(loaderRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [lessons.length, hasMore, loadingLessons, loadingMore, selectedLesson]);
 
   const handleLecturerClick = (id: number | string) => {
     exactCategoryRef.current = false;
@@ -440,7 +449,7 @@ const AllLessons = () => {
         p: 2, textAlign: 'center', flexShrink: 0,
       }}>
         <Typography sx={{
-          fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--dedication-card-title-size)', mb: 1,
+          fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--dedication-card-title-size)', mb: 1,
           backgroundImage: 'var(--gradient-gold)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
         }}>
           הקדשת שיעור
@@ -457,7 +466,7 @@ const AllLessons = () => {
   const renderSidebarContent = () => (
     <>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, px: 0.5 }}>
-        <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--filter-title-size)', color: 'var(--ink-wine)', m: 0 }}>
+        <Typography component="h2" sx={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--filter-title-size)', color: 'var(--ink-wine)', m: 0 }}>
           סינון
         </Typography>
         {selectedLecturerIds.length > 0 && (
@@ -484,7 +493,7 @@ const AllLessons = () => {
       <Accordion defaultExpanded elevation={0} sx={{ bgcolor: 'var(--surface)', borderRadius: '12px !important', border: `1px solid var(--gold)`, mb: 1.5, flexShrink: 0, '&:before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: GOLD_TEXT }} />} sx={{ px: 2 }}>
           <Box sx={{ width: '100%' }}>
-            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--filter-group-title-size)', color: 'var(--ink-wine)', m: 0 }}>
+            <Typography component="h2" sx={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--filter-group-title-size)', color: 'var(--ink-wine)', m: 0 }}>
               הרב המוסר
             </Typography>
             <Box sx={{ width: '30px', height: '2px', bgcolor: 'var(--gold)', mt: 1 }} />
@@ -826,7 +835,7 @@ const AllLessons = () => {
 
                       <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', textAlign: 'right', gap: '6px' }}>
                         <Typography sx={{
-                          fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: { xs: '15px', md: '18px' },
+                          fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: { xs: '15px', md: '18px' },
                           color: 'var(--ink-wine)', lineHeight: 1.3,
                           overflow: 'hidden', overflowWrap: 'anywhere',
                           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',

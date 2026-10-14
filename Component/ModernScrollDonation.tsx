@@ -1,205 +1,187 @@
-
 import AppButton from './shared/AppButton';
-import { useEffect, useState } from 'react';
-import { Box, Typography, Button, Container, Stack, Paper, Divider, Dialog, DialogContent, IconButton } from '@mui/material';
-import { motion } from 'framer-motion';
-import { Globe, Users,  Heart, ShieldCheck } from 'lucide-react';
-import CloseIcon from '@mui/icons-material/Close';
+import PageHeader from './shared/PageHeader';
+import SectionArch from './shared/SectionArch';
+import SectionFlourish from './shared/SectionFlourish';
+import { useEffect } from 'react';
+import { Box, Typography } from '@mui/material';
+import { Globe, Users, Heart, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-const MEDIA_BASE_URL = `${import.meta.env.VITE_MEDIA_URL}/About`;
+
+const donationOptions = [
+  { title: 'מגבית לחידוש ותרומות לאתר הישיבה', subtitle: 'בזכותך – קול התורה לא ייפסק', icon: <Globe size={24} /> },
+  { title: 'תרומה כללית', subtitle: 'עבור החזקת פעילות הישיבה והפצת התורה', icon: <Heart size={24} /> },
+  { title: 'אחזקת אברך בחודש', subtitle: 'קנה לך שותף למשמרת הלימוד של הישיבה', icon: <Users size={24} /> },
+];
 
 const LuxuryDonationPage = () => {
-  const [openDonation, setOpenDonation] = useState(false);
   const navigate = useNavigate();
-  const NEDARIM_URL = "https://www.matara.pro/nedarimplus/online/?mosad=7002025&Analytic=%D7%90%D7%AA%D7%A8";
 
-  const donationOptions = [
-    { 
-      title: 'מגבית לחידוש ותרומות לאתר הישיבה', 
-      subtitle: 'בזכותך – קול התורה לא ייפסק', 
-      icon: <Globe size={24} />, 
-      progress: 15 
-    },
-    { 
-      title: 'תרומה כללית', 
-      subtitle: 'עבור החזקת פעילות הישיבה והפצת התורה', 
-      icon: <Heart size={24} />, 
-      progress: null 
-    },
-    { 
-      title: 'אחזקת אברך בחודש', 
-      subtitle: 'קנה לך שותף למשמרת הלימוד של הישיבה', 
-      icon: <Users size={24} />, 
-      progress: null 
-    },
-    // { 
-    //   title: 'קניית ספרים', 
-    //   subtitle: 'הנצחה נצחית בין דפי הספרים שיישארו לדורות', 
-    //   icon: <BookOpen size={24} />, 
-    //   progress: null 
-    // },
-  ];
-useEffect(() => {
-  window.scrollTo({ top: 0, behavior: 'auto' });
-}, []);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
+
   return (
-    <Box sx={{
-      minHeight: '100vh',
-      backgroundImage: `url('${MEDIA_BASE_URL}/pastel-yellow-vignette-concrete-textured-background 1 (1) (1).png')`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      position: 'relative',
-      overflow: 'hidden',
-      display: 'flex',
-      alignItems: 'center',
-      py: 6,
-      direction: 'rtl'
-    }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'var(--parchment)', direction: 'rtl' }}>
+      <PageHeader eyebrow="שותפות נצח" title="תרומות" />
 
-      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
-        <Stack 
-          direction={{ xs: 'column', md: 'row' }} 
-          spacing={4} 
-          alignItems="center"
-          justifyContent="center"
-        >
-          
-          {/* צד ימין: סרטון */}
-          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', position: 'relative' }}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1 }}
-              style={{ width: '100%', maxWidth: '700px' }}
-            >
-              <Box sx={{
-                position: 'relative',
-                width: '100%',
-                paddingTop: '56.25%',
-                borderRadius: '20px',
-                overflow: 'hidden',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.35)'
-              }}>
+      <Box sx={{ py: { xs: '48px', md: 'var(--s6)' }, px: { xs: '16px', md: '24px' } }}>
+        {/* מלבן אחד: מסגרת זהב ופינות פעם אחת, היין והבהיר מתחלקים בתוכו (כמו בדף הבית) */}
+        <Box sx={{
+          maxWidth: 'var(--donation-section-max-width)',
+          mx: 'auto',
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: 'stretch',
+          border: '1px solid var(--gold)',
+          borderRadius: 'var(--donation-section-radius)',
+          overflow: 'hidden',
+        }}>
+          {/* החלק היין — אפיקי התרומה */}
+          <Box sx={{
+            flexShrink: 0,
+            width: { xs: '100%', md: 'var(--donation-section-card-wine-width)' },
+            boxSizing: 'border-box',
+            bgcolor: 'var(--wine)',
+            p: { xs: '32px 24px', md: 'var(--donation-section-wine-pad)' },
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            <Typography sx={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--donation-section-wine-eyebrow-size)',
+              fontWeight: 700,
+              letterSpacing: 'var(--donation-section-wine-eyebrow-letter-spacing)',
+              color: 'var(--gold)',
+              mb: 'var(--s3)',
+            }}>שותפות נצח</Typography>
+
+            <Typography component="h2" sx={{
+              fontFamily: 'var(--font-heading-ornate)',
+              fontSize: 'var(--donation-section-wine-title-size)',
+              fontWeight: 400,
+              lineHeight: 1.2,
+              background: 'var(--gradient-gold-text-vertical)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              color: 'transparent',
+            }}>החזקת התורה</Typography>
+
+            <Typography sx={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--donation-section-wine-subtitle-size)',
+              color: 'var(--gold-light)',
+              mt: 'var(--s4)',
+              mb: 'var(--s4)',
+            }}>בחרו את אפיק הזכות שלכם:</Typography>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 'var(--s3)' }}>
+              {donationOptions.map((option) => (
                 <Box
-                  component="iframe"
-                  src="https://www.youtube.com/embed/7-r83WoriYk"
-                  title="סרטון תרומות"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
+                  key={option.title}
                   sx={{
-                    position: 'absolute',
-                    top: 0, left: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--s3)',
                     width: '100%',
-                    height: '100%',
-                    border: 'none'
+                    textAlign: 'right',
+                    p: 'var(--s3)',
+                    border: '1px solid color-mix(in srgb, var(--gold) 34.902%, transparent)',
+                    borderRadius: 'var(--donation-section-letter-inner-radius)',
                   }}
-                />
+                >
+                  <Box sx={{ color: 'var(--gold)', display: 'flex', flexShrink: 0 }}>{option.icon}</Box>
+                  <Box>
+                    <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--t3)', color: 'var(--gold-light)', lineHeight: 1.3 }}>
+                      {option.title}
+                    </Typography>
+                    <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t2)', color: 'var(--book-purchase-card-sub-text-color)', mt: 'var(--s1)' }}>
+                      {option.subtitle}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+
+            <Box sx={{ flexGrow: 1, minHeight: 'var(--s5)' }} />
+
+            <AppButton onClick={() => navigate('/DonateLetter')} sx={{ width: '100%' }}>
+              אני רוצה להיות שותף
+            </AppButton>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--s2)', mt: 'var(--s4)', color: 'var(--book-purchase-card-muted-text-color)' }}>
+              <ShieldCheck size={16} />
+              <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t1)', color: 'inherit' }}>
+                תשלום מאובטח בתקן PCI-DSS
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* החלק הבהיר — עץ חיים והסרטון */}
+          <Box sx={{
+            flex: 1,
+            minWidth: 0,
+            boxSizing: 'border-box',
+            bgcolor: 'var(--surface)',
+            p: 'var(--donation-section-letter-inner-inset)',
+          }}>
+            <Box sx={{
+              height: '100%',
+              boxSizing: 'border-box',
+              border: '1px solid color-mix(in srgb, var(--gold) 34.902%, transparent)',
+              borderRadius: 'var(--donation-section-letter-inner-radius)',
+              p: { xs: '24px 16px', md: 'var(--donation-section-letter-pad)' },
+              display: 'flex',
+              flexDirection: 'column',
+            }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: '32px', md: '40px' } }}>
+                <SectionArch mb="16px" />
+                <Typography component="h2" sx={{
+                  fontFamily: 'var(--font-heading-ornate)',
+                  fontSize: { xs: 'var(--t5)', md: 'var(--t6)' },
+                  fontWeight: 400,
+                  lineHeight: 1.2,
+                  textAlign: 'center',
+                  color: 'var(--wine)',
+                }}>עץ חיים היא למחזיקים בה</Typography>
+                <SectionFlourish mt="24px" />
               </Box>
-            </motion.div>
-          </Box>
 
-          {/* צד שמאל: כרטיס התרומה - יחס שווה */}
-          <Box sx={{ flex: 1, width: '100%', display: 'flex', justifyContent: 'center' }}>
-            <motion.div 
-              initial={{ opacity: 0, x: -30 }} 
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1, delay: 1}}
-              style={{ width: '100%', maxWidth: '500px' }}
-            >
-              <Paper elevation={0} sx={{
-                p: 5,
-                borderRadius: '32px',
-                border: '1px solid rgba(197, 160, 89, 0.3)',
-                backgroundColor: 'rgba(0, 0, 0, 0.88)',
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 30px 60px rgba(0, 0, 0, 0.5)'
-              }}>
-                <Typography variant="h4" sx={{ fontWeight: 900, color: 'var(--gold)', mb: 1, fontFamily: "'Yetzira-Choppy', sans-serif !important" }}>
-                  שותפות נצח
+              <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', py: 'var(--s3)' }}>
+                <Box sx={{
+                  width: '100%',
+                  maxWidth: 'var(--donation-section-video-max-width)',
+                  aspectRatio: '16/9',
+                  overflow: 'hidden',
+                  borderRadius: 'var(--donation-section-video-radius)',
+                  border: '1px solid var(--gold)',
+                  bgcolor: 'var(--ink)',
+                }}>
+                  <iframe
+                    src="https://www.youtube.com/embed/7YVDVwYOM3E"
+                    title="דברי ראש הישיבה"
+                    width="100%"
+                    height="100%"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{ display: 'block', border: 'none' }}
+                  />
+                </Box>
+              </Box>
+
+              <Box sx={{ borderTop: '1px solid var(--rule-soft)', pt: 'var(--s2)', display: 'flex', alignItems: 'baseline', gap: 'var(--s2)' }}>
+                <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--donation-section-letter-name-size)', fontWeight: 400, color: 'var(--ink-wine)' }}>
+                  הרב מרדכי עטייה
                 </Typography>
-                <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.75)', mb: 4 }}>
-                  בחרו את אפיק הזכות שלכם:
+                <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--donation-section-letter-role-size)', color: 'var(--muted)' }}>
+                  · ראש הישיבה
                 </Typography>
-
-                <Stack spacing={2}>
-                  {donationOptions.map((option, index) => (
-                    <Button
-                      key={index}
-                      fullWidth
-                      variant="outlined"
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'flex-start',
-                        textAlign: 'right',
-                        p: 2.5,
-                        borderRadius: '16px',
-                        borderColor: 'rgba(197, 160, 89, 0.3)',
-                        '&:hover': {
-                          borderColor: 'var(--gold)',
-                          backgroundColor: 'rgba(197, 160, 89, 0.08)',
-                          transform: 'scale(1.02)'
-                        }
-                      }}
-                    >
-                      <Box sx={{ color: 'var(--gold)', ml: 2 }}>
-                        {option.icon}
-                      </Box>
-                      <Box>
-                        <Typography variant="subtitle1" fontWeight="800" sx={{ color: '#ffffff' }}>
-                          {option.title}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)' }}>
-                          {option.subtitle}
-                        </Typography>
-                      </Box>
-                    </Button>
-                  ))}
-                </Stack>
-
-                <Divider sx={{ my: 4, borderColor: 'rgba(197, 160, 89, 0.3)' }}>
-                  <Typography variant="caption" sx={{ color: 'var(--gold)', fontWeight: 'bold' }}>עץ חיים היא למחזיקים בה</Typography>
-                </Divider>
-
-                <AppButton fullWidth onClick={() => navigate('/DonateLetter')}>
-                  אני רוצה להיות שותף
-                </AppButton>
-
-                <Stack direction="row" justifyContent="center" spacing={1} mt={3} sx={{ opacity: 0.5 }}>
-                  <ShieldCheck size={16} color="#ffffff" />
-                  <Typography variant="caption" sx={{ color: '#ffffff' }}>תשלום מאובטח בתקן PCI-DSS</Typography>
-                </Stack>
-              </Paper>
-            </motion.div>
+              </Box>
+            </Box>
           </Box>
-          
-        </Stack>
-      </Container>
-
-      {/* חלון תרומה צף (נדרים פלוס) */}
-      <Dialog 
-        open={openDonation} 
-        onClose={() => setOpenDonation(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: { borderRadius: '20px', overflow: 'hidden' }
-        }}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, bgcolor: '#fdfbf7' }}>
-          <IconButton onClick={() => setOpenDonation(false)} aria-label="סגירה">
-            <CloseIcon />
-          </IconButton>
         </Box>
-        <DialogContent sx={{ p: 0, height: '80vh' }}>
-          <iframe
-            src={NEDARIM_URL}
-            width="100%"
-            height="100%"
-            title="תרומה מאובטחת"
-            style={{ border: 'none' }}
-          />
-        </DialogContent>
-      </Dialog>
+      </Box>
+
     </Box>
   );
 };

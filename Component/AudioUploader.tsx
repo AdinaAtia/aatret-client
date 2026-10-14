@@ -314,6 +314,7 @@ const handleSubmit = async () => {
         AudioDir: lessonData.audioDir,
         AudioFileName: lessonData.audioFileName,
         PdfFileName: lessonData.pdfFileName,
+        PdfFiles: lessonData.pdfFileName ? [lessonData.pdfFileName] : [],
         duration: lessonData.duration || undefined,
 
         

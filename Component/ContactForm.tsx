@@ -94,7 +94,7 @@ const ContactForm: React.FC = () => {
   });
 
   const [errors, setErrors] = useState({
-    fullName: '', phone: '', email: '', questionType: '', message: '',
+    fullName: '', phone: '', email: '', rabbiName: '', questionType: '', message: '',
   });
 
   useEffect(() => {
@@ -118,10 +118,12 @@ const ContactForm: React.FC = () => {
   };
 
   const validate = () => {
-    const newErrors = { fullName: '', phone: '', email: '', questionType: '', message: '' };
+    const newErrors = { fullName: '', phone: '', email: '', rabbiName: '', questionType: '', message: '' };
     if (formData.fullName.trim().length < 2) newErrors.fullName = 'שם מלא חייב להכיל לפחות 2 תווים';
     if (!formData.phone.trim()) newErrors.phone = 'טלפון הוא שדה חובה';
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'כתובת דוא"ל אינה תקינה';
+    if (!formData.email.trim()) newErrors.email = 'דוא"ל הוא שדה חובה';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) newErrors.email = 'כתובת דוא"ל אינה תקינה';
+    if (!formData.rabbiName) newErrors.rabbiName = 'יש לבחור את הרב שאליו מופנית השאלה';
     if (!formData.questionType) newErrors.questionType = 'יש לבחור נושא פנייה';
     if (formData.message.trim().length < 10) newErrors.message = 'תוכן הפנייה חייב להכיל לפחות 10 תווים';
     setErrors(newErrors);
@@ -164,7 +166,7 @@ const ContactForm: React.FC = () => {
       label: 'מאגר שיעורים טלפוני',
       value: site.phones.lessonsArchive,
       href: site.phones.lessonsArchive ? toTelHref(site.phones.lessonsArchive) : undefined,
-      subText: 'שיעורי רבני הישיבה, ובהם הרב אליהו מרגי שליט"א ועוד, זמינים להאזנה בטלפון. המערכת כוללת שלוחות.',
+      subText: 'שיעורי רבני הישיבה, ובהם הרב אליהו מרגי שליט"א ועוד, זמינים להאזנה בטלפון במרחב הקולי. המערכת כוללת שלוחות.',
     },
     ...(site.whatsapp ? [{
       key: 'whatsapp',
@@ -199,7 +201,7 @@ const ContactForm: React.FC = () => {
           <Box sx={{ order: { xs: 2, md: 1 } }}>
             <Typography
               component="h2"
-              sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--t5)', color: 'var(--ink-wine)', mb: 3 }}
+              sx={{ fontFamily: 'var(--font-heading)', fontWeight: 400, fontSize: 'var(--t5)', color: 'var(--ink-wine)', mb: 3 }}
             >
               פרטי הישיבה
             </Typography>
@@ -308,7 +310,7 @@ const ContactForm: React.FC = () => {
               >
                 <Typography
                   component="h2"
-                  sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--t5)', color: 'var(--ink-wine)', mb: 1 }}
+                  sx={{ fontFamily: 'var(--font-heading)', fontWeight: 400, fontSize: 'var(--t5)', color: 'var(--ink-wine)', mb: 1 }}
                 >
                   שאלה לרב
                 </Typography>
@@ -344,12 +346,14 @@ const ContactForm: React.FC = () => {
 
                   <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <FieldLabel id="cf-rabbiName">הפנייה לרב</FieldLabel>
+                    <FieldLabel id="cf-rabbiName" required>הפנייה לרב</FieldLabel>
                     <TextField
-                      id="cf-rabbiName" select fullWidth size="small"
+                      id="cf-rabbiName" select fullWidth size="small" required
                       name="rabbiName"
                       SelectProps={{ labelId: 'cf-rabbiName-label' }}
                       value={formData.rabbiName} onChange={handleChange}
+                      error={!!errors.rabbiName} helperText={errors.rabbiName}
+                      inputProps={{ 'aria-required': true }}
                       sx={fieldStyle}
                     >
                       {rabbis.map(r => (
@@ -361,12 +365,13 @@ const ContactForm: React.FC = () => {
                     </Box>
 
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <FieldLabel id="cf-email">דוא"ל</FieldLabel>
+                    <FieldLabel id="cf-email" required>דוא"ל</FieldLabel>
                     <TextField
-                      id="cf-email" fullWidth size="small"
-                      name="email"
+                      id="cf-email" fullWidth size="small" required
+                      name="email" type="email"
                       value={formData.email} onChange={handleChange}
                       error={!!errors.email} helperText={errors.email}
+                      inputProps={{ 'aria-required': true, dir: 'ltr', style: { textAlign: 'right' } }}
                       sx={fieldStyle}
                     />
                     </Box>
@@ -419,13 +424,14 @@ const ContactForm: React.FC = () => {
                     {submitStatus === 'loading' ? 'שולח...' : 'שליחת הפנייה'}
                   </AppButton>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--muted)' }}>
-                    <InfoOutlinedIcon aria-hidden="true" sx={{ fontSize: 16, color: 'var(--gold-text)', flexShrink: 0 }} />
-                    <Typography sx={{ fontSize: 'var(--t1)', color: 'inherit', fontFamily: 'var(--font-body)' }}>
-                      התשובה תפורסם באתר ללא פרטים מזהים.
-                      {site.responseDays && ` נחזור אליך תוך ${site.responseDays} ימי עבודה.`}
-                    </Typography>
-                  </Box>
+                  {site.responseDays && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--muted)' }}>
+                      <InfoOutlinedIcon aria-hidden="true" sx={{ fontSize: 16, color: 'var(--gold-text)', flexShrink: 0 }} />
+                      <Typography sx={{ fontSize: 'var(--t1)', color: 'inherit', fontFamily: 'var(--font-body)' }}>
+                        {`נחזור אליך תוך ${site.responseDays} ימי עבודה.`}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
               </Box>
             </Box>

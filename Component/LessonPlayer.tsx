@@ -1,4 +1,4 @@
-import { Box, Typography, Stack, IconButton, Container, Dialog, DialogTitle, DialogContent, Divider, RadioGroup, FormControlLabel, Radio, TextField, Popover } from "@mui/material";
+import { Box, Typography, Stack, IconButton, Container, Dialog, DialogTitle, DialogContent, Divider, RadioGroup, FormControlLabel, Radio, TextField, Popover, Menu, MenuItem, Tooltip } from "@mui/material";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useNavigate } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
@@ -14,6 +14,7 @@ import { ChevronRight, ChevronLeft, Play, Pause, Volume2, VolumeX, Link2, Mail, 
 import LessonThumb, { youtubeThumbSources } from './shared/LessonThumb';
 import { site } from '../src/content/site';
 import AppButton from './shared/AppButton';
+import { getPdfList } from './shared/pdfFiles';
 import Breadcrumb from './shared/Breadcrumb';
 import LessonCard from './shared/LessonCard';
 import SectionArch from './shared/SectionArch';
@@ -134,8 +135,19 @@ const LessonPlayer = ({ lesson, onBack, onLessonSelect }: LessonPlayerProps) => 
 
   const {
     title, youtube_id, lesson_date_gregorian, lesson_date_hebrew,
-    rabbi, duration, views, AudioDir, AudioFileName, PdfFileName
+    rabbi, duration, views, AudioDir, AudioFileName
   } = lesson;
+  const pdfList = getPdfList(lesson);
+  const downloadPdf = (name: string) => {
+    const cleanDir = (AudioDir || '').replace(/^\/+|\/+$/g, '');
+    const file = `${cleanDir}/${name}`;
+    const params = new URLSearchParams({ key: 'ATERET_DL_2026', file, title: title || name });
+    const a = document.createElement('a');
+    a.href = `https://ateretmordechaifiles.com/download.php?${params}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
 
   const rabbiName = rabbi?.name || "";
   const lessonNumber = title.match(/\d{3}/)?.[0] || "";
@@ -173,6 +185,7 @@ const LessonPlayer = ({ lesson, onBack, onLessonSelect }: LessonPlayerProps) => 
 const [categoryPath, setCategoryPath] = useState<string>("");
   const [relatedLessons, setRelatedLessons] = useState<any[]>([]);
   // שיעור קודם/הבא באותה סדרה, לפי תאריך השיעור
+  const [pdfMenuAnchor, setPdfMenuAnchor] = useState<HTMLElement | null>(null);
   const [downloadHelpAnchor, setDownloadHelpAnchor] = useState<HTMLElement | null>(null);
   const [prevLesson, setPrevLesson] = useState<any | null>(null);
   const [nextLesson, setNextLesson] = useState<any | null>(null);
@@ -188,6 +201,7 @@ const [categoryPath, setCategoryPath] = useState<string>("");
       await axios.post(`${import.meta.env.VITE_API_URL}/api/contact/lesson-feedback`, {
         ...feedbackData,
         lessonTitle: title,
+        lessonDocumentId: lesson?.documentId,
       });
       setFeedbackStatus('success');
       setFeedbackData({ name: '', email: '', message: '' });
@@ -228,7 +242,7 @@ const [categoryPath, setCategoryPath] = useState<string>("");
   };
   const dialogTitleSx = {
     position: 'relative', textAlign: 'center', py: 2.5, px: 6,
-    fontFamily: 'var(--font-heading)', fontSize: '26px', fontWeight: 700, color: 'var(--ink-wine)',
+    fontFamily: 'var(--font-heading)', fontSize: '26px', fontWeight: 400, color: 'var(--ink-wine)',
     bgcolor: 'var(--parchment-2)', borderBottom: `1px solid var(--gold)`,
   } as const;
   const dialogCloseSx = {
@@ -238,7 +252,7 @@ const [categoryPath, setCategoryPath] = useState<string>("");
   } as const;
   const dialogContentSx = { pt: '24px !important', fontFamily: 'var(--font-body)', color: 'var(--body)' };
   const dialogSectionTitleSx = {
-    fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '20px', color: 'var(--ink-wine)',
+    fontFamily: 'var(--font-heading)', fontWeight: 400, fontSize: '20px', color: 'var(--ink-wine)',
   } as const;
   const dialogDividerSx = { borderColor: 'var(--rule-soft)' };
   const radioSx = { color: 'var(--gold)', '&.Mui-checked': { color: 'var(--gold-deep)' } };
@@ -270,10 +284,10 @@ useEffect(() => {
       setSeriesFilter({ rabbiId: rabbiId ?? null, mainCategoryId: mainId ?? null, subCategoryId: subId ?? null });
       const filterKey = subId ? 'sub_category' : 'main_category';
       const filterId = subId || mainId;
+      // התאמה מדויקת לאותה קטגוריה: אם אין תת-קטגוריה, לא מביאים שיעורים השייכים לתת-קטגוריות של הראשית
+      const exactOnly = subId ? '' : '&filters[sub_category][id][$null]=true';
       if (filterId) {
         try {
-          // התאמה מדויקת לאותה קטגוריה: אם אין תת-קטגוריה, לא מביאים שיעורים השייכים לתת-קטגוריות של הראשית
-          const exactOnly = subId ? '' : '&filters[sub_category][id][$null]=true';
           const relRes = await axios.get(
             `${import.meta.env.VITE_API_URL}/api/lessons?filters[${filterKey}][id][$eq]=${filterId}${exactOnly}&filters[id][$ne]=${lesson.id}&populate=rabbi&pagination[pageSize]=4&sort[0]=lesson_date_gregorian:desc`
           );
@@ -410,7 +424,7 @@ useEffect(() => {
               </Typography>
             )}
 
-            <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '28px', md: '40px' }, fontWeight: 700, color: 'var(--ink-wine)', lineHeight: 1.25, mb: '10px' }}>
+            <Typography component="h1" sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '28px', md: '40px' }, fontWeight: 700, color: 'var(--ink-wine)', lineHeight: 1.25, mb: '10px' }}>
               {title}
             </Typography>
 
@@ -601,12 +615,7 @@ useEffect(() => {
             </Box>
 
             {/* כפתורי פעולה — אחד ראשי, השאר משניים */}
-            <Box sx={{
-              display: 'grid', gap: 1.5,
-              gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-              '& .MuiButton-root': { width: '100%', height: '46px', whiteSpace: 'nowrap' },
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {AudioFileName && (
                 <IconButton
                   aria-label="עזרה בהורדת השיעור"
@@ -617,6 +626,14 @@ useEffect(() => {
                   <HelpOutlineIcon sx={{ fontSize: 20 }} />
                 </IconButton>
               )}
+            <Box sx={{
+              flex: 1, minWidth: 0,
+              display: 'grid', gap: '12px',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+              '& .MuiButton-root': { width: '100%', height: '46px', whiteSpace: 'nowrap' },
+            }}>
+              <Tooltip title="הורדת קובץ השמע בלבד. הסרטון זמין לצפייה ביוטיוב">
+              <Box component="span" sx={{ display: 'block', flex: 1 }}>
               <AppButton
 
                 disabled={!AudioFileName}
@@ -632,27 +649,29 @@ useEffect(() => {
                 }}
                 startIcon={<ArrowDownToLine size={15} strokeWidth={1.75} />}
               >
-                הורדת השיעור
+                הורדת שמע
               </AppButton>
               </Box>
+              </Tooltip>
 
               <AppButton
                 variant="outline"
-                disabled={!PdfFileName}
-                onClick={() => {
-                  const cleanDir = (AudioDir || '').replace(/^\/+|\/+$/g, '');
-                  const file = `${cleanDir}/${PdfFileName}`;
-                  const params = new URLSearchParams({ key: 'ATERET_DL_2026', file, title: title || PdfFileName });
-                  const a = document.createElement('a');
-                  a.href = `https://ateretmordechaifiles.com/download.php?${params}`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
+                disabled={pdfList.length === 0}
+                onClick={(e: any) => {
+                  if (pdfList.length === 1) downloadPdf(pdfList[0]);
+                  else setPdfMenuAnchor(e.currentTarget);
                 }}
                 startIcon={<FileText size={15} strokeWidth={1.75} />}
               >
-                הורדת דף מקורות
+                {pdfList.length > 1 ? 'הורדת דפי מקורות' : 'הורדת דף מקורות'}
               </AppButton>
+              <Menu anchorEl={pdfMenuAnchor} open={!!pdfMenuAnchor} onClose={() => setPdfMenuAnchor(null)}>
+                {pdfList.map((name) => (
+                  <MenuItem key={name} onClick={() => { downloadPdf(name); setPdfMenuAnchor(null); }} sx={{ direction: 'rtl', fontFamily: 'var(--font-body)' }}>
+                    {name}
+                  </MenuItem>
+                ))}
+              </Menu>
 
               <AppButton variant="outline" startIcon={<Heart size={15} strokeWidth={1.75} />} onClick={() => setDedicateOpen(true)}>
                 הקדשת השיעור
@@ -661,13 +680,14 @@ useEffect(() => {
                 הערה על השיעור
               </AppButton>
             </Box>
+            </Box>
           </Box>
 
           {/* ===== סרגל צד ===== */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {seriesName && (
               <Box sx={{ bgcolor: 'var(--surface)', border: `1px solid var(--gold)`, borderRadius: '12px', p: '20px' }}>
-                <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '18px', fontWeight: 700, color: 'var(--ink-wine)', mb: '8px' }}>
+                <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '18px', fontWeight: 700, color: 'var(--ink-wine)', mb: '8px' }}>
                   על הסדרה
                 </Typography>
                 <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--muted)', mb: '14px' }}>
@@ -680,7 +700,7 @@ useEffect(() => {
             )}
 
             <Box sx={{ bgcolor: 'var(--surface)', border: `1px solid var(--gold)`, borderRadius: '12px', p: '20px' }}>
-              <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '18px', fontWeight: 700, color: 'var(--ink-wine)', mb: '12px' }}>
+              <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '18px', fontWeight: 700, color: 'var(--ink-wine)', mb: '12px' }}>
                 שיתוף
               </Typography>
               <Box sx={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -708,7 +728,7 @@ useEffect(() => {
             </Box>
 
             <Box sx={{ bgcolor: 'var(--wine)', border: `1px solid var(--gold)`, borderRadius: '12px', p: '20px', color: 'var(--surface)' }}>
-              <Typography sx={{ background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent', fontFamily: 'var(--font-heading)', fontSize: '18px', fontWeight: 700, mb: '10px' }}>
+              <Typography sx={{ background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent', fontFamily: 'var(--font-body)', fontSize: '18px', fontWeight: 700, mb: '10px' }}>
                 שיעור קבלה יומי
               </Typography>
               <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--book-purchase-card-sub-text-color)', mb: '4px' }}>
@@ -733,7 +753,7 @@ useEffect(() => {
         <Box sx={{ bgcolor: 'var(--section-bg)', borderTop: `1px solid var(--gold)`, py: { xs: 5, md: 7 } }}>
         <Container maxWidth="lg">
           <SectionArch mb="17px" />
-          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '26px', md: '38px' }, lineHeight: 1.2, fontWeight: 700, color: 'var(--ink-wine)', mb: '38px', textAlign: 'center' }}>
+          <Typography component="h2" sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '26px', md: '38px' }, lineHeight: 1.2, fontWeight: 700, color: 'var(--ink-wine)', mb: '38px', textAlign: 'center' }}>
             שיעורים נוספים בסדרה
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: '20px' }}>
@@ -769,11 +789,11 @@ useEffect(() => {
         transformOrigin={{ vertical: 'top', horizontal: 'center' }}
         slotProps={{ paper: { dir: 'rtl', sx: { maxWidth: 320, p: '16px 18px', border: `1px solid var(--gold)`, borderRadius: '12px', bgcolor: 'var(--surface)' } } }}
       >
-        <Typography sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '17px', color: 'var(--ink-wine)', mb: '6px' }}>
+        <Typography sx={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '17px', color: 'var(--ink-wine)', mb: '6px' }}>
           איך מורידים את השיעור?
         </Typography>
         <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--body)', lineHeight: 1.6 }}>
-          לחצו על "הורדת השיעור". הקובץ יישמר בתיקיית ההורדות במכשיר.
+          לחצו על "הורדת שמע". מורד קובץ השמע בלבד (הסרטון זמין לצפייה ביוטיוב). הקובץ יישמר בתיקיית ההורדות במכשיר.
           בטלפון: אם הקובץ נפתח במקום להישמר, לחצו לחיצה ארוכה על הכפתור ובחרו "שמירת קישור".
         </Typography>
       </Popover>

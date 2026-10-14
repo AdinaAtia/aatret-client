@@ -5,7 +5,7 @@ import {
   Box, Typography, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, TextField, IconButton, Tooltip,
   Stack, Button, Avatar, Skeleton, Dialog, DialogTitle,
-  DialogContent, DialogActions, Checkbox
+  DialogContent, DialogActions, Checkbox, FormControlLabel
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -85,6 +85,8 @@ const ManageRabbis = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newPriority, setNewPriority] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhoneOnly, setNewPhoneOnly] = useState(false);
   const [editRabbi, setEditRabbi] = useState<any | null>(null);
   const [saving, setSaving] = useState(false);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
@@ -110,6 +112,8 @@ const ManageRabbis = () => {
           documentId: r.documentId,
           name: r.name || '',
           priority: r.Priority ?? '',
+          email: r.email || '',
+          phoneOnly: Boolean(r.phoneOnly),
           publishedAt: r.publishedAt || null,
           photoUrl: photoPath ? `${API}${photoPath}` : null,
           totalLessons: r.totalLessons ?? 0,
@@ -194,6 +198,8 @@ const ManageRabbis = () => {
         data: {
           name: editRabbi.name,
           Priority: Number(editRabbi.priority),
+          email: editRabbi.email?.trim() || null,
+          phoneOnly: Boolean(editRabbi.phoneOnly),
           schedule: (editRabbi.schedule || []).map((s: ScheduleRow) => ({
             day: s.day,
             startTime: toApiTime(s.startTime),
@@ -259,12 +265,16 @@ const ManageRabbis = () => {
         data: {
           name: newName.trim(),
           Priority: Number(newPriority) || 99,
+          ...(newEmail.trim() ? { email: newEmail.trim() } : {}),
+          phoneOnly: newPhoneOnly,
           ...(photoId ? { photo_url: [photoId] } : {})
         }
       });
       setAddOpen(false);
       setNewName('');
       setNewPriority('');
+      setNewEmail('');
+      setNewPhoneOnly(false);
       setNewPhotoFile(null);
       setNewPhotoPreview(null);
       fetchRabbis();
@@ -402,6 +412,7 @@ const ManageRabbis = () => {
               </TableCell>
               <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>תמונה</TableCell>
               <TableCell align="right" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>שם</TableCell>
+              <TableCell align="right" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>כתובת מייל</TableCell>
               <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>עדיפות</TableCell>
               <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>שיעורים</TableCell>
               <TableCell align="center" sx={{ bgcolor: colors.gold, color: '#000', fontWeight: 700 }}>כניסות</TableCell>
@@ -414,7 +425,7 @@ const ManageRabbis = () => {
             {loading ? (
               [1, 2, 3].map(i => (
                 <TableRow key={i}>
-                  <TableCell colSpan={6}><Skeleton variant="rectangular" height={60} /></TableCell>
+                  <TableCell colSpan={10}><Skeleton variant="rectangular" height={60} /></TableCell>
                 </TableRow>
               ))
             ) : rabbis.map(rabbi => (
@@ -438,6 +449,12 @@ const ManageRabbis = () => {
                 <TableCell align="right">
                   <Typography fontWeight={700}>{rabbi.name}</Typography>
                   <Typography variant="caption" sx={{ color: colors.gold }}>ID: {rabbi.id}</Typography>
+                </TableCell>
+
+                <TableCell align="right">
+                  <Typography variant="body2" sx={{ color: rabbi.email ? '#000' : '#bdbdbd', direction: 'ltr', textAlign: 'right' }}>
+                    {rabbi.email || 'לא הוגדר'}
+                  </Typography>
                 </TableCell>
 
                 <TableCell align="center">
@@ -525,6 +542,26 @@ const ManageRabbis = () => {
               onChange={e => setEditRabbi((prev: any) => ({ ...prev, priority: e.target.value }))}
               fullWidth
               sx={editFieldStyle}
+            />
+            <TextField
+              label="כתובת מייל (לקבלת שאלות ותגובות)"
+              type="email"
+              value={editRabbi?.email || ''}
+              onChange={e => setEditRabbi((prev: any) => ({ ...prev, email: e.target.value }))}
+              fullWidth
+              inputProps={{ dir: 'ltr', style: { textAlign: 'right' } }}
+              sx={editFieldStyle}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={Boolean(editRabbi?.phoneOnly)}
+                  onChange={e => setEditRabbi((prev: any) => ({ ...prev, phoneOnly: e.target.checked }))}
+                  sx={{ color: '#000', '&.Mui-checked': { color: '#000' } }}
+                />
+              }
+              label="מרחב קולי בלבד (שיעורים בקו הטלפוני, אין שיעורים באתר)"
+              sx={{ mx: 0 }}
             />
 
             <Box>
@@ -679,6 +716,18 @@ const ManageRabbis = () => {
             </Box>
             <TextField label="שם הרב" value={newName} onChange={e => setNewName(e.target.value)} fullWidth autoFocus sx={editFieldStyle} />
             <TextField label="עדיפות (סדר הופעה)" type="number" value={newPriority} onChange={e => setNewPriority(e.target.value)} fullWidth sx={editFieldStyle} />
+            <TextField label="כתובת מייל (לקבלת שאלות ותגובות)" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} fullWidth inputProps={{ dir: 'ltr', style: { textAlign: 'right' } }} sx={editFieldStyle} />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={newPhoneOnly}
+                  onChange={e => setNewPhoneOnly(e.target.checked)}
+                  sx={{ color: '#000', '&.Mui-checked': { color: '#000' } }}
+                />
+              }
+              label="מרחב קולי בלבד (שיעורים בקו הטלפוני, אין שיעורים באתר)"
+              sx={{ mx: 0 }}
+            />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>

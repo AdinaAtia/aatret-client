@@ -18,6 +18,13 @@ const DonateLetter = () => {
           {/* תוכן - צד שמאל */}
           <Box sx={{ flex: 1 }}>
 
+            {/* כפתור תרומה */}
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <AppButton href={nedarimUrl} target="_blank" rel="noopener noreferrer">
+                לתרומה בכרטיס אשראי
+              </AppButton>
+            </Box>
+
             {/* חלק עברי */}
             <Box sx={{ textAlign: 'center', mb: 4 }}>
               <Typography sx={{ fontWeight: 900, fontSize: '1.1rem', color: DARK, mb: 2 }}>
@@ -96,13 +103,6 @@ const DonateLetter = () => {
               <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: DARK }}>{en.signature1}</Typography>
               <Typography sx={{ fontSize: '0.9rem', color: DARK, mb: 2 }}>{en.signature2}</Typography>
               <Typography sx={{ fontSize: '0.85rem', color: GOLD, fontStyle: 'italic' }}>{en.footer}</Typography>
-            </Box>
-
-            {/* כפתור תרומה */}
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <AppButton href={nedarimUrl} target="_blank" rel="noopener noreferrer">
-                לתרומה בכרטיס אשראי
-              </AppButton>
             </Box>
 
           </Box>

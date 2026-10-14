@@ -124,7 +124,7 @@ const VideoGallery = () => {
       {/* כותרת */}
       <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 } }}>
         <SectionArch mb="6px" />
-        <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '1.8rem', md: '42px' }, fontWeight: 700, m: 0, background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}>
+        <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '1.8rem', md: '42px' }, fontWeight: 400, m: 0, background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}>
           גלריית וידאו
         </Typography>
         <SectionFlourish />

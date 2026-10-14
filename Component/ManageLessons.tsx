@@ -18,6 +18,7 @@ import EditLessonDialog, { type ConvertState } from './EditLessonDialog';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import DeleteActionPopover from './DeleteActionPopover';
+import { getPdfList } from './shared/pdfFiles';
 
 import { colors } from '../src/theme/tokens';
 const COLORS = {
@@ -59,7 +60,6 @@ const handleEditClick = (lesson: any) => {
 };
 const [isSyncing, setIsSyncing] = useState(false);
 const [isSyncingViews, setIsSyncingViews] = useState(false);
-const [isScanningAudio, setIsScanningAudio] = useState(false);
 const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 const [playingAudio, setPlayingAudio] = useState<{ url: string; title: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -148,25 +148,11 @@ const getAudioUrl = (attr: any) => {
   return `/api/lessons/download-file?audioDir=${encodeURIComponent(cleanDir)}&audioFileName=${encodeURIComponent(attr.AudioFileName)}`;
 };
 
-const getPdfUrl = (attr: any) => {
+const getPdfUrl = (attr: any, fileName: string) => {
   const cleanDir = (attr.PdfDir || '').startsWith('/')
     ? attr.PdfDir.slice(1)
     : (attr.PdfDir || '');
-  return `/api/lessons/download-file?audioDir=${encodeURIComponent(cleanDir)}&audioFileName=${encodeURIComponent(attr.PdfFileName)}`;
-};
-
-const handleScanAudio = async () => {
-  setIsScanningAudio(true);
-  try {
-    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/lessons/scan-audio`, { limit: 3 });
-    setSnackbar({ open: true, message: `סריקת שמע הסתיימה! נסרקו: ${response.data.scanned} קבצים, נוספו: ${response.data.added} שיעורים חדשים (Draft)`, severity: 'success' });
-    await fetchLessons(currentPage);
-  } catch (error) {
-    console.error('Scan audio error:', error);
-    setSnackbar({ open: true, message: 'שגיאה בסריקת קבצי שמע.', severity: 'error' });
-  } finally {
-    setIsScanningAudio(false);
-  }
+  return `/api/lessons/download-file?audioDir=${encodeURIComponent(cleanDir)}&audioFileName=${encodeURIComponent(fileName)}`;
 };
 
 const handleOpenPopover = (event: React.MouseEvent<HTMLButtonElement>, lesson: any) => {
@@ -410,43 +396,6 @@ const fetchLecturers = async () => {
           {isSyncingViews ? 'מעדכן צפיות...' : 'עדכן צפיות יוטיוב'}
         </Button>
 
-        <Button
-          variant="outlined"
-          onClick={handleScanAudio}
-          disabled={isScanningAudio}
-          sx={{
-            borderColor: '#4a90d9',
-            color: '#4a90d9',
-            borderRadius: '8px',
-            height: '35px',
-            px: 3,
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            '&:hover': { bgcolor: '#4a90d9', color: '#fff' },
-            transition: '0.3s',
-            '&.Mui-disabled': { borderColor: '#666', color: '#666' }
-          }}
-        >
-          {isScanningAudio ? 'סורק שמע...' : 'סנכרן שמע מהשרת'}
-        </Button>
-
-        <Button
-          variant="outlined"
-          onClick={() => fetchLessons(currentPage)}
-          sx={{
-            borderColor: colors.gold,
-            color: colors.gold,
-            borderRadius: '8px',
-            height: '35px',
-            px: 3,
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            '&:hover': { bgcolor: colors.gold, color: '#000' },
-            transition: '0.3s',
-          }}
-        >
-          רענן
-        </Button>
       </Stack>
 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center', gap: 1 }}>
   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -669,13 +618,13 @@ const { rabbi } = attr;   const rabbiName = rabbi?.data?.attributes?.name || rab
         </IconButton>
       </Tooltip>
     )}
-    {attr.PdfFileName && (
-      <Tooltip title="פתח PDF">
-        <IconButton size="small" onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(getPdfUrl(attr), '_blank'); }}>
+    {getPdfList(attr).map((pdfName) => (
+      <Tooltip key={pdfName} title={`פתח PDF: ${pdfName}`}>
+        <IconButton size="small" onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(getPdfUrl(attr, pdfName), '_blank'); }}>
           <PictureAsPdfIcon sx={{ color: '#d32f2f', fontSize: 20 }} />
         </IconButton>
       </Tooltip>
-    )}
+    ))}
   </Stack>
 </TableCell>
 

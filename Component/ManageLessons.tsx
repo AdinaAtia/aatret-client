@@ -131,6 +131,7 @@ const handleSyncViews = async () => {
     const missing: string[] = response.data.missing || [];
     alert(
       `עדכון צפיות הסתיים! עודכנו ${response.data.updated} מתוך ${response.data.total} סרטונים` +
+      (response.data.baselined ? `\n${response.data.baselined} סרטונים נשמרו כבסיס — הצפיות שלהם יתעדכנו מהסנכרון הבא` : '') +
       (missing.length ? `\nלא עודכנו (נמחקו/פרטיים/צפיות מוסתרות): ${missing.join(', ')}` : '')
     );
   } catch (error) {

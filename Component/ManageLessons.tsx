@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect  } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box, Typography, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, TextField, IconButton, Tooltip,
-  Stack, Button, MenuItem, Pagination, Checkbox, Select, Snackbar, Alert
+  Stack, Button, MenuItem, Pagination, Checkbox, Select, Snackbar, Alert, Chip, CircularProgress
 } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import YouTubeIcon from '@mui/icons-material/YouTube';
@@ -14,7 +14,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarTodayOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import axios from 'axios';
 import EditIcon from '@mui/icons-material/Edit';
-import EditLessonDialog from './EditLessonDialog';
+import EditLessonDialog, { type ConvertState } from './EditLessonDialog';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import DeleteActionPopover from './DeleteActionPopover';
@@ -68,6 +68,29 @@ const [playingAudio, setPlayingAudio] = useState<{ url: string; title: string } 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
+  // המרות שרצות ברקע, לפי documentId של השיעור — מוצגות כתגית בשורה
+  const [conversions, setConversions] = useState<Record<string, ConvertState>>({});
+  const refreshRef = useRef<() => void>(() => {});
+  refreshRef.current = () => fetchLessons(currentPage, searchQuery, selectedRabbiDocId);
+
+  const dismissConversion = (docId: string) =>
+    setConversions(prev => { const next = { ...prev }; delete next[docId]; return next; });
+
+  const handleConvertChange = (docId: string, state: ConvertState) => {
+    setConversions(prev => ({ ...prev, [docId]: state }));
+    if (state.status === 'running') return;
+
+    if (state.status === 'done') {
+      setSnackbar({ open: true, message: 'ההמרה הסתיימה בהצלחה', severity: 'success' });
+      refreshRef.current();
+      setTimeout(() => dismissConversion(docId), 6000);
+    } else if (state.status === 'failed') {
+      setSnackbar({ open: true, message: `ההמרה נכשלה: ${state.error || 'שגיאה לא ידועה'}`, severity: 'error' });
+    } else {
+      setSnackbar({ open: true, message: 'ההמרה עדיין רצה בשרת — בדקי בעוד כמה דקות', severity: 'success' });
+    }
+  };
+
   const handleRabbiFilter = (rabbiDocId: string) => {
     setSelectedRabbiDocId(rabbiDocId);
     fetchLessons(1, searchQuery, rabbiDocId);
@@ -105,7 +128,11 @@ const handleSyncViews = async () => {
   setIsSyncingViews(true);
   try {
     const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/lessons/sync-views`);
-    alert(`עדכון צפיות הסתיים! עודכנו ${response.data.updated} מתוך ${response.data.total} שיעורים`);
+    const missing: string[] = response.data.missing || [];
+    alert(
+      `עדכון צפיות הסתיים! עודכנו ${response.data.updated} מתוך ${response.data.total} סרטונים` +
+      (missing.length ? `\nלא עודכנו (נמחקו/פרטיים/צפיות מוסתרות): ${missing.join(', ')}` : '')
+    );
   } catch (error) {
     console.error('Sync views error:', error);
     alert('שגיאה בעדכון הצפיות.');
@@ -514,7 +541,7 @@ const fetchLecturers = async () => {
               lessons.map((lesson) => {
                const attr = lesson.attributes || lesson;
                const realDbId = lesson.id;
-const { rabbi } = attr;   const rabbiName = rabbi?.data?.attributes?.name || rabbi?.name || "הרב מרדכי עטייה";
+const { rabbi } = attr;   const rabbiName = rabbi?.data?.attributes?.name || rabbi?.name || "";
                 // חילוץ נתוני הרב כפי שעשית בקוד ה-AllLessons
 // console.log(`Original ID: ${lesson.id}, Title: ${attr.title}`);
                 return (
@@ -538,8 +565,41 @@ const { rabbi } = attr;   const rabbiName = rabbi?.data?.attributes?.name || rab
                     <TableCell sx={{ textAlign: 'justify', py: 0 }}>
                       <Typography variant="body2" alignItems="center" sx={{textAlign: 'justify',fontWeight: 700 }}>{attr.title || `שיעור ${lesson.id}`}</Typography>
                       <Typography variant="caption" sx={{textAlign: 'justify', color: COLORS.BROWN_LIGHT, fontWeight: 600 }}>
-                        {rabbiName} | ID: {realDbId}
+                        {rabbiName ? `${rabbiName} | ` : ''}ID: {realDbId}
                       </Typography>
+                      {(() => {
+                        const conv = conversions[lesson.documentId];
+                        if (!conv) return null;
+                        const running = conv.status === 'running';
+                        const done = conv.status === 'done';
+                        const failed = conv.status === 'failed';
+                        const label = running
+                          ? `ממיר ברקע${conv.stage ? ` · ${conv.stage}` : ''}…`
+                          : done ? '✓ ההמרה הסתיימה'
+                          : failed ? 'ההמרה נכשלה'
+                          : 'ההמרה עדיין רצה בשרת';
+                        return (
+                          <Box sx={{ mt: 0.5, mb: 0.5 }} onClick={(e) => e.stopPropagation()}>
+                            <Tooltip title={failed ? (conv.error || '') : ''}>
+                              <Chip
+                                size="small"
+                                icon={running ? <CircularProgress size={12} sx={{ color: `${colors.gold} !important` }} /> : undefined}
+                                label={label}
+                                onDelete={running ? undefined : () => dismissConversion(lesson.documentId)}
+                                sx={{
+                                  height: 22,
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  bgcolor: failed ? '#fdecea' : '#000',
+                                  color: failed ? '#c62828' : colors.gold,
+                                  border: failed ? '1px solid #e57373' : 'none',
+                                  '& .MuiChip-deleteIcon': { color: 'inherit', fontSize: 16 },
+                                }}
+                              />
+                            </Tooltip>
+                          </Box>
+                        );
+                      })()}
                     </TableCell>
 <TableCell sx={{ py: 0 }}> {/* צמצום הגובה של כל השורה בטבלה */}
   <Stack spacing={1}>
@@ -694,6 +754,7 @@ handleEditClick(lesson)
   lesson={selectedLesson}        // מעביר את נתוני השיעור שנבחר
   lecturers={lecturers}          // מעביר את רשימת הרבנים
   onSaveSuccess={() => fetchLessons(currentPage)} // מעביר פונקציה שמרעננת את הטבלה אחרי שמירה
+  onConvertChange={handleConvertChange} // התקדמות ההמרה ברקע — תגית בשורה
 />
     </Box>
 

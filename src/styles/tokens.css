@@ -1,0 +1,324 @@
+/* טוקני עיצוב — מקור: BRIEF-PAGES.md ("מערכת העיצוב"). להגדיר פעם אחת ולהשתמש רק בהם. */
+:root{
+  --ink:        #12090B;  /* טקסט וכותרות (בבריף #14100A — הושאר #12090B כמו ב-tokens.ts כדי לא לשנות את האתר) */
+  --parchment:  #FAF6EA;  /* רקע ברירת מחדל של העמוד */
+  --parchment-2:#EFE6D0;  /* רצועות ורקע מובחן */
+  --surface:    #FFFCF4;  /* כרטיסים */
+  --wine:       #4A0F14;  /* רגעים כהים: רצועות ופעולות ראשיות */
+  --gold:       #C5A059;  /* גבולות, מילויים, טקסט על כהה */
+  --gold-text:  #7E5F1B;  /* זהב לטקסט על רקע בהיר — קריא */
+  --rule:       #C5A059;
+  --rule-soft:  #E2D8C0;
+  --muted:      #6E6152;
+  --body:       #3A2C1E;
+
+  --s1:4px; --s2:8px; --s3:16px; --s4:24px; --s5:40px; --s6:64px;
+  --t1:12px; --t2:14px; --t3:16px; --t4:20px; --t5:28px; --t6:40px;
+
+  /* הזהב המטאלי — כל כפתור ראשי וכל לוגו */
+  --gold-metal: linear-gradient(150deg,#8A6522 0%,#C5A059 30%,#EBD59A 52%,#C5A059 74%,#8A6522 100%);
+
+  /* ───── הועתק מילה במילה מ-src/theme/tokens.ts (colors) ───── */
+  --sand:               #F2E6C7;  /* חול/זהב בהיר — מסגרות, מילויים עדינים */
+  --section-bg:         #F0E9D2;  /* רקע קטע בין שני קווי זהב — אזור ראש הישיבה */
+  --gold-deep:          #8A6522;  /* זהב כהה — אייקונים, מצב פעיל */
+  --gold-button-border: #A6812F;  /* מסגרת כפתור הזהב */
+  --gold-light:         #EBD59A;  /* זהב בהיר — טקסט זהב על רקע כהה */
+  --ink-dark:           #1A1206;  /* אייקון/טקסט כהה על זהב */
+  --ink-wine:           #2C0E10;  /* כותרות וטקסט כהה */
+
+  /* ───── gradients ───── */
+  --gradient-gold-button:        linear-gradient(147deg, #9B7A40 0%, #C0995A 24%, #E9D197 58%, #C9A566 80%, #9B7A40 100%);
+  --gradient-gold-text-vertical: linear-gradient(180deg, #D9BC7F 0%, #C5A059 42%, #8A6522 100%);
+  --gradient-gold:               linear-gradient(160deg, var(--sand) 0%, var(--gold) 38%, var(--gold-deep) 72%, var(--gold) 100%);
+  --gradient-gold-horizontal:    linear-gradient(90deg, var(--gold-deep) 0%, var(--gold) 25%, var(--sand) 50%, var(--gold) 75%, var(--gold-deep) 100%);
+  --gradient-wine:               linear-gradient(180deg, var(--wine) 0%, var(--ink) 100%);
+
+  /* ───── גופנים ───── */
+  --font-heading:        'Yetzira-Regular', 'Heebo', sans-serif;
+  --font-heading-ornate: 'Yetzira-Choppy', 'Heebo', sans-serif;
+  --font-heading-light:  'Yetzira-Light', 'Heebo', sans-serif;
+  --font-body:           'Heebo', sans-serif;
+
+  /* ═════ הועתק מילה במילה מ-src/theme/tokens.ts (measurements) — מידות הרכיבים ═════ */
+  /* ───── logoTitleMobile ───── */
+  --logo-title-mobile: 24px;
+
+  /* ───── radius ───── */
+  --radius-sm: 4px;
+  --radius-control: 6px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --radius-arch: 50% 50% 0 0 / 28% 28% 0 0;
+
+  /* ───── videoCard ───── */
+  --video-card-radius: 10px;
+  --video-card-bg: #0C0607;
+  --video-card-hover-bg: #350913;
+  --video-card-border: rgba(197,160,89,0.45);
+  --video-card-play-size: 43px;
+  --video-card-title-size: 16px;
+  --video-card-title-line: 22px;
+  --video-card-sub-size: 13px;
+  --video-card-sub-color: rgba(235,213,154,0.6);
+  --video-card-caption-min-height: 76px;
+
+  /* ───── playBadge ───── */
+  --play-badge-icon-ratio: 0.4;
+
+  /* ───── border ───── */
+  --border-hairline: 1px solid color-mix(in srgb, var(--gold-deep) 21.961%, transparent);
+  --border-gold: 1px solid var(--gold);
+
+  /* ───── headerHeight ───── */
+  --header-height-xs: 64px;
+  --header-height-md: 80px;
+
+  /* ───── headerPadX ───── */
+  --header-pad-x-xs: 16px;
+  --header-pad-x-md: 56px;
+
+  /* ───── headerControls ───── */
+  --header-controls-donate-xs-w: 71px;
+  --header-controls-donate-xs-h: 44px;
+  --header-controls-donate-md-w: 105px;
+  --header-controls-donate-md-h: 46px;
+  --header-controls-search-size: 47px;
+  --header-controls-search-open-width: 230px;
+  --header-controls-crown-xs-w: 42px;
+  --header-controls-crown-xs-h: 36px;
+  --header-controls-crown-md-w: 61px;
+  --header-controls-crown-md-h: 52px;
+  --header-controls-nav-gap: 36px;
+
+  /* ───── weeklyBar ───── */
+  --weekly-bar-height-mobile: 234px;
+  --weekly-bar-height-desktop: 103px;
+  --weekly-bar-rule-width: 1px;
+  --weekly-bar-gap: 40px;
+  --weekly-bar-divider-w: 2px;
+  --weekly-bar-divider-h: 49px;
+  --weekly-bar-diamond-diagonal: 13px;
+  --weekly-bar-diamond-gap: 10px;
+  --weekly-bar-title-desktop: 28px;
+  --weekly-bar-title-mobile: 23px;
+  --weekly-bar-time-size: 17px;
+  --weekly-bar-subtitle-size: 14px;
+  --weekly-bar-subtitle-color: #5A4A32;
+  --weekly-bar-place-desktop: 15px;
+  --weekly-bar-place-mobile: 14px;
+  --weekly-bar-pin-size: 12px;
+  --weekly-bar-button-w: 133px;
+  --weekly-bar-button-h: 46px;
+  --weekly-bar-button-radius: 6px;
+  --weekly-bar-button-size: 15px;
+  --weekly-bar-button-px: 26px;
+  --weekly-bar-time-line-height: 25px;
+
+  /* ───── rabbiCard ───── */
+  --rabbi-card-width: 248px;
+  --rabbi-card-height: 387px;
+  --rabbi-card-gap: 24px;
+  --rabbi-card-radius: 12px;
+  --rabbi-card-arch-fill: #F0E4C6;
+  --rabbi-card-crown-w: 46px;
+  --rabbi-card-crown-h: 39px;
+  --rabbi-card-name-size: 16px;   /* נמדד מהווקטור: ateret-mordechai-design.pdf, דף הבית — 16px מודגש */
+  --rabbi-card-name-weight: 700;
+  --rabbi-card-rule-w: 34px;
+  --rabbi-card-rule-h: 1px;
+  --rabbi-card-button-w: 122px;
+  --rabbi-card-button-h: 44px;
+  --rabbi-card-button-radius: 6px;
+  --rabbi-card-button-size: 14px;
+  --rabbi-card-pad-top: 18px;
+  --rabbi-card-pad-rule-top: 16px;
+  --rabbi-card-pad-rule-bottom: 16px;
+  --rabbi-card-pad-bottom: 22px;
+  --rabbi-card-heading-ornament-w: 48px;
+  --rabbi-card-heading-ornament-h: 27px;
+  --rabbi-card-heading-ornament-stroke: 2px;
+  --rabbi-card-heading-ornament-radius: 10px;
+  --rabbi-card-heading-color: #3D2F30;
+
+  /* ───── pageHeader ───── */
+  --page-header-height: 125px;
+  --page-header-padding-top: 16px;
+  --page-header-padding-x: 52px;
+  --page-header-padding-bottom: 14px;
+  --page-header-arch-w: 28px;
+  --page-header-arch-h: 12px;
+  --page-header-eyebrow-size: 12px;
+  --page-header-eyebrow-letter-spacing: .28em;
+  --page-header-eyebrow-weight: 700;
+  --page-header-title-size: 32px;
+  --page-header-title-weight: 700;
+  --page-header-flourish-line-w: 96px;
+  --page-header-flourish-diamond: 6px;
+
+  /* ───── breadcrumb ───── */
+  --breadcrumb-padding-y: 20px;
+  --breadcrumb-padding-x: 52px;
+  --breadcrumb-size: 14px;
+
+  /* ───── lessonCard ───── */
+  --lesson-card-radius: 12px;
+  --lesson-card-shadow: 0 1px 3px rgba(44,14,16,.05);
+  --lesson-card-duration-badge-border: #875736;
+  --lesson-card-duration-badge-size: 11px;
+  --lesson-card-duration-badge-radius: 4px;
+  --lesson-card-duration-badge-right: 8px;
+  --lesson-card-duration-badge-bottom: 7px;
+
+  /* ───── כפתורים — מידות אחידות לכל האתר (AppButton) ───── */
+  --btn-h: 46px;
+  --btn-radius: var(--radius-control);
+  --btn-font-size: 15px;
+  --btn-font-weight: 600;
+  --btn-px: 24px;
+  --btn-icon: 44px;
+
+  /* ───── actionButtons ───── */
+  --action-buttons-size: var(--btn-icon);
+
+  /* ───── audioPlayer ───── */
+  --audio-player-radius: 12px;
+  --audio-player-play-button-size: 52px;
+  --audio-player-label-size: 14px;
+  --audio-player-label-weight: 600;
+  --audio-player-time-size: 13px;
+  --audio-player-time-color: #D6B7AE;
+  --audio-player-track-height: 6px;
+  --audio-player-track-bg: color-mix(in srgb, var(--gold) 27.843%, transparent);
+  --audio-player-handle-size: 14px;
+  --audio-player-handle-color: #F5E7BC;
+  --audio-player-control-button-size: 44px;
+
+  /* ───── bookCard ───── */
+  --book-card-inner-border: color-mix(in srgb, var(--gold) 34.902%, transparent);
+  --book-card-radius: 12px;
+  --book-card-inner-radius: 7px;
+  --book-card-image-height: 236px;
+
+  /* ───── bookPurchaseCard ───── */
+  --book-purchase-card-radius: 12px;
+  --book-purchase-card-sub-text-color: #E0CDA8;
+  --book-purchase-card-muted-text-color: #C4B396;
+
+  /* ───── archiveFilters — עמוד ארכיון השיעורים. נמדד מהווקטור: ateret-mordechai-design.pdf עמ' 3 ───── */
+  /* כרטיס "הקדשת שיעור": אותו כרטיס יין של רכישת הספרים — רדיוס 12, טקסט משנה #E0CDA8 */
+  --dedication-card-radius: var(--book-purchase-card-radius);
+  --dedication-card-title-size: 22px;
+  --dedication-card-sub-size: 15px;
+  --dedication-card-sub-color: var(--book-purchase-card-sub-text-color);
+  --dedication-card-button-size: 15px;
+  /* תוויות הסינון (שם רב / קטגוריה): #3A2C1E, 15px */
+  --filter-label-color: var(--body);
+  --filter-label-size: 15px;
+  /* כותרת "סינון" 21px, קישור "ניקוי" 14px, כותרות הקבוצות ("הרב המוסר", "נושא") 19px */
+  --filter-title-size: 21px;
+  --filter-clear-size: 14px;
+  --filter-group-title-size: 19px;
+  /* placeholder בשדה החיפוש: #8B8272, 18px */
+  --search-placeholder-color: #8B8272;
+
+  /* ───── footer — נמדד מהווקטור: ateret-mordechai-design.pdf, עמוד הארכיון (דסקטופ 1440) ───── */
+  --footer-bg: var(--ink-wine);                 /* מלבן 1440×450, #2C0E10 */
+  --footer-pad-x: 52px;                         /* התוכן נמתח מ-x=52 עד x=1388 */
+  --footer-cols: 335px 248px 248px 1fr;         /* קצוות ימניים של העמודות: 1388 / 1005 / 709 / 413 */
+  --footer-gap: 48px;
+  --footer-heading-size: 18px;                  /* #C5A059, מודגש */
+  --footer-heading-weight: 700;
+  --footer-text-size: 15px;
+  --footer-text-color: var(--book-purchase-card-muted-text-color); /* #C4B396 — קישורים, רבנים, צור קשר */
+  --footer-contact-strong-size: 16px;           /* טלפון ווטסאפ: 16px */
+  --footer-brand-text-color: #8A7A5E;           /* תיאור המותג, שתי שורות, מרווח שורות 26px */
+  --footer-brand-text-line: 26px;
+  --footer-link-pitch: 38px;                    /* מרחק בין שורות קישורים */
+  --footer-copyright-size: 14px;                /* #6E6152 — זכויות יוצרים וקישורים משפטיים */
+  --footer-copyright-color: var(--muted);
+
+  /* ───── bookDetailsHero ───── */
+  --book-details-hero-grid-cols: 480px 1fr;
+  --book-details-hero-grid-gap: 56px;
+  --book-details-hero-cover-outer-radius: 12px;
+  --book-details-hero-cover-outer-pad: 12px;
+  --book-details-hero-cover-inner-border: color-mix(in srgb, var(--gold) 34.902%, transparent);
+  --book-details-hero-cover-inner-radius: 7px;
+  --book-details-hero-cover-inner-pad: 52px 77px;
+  --book-details-hero-cover-image-w: 300px;
+  --book-details-hero-cover-image-h: 380px;
+  --book-details-hero-cover-bg: #FFFCF4;
+  --book-details-hero-cover-inner-bg: #FFFFFF;
+  --book-details-hero-title-size: 46px;
+  --book-details-hero-title-weight: 700;
+  --book-details-hero-author-size: 19px;
+  --book-details-hero-description-size: 18px;
+  --book-details-hero-description-line-height: 1.95;
+  --book-details-hero-description-max-width: 60ch;
+
+  /* ───── orderBlock ───── */
+  --order-block-radius: 12px;
+  --order-block-padding: 26px 28px;
+  --order-block-phone-circle-size: 52px;
+  --order-block-label-size: 13px;
+  --order-block-label-letter-spacing: .14em;
+  --order-block-number-size: 32px;
+  --order-block-number-color: #F5E7BC;
+  --order-block-sub-text-size: 14px;
+  --order-block-sub-text-color: #C4B396;
+
+  /* ───── detailsTable ───── */
+  --details-table-row-padding: 11px 0;
+
+  /* ───── donationSection ───── */
+  --donation-section-max-width: 1240px;
+  --donation-section-pad-y: 32px;
+  --donation-section-radius: 12px;
+  --donation-section-card-height: 536px;
+  --donation-section-card-wine-width: 420px;
+  --donation-section-wine-pad: 32px;
+  --donation-section-wine-eyebrow-size: 12px;
+  --donation-section-wine-eyebrow-letter-spacing: .35em;
+  --donation-section-wine-title-size: 40px;
+  --donation-section-wine-subtitle-size: 16px;
+  --donation-section-letter-inner-inset: 12px;
+  --donation-section-letter-inner-radius: 7px;
+  --donation-section-letter-pad: 24px 32px;
+  --donation-section-letter-crown-w: 37px;
+  --donation-section-letter-crown-h: 31px;
+  --donation-section-letter-title-size: 28px;
+  --donation-section-letter-flourish-line-w: 68px;
+  --donation-section-letter-text-size: 16px;
+  --donation-section-letter-text-line-height: 1.5;
+  --donation-section-letter-name-size: 20px;
+  --donation-section-letter-role-size: 14px;
+  --donation-section-video-max-width: 520px;
+  --donation-section-video-radius: 7px;
+
+  /* ───── contactCard ───── */
+  --contact-card-radius: 12px;
+  --contact-card-icon-circle-size: 48px;
+  --contact-card-label-size: 13px;
+  --contact-card-label-letter-spacing: .14em;
+  --contact-card-label-weight: 700;
+  --contact-card-value-size: 24px;
+  --contact-card-value-weight: 700;
+  --contact-card-sub-text-size: 14px;
+
+  /* ───── contactMap ───── */
+  --contact-map-radius: 12px;
+
+  /* ───── contactForm ───── */
+  --contact-form-outer-radius: 12px;
+  --contact-form-outer-pad: 20px;
+  --contact-form-inner-border: color-mix(in srgb, var(--gold) 34.902%, transparent);
+  --contact-form-inner-radius: 7px;
+  --contact-form-inner-pad: 24px;
+  --contact-form-label-size: 14px;
+  --contact-form-label-weight: 600;
+  --contact-form-required: #9B2C1E;
+  --contact-form-textarea-height: 150px;
+  --contact-form-submit-button-min-height: 56px;
+}

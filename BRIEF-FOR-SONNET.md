@@ -11,7 +11,7 @@
 
 אתר ישיבת עטרת מרדכי — `https://ateretmordechai.com`.
 React + Vite, MUI (Emotion), עברית RTL. מסלולים קיימים:
-`/` · `/About` · `/AllLessons` · `/AllLessons/:lessonId` · `/FullBooksPage` · `/BookDetailsPage` · `/ContactForm` · `/RabbiQuestionForm` · `/VideoGallery` · `/ModernScrollDonation` · `/DonateLetter` · `/manager/*`
+`/` · `/About` · `/AllLessons` · `/AllLessons/:lessonId` · `/FullBooksPage` · `/BookDetailsPage` · `/ContactForm` · `/VideoGallery` · `/ModernScrollDonation` · `/DonateLetter` · `/manager/*`
 
 הממצאים במסמך הזה נמדדו על האתר החי בדפדפן אמיתי ב־6.9.2026. כולם ניתנים לאימות.
 

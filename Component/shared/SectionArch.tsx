@@ -1,7 +1,5 @@
 import React from 'react';
 import { Box } from '@mui/material';
-
-import { colors } from '../../src/theme/tokens';
 interface SectionArchProps {
   /** מרווח תחתון מתחת לקשת */
   mb?: string | number;
@@ -33,7 +31,7 @@ const SectionArch: React.FC<SectionArchProps> = ({ mb = '12px' }) => {
       <path
         d={`M${o} ${H} V${RY} A${RX - o} ${RY - o} 0 0 1 ${W - o} ${RY} V${H}`}
         fill="none"
-        stroke={colors.goldButtonBorder}
+        stroke={'var(--gold-button-border)'}
         strokeWidth={STROKE}
       />
     </Box>

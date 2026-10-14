@@ -140,7 +140,7 @@ const AdminLayout = ({ children, token }: AdminLayoutProps) => {
 
       {/* --- אזור התוכן המרכזי (הדפים שמתחלפים) --- */}
       <Box 
-        component="main" 
+        component="div"
         sx={{ 
           flexGrow: 1, 
           p: { xs: 2, md: 4 }, 

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { fonts, breadcrumb, headerHeight } from '../../src/theme/tokens';
 
 export interface BreadcrumbItem {
   label: string;
@@ -23,19 +22,19 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, sticky }) => {
       component="nav"
       aria-label="פירורי לחם"
       sx={{
-        bgcolor: breadcrumb.bg,
-        borderBottom: `1px solid ${breadcrumb.borderColor}`,
-        py: `${breadcrumb.padding.y}px`,
-        px: { xs: '20px', md: `${breadcrumb.padding.x}px` },
+        bgcolor: 'var(--parchment-2)',
+        borderBottom: `1px solid var(--gold)`,
+        py: `var(--breadcrumb-padding-y)`,
+        px: { xs: '20px', md: `var(--breadcrumb-padding-x)` },
         display: 'flex',
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: '8px',
-        fontSize: `${breadcrumb.size}px`,
-        fontFamily: fonts.body,
+        fontSize: `var(--breadcrumb-size)`,
+        fontFamily: 'var(--font-body)',
         ...(sticky && {
           position: 'sticky',
-          top: { xs: `${headerHeight.xs}px`, md: `${headerHeight.md}px` },
+          top: { xs: `var(--header-height-xs)`, md: `var(--header-height-md)` },
           zIndex: 10,
         }),
       }}
@@ -45,12 +44,12 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, sticky }) => {
         return (
           <React.Fragment key={`${item.label}-${i}`}>
             {i > 0 && (
-              <Box component="span" aria-hidden="true" sx={{ color: breadcrumb.linkColor }}>
-                {breadcrumb.separator}
+              <Box component="span" aria-hidden="true" sx={{ color: 'var(--gold-text)' }}>
+                {"›"}
               </Box>
             )}
             {isLast || !item.path ? (
-              <Box component="span" sx={{ color: breadcrumb.currentColor, fontWeight: 600 }}>
+              <Box component="span" sx={{ color: 'var(--ink-wine)', fontWeight: 600 }}>
                 {item.label}
               </Box>
             ) : (
@@ -60,7 +59,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, sticky }) => {
                 tabIndex={0}
                 onClick={() => navigate(item.path!)}
                 onKeyDown={(e) => { if (e.key === 'Enter') navigate(item.path!); }}
-                sx={{ color: breadcrumb.linkColor, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                sx={{ color: 'var(--gold-text)', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
               >
                 {item.label}
               </Box>

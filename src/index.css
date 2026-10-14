@@ -36,3 +36,40 @@ html, body {
   font-family: 'Heebo', sans-serif;
   margin: 0;
 }
+
+/* ללא מסגרת פוקוס בכל האתר (לפי בקשת הלקוחה) */
+:focus-visible,
+.MuiButtonBase-root:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ───── נגישות: קישור "דלג לתוכן" — מוסתר עד שמקבל פוקוס במקלדת ───── */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  right: 16px;
+  z-index: 2000;
+  padding: 10px 18px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}

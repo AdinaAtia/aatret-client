@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { pageHeader } from '../../src/theme/tokens';
 
 interface SectionFlourishProps {
   /** מרווח עליון מעל הקו (ברירת מחדל 5px, כמו ברצועת הכותרת) */
@@ -18,7 +17,9 @@ interface SectionFlourishProps {
  * ערכים מ-pageHeader.flourish ב-tokens: קווים של 96px שמתעממים החוצה, מעוין 6px, רווח 10px.
  */
 const SectionFlourish: React.FC<SectionFlourishProps> = ({ mt = '5px', mb, lineW: lineWProp, justify = 'center' }) => {
-  const { lineW: tokenLineW, color, diamond } = pageHeader.flourish;
+  const tokenLineW = 'var(--page-header-flourish-line-w)';
+  const color = 'var(--gold-button-border)';
+  const diamond = 'var(--page-header-flourish-diamond)';
   const lineW = lineWProp ?? tokenLineW;
   return (
     <Box aria-hidden="true" sx={{ display: 'flex', alignItems: 'center', justifyContent: justify, gap: '10px', mt, mb }}>

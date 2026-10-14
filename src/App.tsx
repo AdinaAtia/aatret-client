@@ -8,7 +8,6 @@
 // import Header from '../Component/Header';
 // import CategoryManager from '../Component/CategoryManager';
 // import Home from '../Component/Home';
-// import RabbiQuestionForm from '../Component/RabbiQuestionForm';
 // import AdminLogin from '../Component/AdminLogin';
 // import Footer from '../Component/Footer';
 // import FullBooksPage from '../Component/FullBooksPage';
@@ -76,7 +75,6 @@
 //               <Routes>
 //                 {/* דפים ציבוריים */}
 //                 <Route path="/" element={<Home />} />
-//                 <Route path="/RabbiQuestionForm" element={<RabbiQuestionForm />} />
 //                 <Route path="/FullBooksPage" element={<FullBooksPage />} />
 //                 <Route path="/ModernScrollDonation" element={<ModernScrollDonation />} />
 //                 <Route path="/ContactForm" element={<ContactForm />} />
@@ -139,7 +137,6 @@
 // import Header from '../Component/Header';
 // import CategoryManager from '../Component/CategoryManager';
 // import Home from '../Component/Home';
-// import RabbiQuestionForm from '../Component/RabbiQuestionForm';
 // import AdminLogin from '../Component/AdminLogin';
 // import Footer from '../Component/Footer';
 // import FullBooksPage from '../Component/FullBooksPage';
@@ -198,7 +195,6 @@
 //             <Routes>
 //               {/* דפים ציבוריים */}
 //               <Route path="/" element={<Home />} />
-//               <Route path="/RabbiQuestionForm" element={<RabbiQuestionForm />} />
 //               <Route path="/FullBooksPage" element={<FullBooksPage />} />
 //               <Route path="/ModernScrollDonation" element={<ModernScrollDonation />} />
 //               <Route path="/ContactForm" element={<ContactForm />} />
@@ -269,7 +265,6 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { Box, createTheme, ThemeProvider } from '@mui/material';
 import { HelmetProvider } from 'react-helmet-async';
 import { RabbisProvider } from './context/RabbisContext';
-import { fonts } from './theme/tokens';
 
 import Header from '../Component/Header';
 import Footer from '../Component/Footer';
@@ -278,7 +273,6 @@ import RouteSeo from '../Component/shared/RouteSeo';
 
 const CategoryManager = lazy(() => import('../Component/CategoryManager'));
 const Home = lazy(() => import('../Component/Home'));
-const RabbiQuestionForm = lazy(() => import('../Component/RabbiQuestionForm'));
 const AdminLogin = lazy(() => import('../Component/AdminLogin'));
 const FullBooksPage = lazy(() => import('../Component/FullBooksPage'));
 const ManageLessons = lazy(() => import('../Component/ManageLessons'));
@@ -298,10 +292,10 @@ const VideoGallery = lazy(() => import('../Component/VideoGallery'));
 const theme = createTheme({
   direction: 'rtl',
   typography: {
-    fontFamily: fonts.body,
-    h1: { fontFamily: fonts.heading },
-    h2: { fontFamily: fonts.heading },
-    h3: { fontFamily: fonts.heading },
+    fontFamily: 'var(--font-body)',
+    h1: { fontFamily: 'var(--font-heading)' },
+    h2: { fontFamily: 'var(--font-heading)' },
+    h3: { fontFamily: 'var(--font-heading)' },
   },
 });
 
@@ -342,17 +336,18 @@ function App() {
           <ScrollToTop />
           <RouteSeo />
           <Box sx={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', m: 0, p: 0 }}>
+            <a href="#main-content" className="skip-link">דלג לתוכן הראשי</a>
             <Header />
-            <Box sx={{ flex: 1, width: '100%' }}>
+            <Box component="main" id="main-content" tabIndex={-1} sx={{ flex: 1, width: '100%', outline: 'none', scrollMarginTop: { xs: 'var(--header-height-xs)', md: 'var(--header-height-md)' } }}>
               <Suspense fallback={<Box sx={{ minHeight: '60vh' }} />}>
                 <Routes>
                   <Route path="/" element={<Home />} />
-                  <Route path="/RabbiQuestionForm" element={<RabbiQuestionForm />} />
                   <Route path="/FullBooksPage" element={<FullBooksPage />} />
                   <Route path="/ModernScrollDonation" element={<ModernScrollDonation />} />
                   <Route path="/DonateLetter" element={<DonateLetter />} />
                   <Route path="/ContactForm" element={<ContactForm />} />
                   <Route path="/BookDetailsPage" element={<BookDetailsPage />} />
+                  <Route path="/BookDetailsPage/:bookId" element={<BookDetailsPage />} />
                   <Route path="/AllLessons" element={<AllLessons />} />
                   <Route path="/AllLessons/:lessonId" element={<AllLessons />} />
                   <Route path="/About" element={<About />} />

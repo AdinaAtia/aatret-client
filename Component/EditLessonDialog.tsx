@@ -6,7 +6,9 @@ import {
 } from '@mui/material';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CloseIcon from '@mui/icons-material/Close';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import axios from 'axios';
+import { HDate, gematriyaStrToNum } from '@hebcal/core';
 
 import { colors } from '../src/theme/tokens';
 const COLORS = {
@@ -33,6 +35,105 @@ const editFieldStyle = {
   }
 };
 
+const stripHebrew = (s: string) => s.replace(/[֑-ׇ]/g, '').replace(/[״׳"'.,]/g, '').trim();
+
+// לועזי (yyyy-mm-dd) -> עברי, באותו פורמט כמו בהעלאת שיעור
+const gregorianToHebrew = (iso: string): string => {
+  if (!iso) return '';
+  try {
+    const [y, m, d] = iso.split('-').map(Number);
+    if (!y || !m || !d) return '';
+    const parts = new HDate(new Date(y, m - 1, d)).renderGematriya(false).split(' ');
+    const year = parts.pop();
+    return `${parts.join(' ')} ׳${year}`;
+  } catch { return ''; }
+};
+
+// עברי (טקסט חופשי, למשל: כ״ה אדר ב׳ תשפ״ד) -> לועזי yyyy-mm-dd, או null אם לא ניתן לפענח
+const hebrewToGregorian = (text: string): string | null => {
+  try {
+    const tokens = (text || '').trim().split(/\s+/).filter(Boolean);
+    if (tokens.length < 3) return null;
+
+    const day = gematriyaStrToNum(stripHebrew(tokens[0]));
+    const yearRaw = stripHebrew(tokens[tokens.length - 1]);
+    let year = /^\d+$/.test(yearRaw) ? Number(yearRaw) : gematriyaStrToNum(yearRaw);
+    if (!day || !year) return null;
+    if (year < 1000) year += 5000;
+
+    const monthName = stripHebrew(tokens.slice(1, -1).join(' '));
+    const leap = new HDate(1, 7, year).isLeapYear();
+    let month = 0;
+    for (let m = 1; m <= 13; m++) {
+      const parts = new HDate(1, m, year > 0 ? year : 5784).renderGematriya(false).split(' ');
+      if (stripHebrew(parts.slice(1, -1).join(' ')) === monthName) { month = m; break; }
+    }
+    if (!month && monthName === 'אדר' && !leap) month = 12;
+    if (!month) return null;
+
+    const hd = new HDate(day, month, year);
+    if (hd.getDate() !== day || hd.getMonth() !== month) return null;
+    const g = hd.greg();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${g.getFullYear()}-${pad(g.getMonth() + 1)}-${pad(g.getDate())}`;
+  } catch { return null; }
+};
+
+// --- הצעות תיקייה / PDF משתי בדיקות: ה-DB / שרת המדיה, ותיאור סרטון היוטיוב ---
+
+interface HintOption { label: string; value: string; note?: string }
+
+const parseYoutubeId = (raw: string): string | null => {
+  const m = (raw || '').match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : ((raw || '').length === 11 ? raw : null);
+};
+
+// השוואה סלחנית: לוכסנים, רווחים כפולים ואותיות גדולות/קטנות
+const normPath = (s: string) =>
+  '/' + (s || '').trim().replace(/\\/g, '/').replace(/\s+/g, ' ').replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/').toLowerCase();
+const normName = (s: string) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+// כשהבדיקות מתנגשות מוצגות כמה אפשרויות לבחירה; כשהן מסכימות — אפשרות אחת לאישור
+const HintCard = ({ title, options, onPick, onClose }: {
+  title: string; options: HintOption[]; onPick: (value: string) => void; onClose: () => void;
+}) => (
+  <Stack
+    spacing={1}
+    sx={{ px: 1.5, py: 1, borderRadius: '12px', border: '1px solid #dcc9a0', bgcolor: '#faf7f0' }}
+  >
+    <Stack direction="row" alignItems="center">
+      <Typography variant="caption" sx={{ flex: 1, fontWeight: 700, color: '#8c6644' }}>{title}</Typography>
+      <IconButton size="small" onClick={onClose}>
+        <CloseIcon fontSize="small" sx={{ color: COLORS.TEXT_GRAY }} />
+      </IconButton>
+    </Stack>
+    {options.map((opt) => (
+      <Stack key={opt.value} direction="row" spacing={1} alignItems="center">
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="caption" sx={{ display: 'block', color: COLORS.TEXT_GRAY }}>{opt.label}</Typography>
+          <Typography
+            variant="body2"
+            sx={{ direction: 'ltr', textAlign: 'left', fontFamily: 'monospace', overflowWrap: 'anywhere' }}
+          >
+            {opt.value}
+          </Typography>
+          {opt.note && (
+            <Typography variant="caption" sx={{ display: 'block', color: '#c62828', fontWeight: 700 }}>{opt.note}</Typography>
+          )}
+        </Box>
+        <Button
+          size="small"
+          variant="contained"
+          onClick={() => onPick(opt.value)}
+          sx={{ whiteSpace: 'nowrap', borderRadius: '8px', boxShadow: 'none', bgcolor: colors.gold, '&:hover': { bgcolor: '#b48a66', boxShadow: 'none' } }}
+        >
+          {options.length > 1 ? 'בחר' : 'אישור'}
+        </Button>
+      </Stack>
+    ))}
+  </Stack>
+);
+
 interface EditLessonDialogProps {
   open: boolean;
   onClose: () => void;
@@ -40,9 +141,17 @@ interface EditLessonDialogProps {
   lecturers: any[];
   onSaveSuccess: () => void;
   isDraft?: boolean;
+  // כשמועבר — ההמרה רצה ברקע, החלון נסגר מיד וההתקדמות מדווחת לשורה בטבלה
+  onConvertChange?: (documentId: string, state: ConvertState) => void;
 }
 
-const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isDraft = false }: EditLessonDialogProps) => {
+export type ConvertState = {
+  status: 'running' | 'done' | 'failed' | 'timeout';
+  stage?: string;
+  error?: string;
+};
+
+const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isDraft = false, onConvertChange }: EditLessonDialogProps) => {
   const [editedLesson, setEditedLesson] = useState<any>(null);
   const [categoriesPath, setCategoriesPath] = useState<any[]>([]);
   const [suggestedFolders, setSuggestedFolders] = useState<string[]>([]);
@@ -53,9 +162,18 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
   const [nameHint, setNameHint] = useState<any>(null);
   const [suggesting, setSuggesting] = useState(false);
 
+  // הצעות תיקייה/PDF: linkInfo מתיאור היוטיוב, pdfLatest משרת המדיה
+  const [linkInfo, setLinkInfo] = useState<{ audioDir: string; pdfFileName: string } | null>(null);
+  const [pdfLatest, setPdfLatest] = useState<{ dir: string; latest: { fileName: string; date: string } | null; files: string[] } | null>(null);
+  const [hintsLoading, setHintsLoading] = useState(false);
+  const [hintsForced, setHintsForced] = useState(false); // "בדוק שוב" — מציג גם כששדות כבר מלאים
+  const [hintsMsg, setHintsMsg] = useState('');
+  const [dismissedDir, setDismissedDir] = useState(false);
+  const [dismissedPdf, setDismissedPdf] = useState(false);
+
   // מושך את סטטוס ההמרה מהשרת עד לסיום. מוותר אחרי 35 דקות —
   // מעט מעל מגבלת 30 הדקות של yt-dlp בשרת, כדי לא לוותר לפניו.
-  const pollConvertStatus = async (jobKey: string): Promise<any> => {
+  const pollConvertStatus = async (jobKey: string, onStage?: (stage: string) => void): Promise<any> => {
     const deadline = Date.now() + 35 * 60 * 1000;
     while (Date.now() < deadline) {
       await new Promise(r => setTimeout(r, 3000));
@@ -67,7 +185,7 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
         if (job.status === 'done' || job.status === 'failed') return job;
         // 'unknown' = השרת עלה מחדש או שהעבודה נוקתה; אין טעם להמשיך לחכות
         if (job.status === 'unknown') return { status: 'timeout' };
-        if (job.stage) setConvertStage(job.stage);
+        if (job.stage) { setConvertStage(job.stage); onStage?.(job.stage); }
       } catch {
         // תקלת רשת זמנית — ננסה שוב בסבב הבא
       }
@@ -104,9 +222,50 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
     }).then(res => setSuggestedPdfs(res.data)).catch(() => setSuggestedPdfs([]));
   };
 
+  const loadLinkInfo = async (youtubeRaw: string) => {
+    const id = parseYoutubeId(youtubeRaw);
+    if (!id) { setHintsMsg('אין קישור יוטיוב לשיעור'); return; }
+    setHintsLoading(true);
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/lessons/youtube-hints`, { params: { youtubeId: id } });
+      const pdf = res.data?.pdf;
+      setLinkInfo(pdf ? { audioDir: pdf.audioDir, pdfFileName: pdf.pdfFileName } : null);
+      setHintsMsg(pdf ? '' : 'לא נמצא קישור PDF בתיאור הסרטון');
+    } catch {
+      setLinkInfo(null);
+      setHintsMsg('לא הצלחנו לקרוא את תיאור הסרטון');
+    } finally {
+      setHintsLoading(false);
+    }
+  };
+
+  const recheckHints = () => {
+    setHintsForced(true);
+    setDismissedDir(false);
+    setDismissedPdf(false);
+    loadLinkInfo(editedLesson?.youtube_id || '');
+  };
+
+  // ה-PDF האחרון שהוכנס לתיקייה הנבחרת (עם השהיה, כי השדה מתעדכן בכל הקשה)
+  useEffect(() => {
+    const dir = editedLesson?.AudioDir;
+    if (!open || !dir) { setPdfLatest(null); return; }
+    const t = setTimeout(() => {
+      axios.get(`${import.meta.env.VITE_API_URL}/api/lessons/pdf-latest`, { params: { audioDir: dir } })
+        .then(res => setPdfLatest({ dir, latest: res.data?.latest || null, files: res.data?.files || [] }))
+        .catch(() => setPdfLatest({ dir, latest: null, files: [] }));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [open, editedLesson?.AudioDir]);
+
   useEffect(() => {
     if (lesson && open) {
       setNameHint(null);
+      setLinkInfo(null);
+      setHintsForced(false);
+      setHintsMsg('');
+      setDismissedDir(false);
+      setDismissedPdf(false);
       // חילוץ נתונים מסטרפי 5: הנתונים יכולים להיות ישירות באובייקט או תחת attributes
       const attrs = lesson.attributes || lesson;
       
@@ -140,6 +299,10 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
       if (audioDir) {
         fetchPdfFiles(audioDir);
       }
+
+      // שיעור שכבר מלא בתיקייה וב-PDF לא נבדק אוטומטית — רק ב"בדוק שוב"
+      const pdfName = attrs.PdfFileName || attrs.pdfFileName || '';
+      if (attrs.youtube_id && (!audioDir || !pdfName)) loadLinkInfo(attrs.youtube_id);
     }
   }, [lesson, open]);
 
@@ -303,7 +466,18 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
       await axios.put(`${import.meta.env.VITE_API_URL}/api/lessons/${docId}${isDraft ? '?status=draft' : ''}`, payload);
 
       // אם יש youtube_id ו-AudioDir ו-AudioFileName → הרץ המרה
+      // אם קובץ השמע כבר קיים בשרת — מדלגים על ההמרה ומעדכנים רק את הנתונים
+      let audioAlreadyExists = false;
       if (youtubeId && editedLesson.AudioDir && editedLesson.AudioFileName) {
+        try {
+          const existsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/lessons/audio-exists`, {
+            params: { audioDir: editedLesson.AudioDir, audioFileName: editedLesson.AudioFileName },
+          });
+          audioAlreadyExists = !!existsRes.data?.exists;
+        } catch { /* לא הצלחנו לבדוק — ממשיכים להמרה כרגיל */ }
+      }
+
+      if (youtubeId && editedLesson.AudioDir && editedLesson.AudioFileName && !audioAlreadyExists) {
         setConverting(true);
         setConvertStage('מתחיל המרה');
         try {
@@ -317,6 +491,18 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
           // ההמרה רצה ברקע בשרת (שיעור של שעה לוקח כמה דקות),
           // לכן מושכים את הסטטוס עד שהיא מסתיימת במקום להניח שהצליחה
           const jobKey = startRes.data?.jobKey || docId;
+
+          if (onConvertChange) {
+            // ההמרה רצה ברקע: סוגרים את החלון מיד ומעדכנים את התגית בשורה עד הסיום
+            onConvertChange(docId, { status: 'running', stage: 'מתחיל המרה' });
+            pollConvertStatus(jobKey, (stage) => onConvertChange(docId, { status: 'running', stage }))
+              .then((final) => onConvertChange(docId, { status: final.status, error: final.error }))
+              .catch((err) => onConvertChange(docId, { status: 'failed', error: err?.message }));
+            onSaveSuccess();
+            onClose();
+            return;
+          }
+
           const finalStatus = await pollConvertStatus(jobKey);
 
           if (finalStatus.status === 'failed') {
@@ -342,6 +528,64 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
 
   if (!editedLesson) return null;
 
+  // --- הצעות תיקייה ---
+  const curDir: string = editedLesson.AudioDir || '';
+  const linkDir = linkInfo?.audioDir || '';
+  let dirOptions: HintOption[] = [];
+  if (linkDir) {
+    if (curDir) {
+      // שדה מלא: מציעים רק ב"בדוק שוב", ורק אם יש התנגשות
+      if (hintsForced && normPath(curDir) !== normPath(linkDir)) {
+        dirOptions = [
+          { label: 'בשדה כעת', value: curDir },
+          { label: 'מהקישור ביוטיוב', value: linkDir },
+        ];
+      }
+    } else {
+      const dbMatch = suggestedFolders.find(f => normPath(f) === normPath(linkDir));
+      const dbSingle = suggestedFolders.length === 1 ? suggestedFolders[0] : '';
+      if (dbSingle && !dbMatch) {
+        dirOptions = [
+          { label: 'לפי ה-DB (הרב והקטגוריה)', value: dbSingle },
+          { label: 'מהקישור ביוטיוב', value: linkDir },
+        ];
+      } else {
+        dirOptions = [{ label: dbMatch ? 'מהקישור ביוטיוב (תואם ל-DB)' : 'מהקישור ביוטיוב', value: dbMatch || linkDir }];
+      }
+    }
+  }
+
+  // --- הצעות PDF (רק כשהתיקייה ידועה) ---
+  const curPdf: string = editedLesson.PdfFileName || '';
+  const latestForDir = pdfLatest && normPath(pdfLatest.dir) === normPath(curDir) ? pdfLatest : null;
+  let pdfOptions: HintOption[] = [];
+  if (curDir && (!curPdf || hintsForced)) {
+    const cands: HintOption[] = [];
+    // שם הקובץ מהקישור שייך לתיקייה שבקישור — לא מציעים אותו אם נבחרה תיקייה אחרת
+    if (linkInfo?.pdfFileName && (!linkDir || normPath(linkDir) === normPath(curDir))) {
+      const inDir = latestForDir ? latestForDir.files.some(f => normName(f) === normName(linkInfo.pdfFileName)) : true;
+      cands.push({
+        label: 'מהקישור ביוטיוב',
+        value: linkInfo.pdfFileName,
+        note: inDir ? undefined : 'הקובץ לא נמצא בתיקייה בשרת המדיה',
+      });
+    }
+    if (latestForDir?.latest) {
+      const latest = latestForDir.latest;
+      const when = latest.date ? ` (${latest.date.slice(0, 10)})` : '';
+      const same = cands.find(c => normName(c.value) === normName(latest.fileName));
+      if (same) same.label = 'מהקישור ביוטיוב (תואם לאחרון בתיקייה)';
+      else cands.push({ label: `האחרון שהוכנס לתיקייה${when}`, value: latest.fileName });
+    }
+    if (!cands.every(c => normName(c.value) === normName(curPdf))) pdfOptions = cands;
+  }
+
+  const applyDirHint = (value: string) => {
+    setEditedLesson((prev: any) => ({ ...prev, AudioDir: value }));
+    fetchPdfFiles(value);
+    fetchSuggestedFileName(value);
+  };
+
   return (
     <Dialog open={open} onClose={onClose} dir="rtl" fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '20px' } }}>
       <DialogTitle sx={{ fontWeight: 900, color: colors.gold, textAlign: 'center', pt: 3 }}>
@@ -365,14 +609,22 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
               InputLabelProps={{ shrink: true }}
               label="תאריך לועזי"
               value={editedLesson.lesson_date_gregorian || ''}
-              onChange={(e) => setEditedLesson({ ...editedLesson, lesson_date_gregorian: e.target.value })}
+              onChange={(e) => {
+                const greg = e.target.value;
+                const heb = gregorianToHebrew(greg);
+                setEditedLesson({ ...editedLesson, lesson_date_gregorian: greg, ...(heb ? { lesson_date_hebrew: heb } : {}) });
+              }}
               sx={editFieldStyle}
             />
             <TextField
               fullWidth
               label="תאריך עברי"
               value={editedLesson.lesson_date_hebrew || ''}
-              onChange={(e) => setEditedLesson({ ...editedLesson, lesson_date_hebrew: e.target.value })}
+              onChange={(e) => {
+                const heb = e.target.value;
+                const greg = hebrewToGregorian(heb);
+                setEditedLesson({ ...editedLesson, lesson_date_hebrew: heb, ...(greg ? { lesson_date_gregorian: greg } : {}) });
+              }}
               sx={editFieldStyle}
             />
           </Stack>
@@ -473,6 +725,15 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
             />
           </Stack>
 
+          {!dismissedDir && dirOptions.length > 0 && (
+            <HintCard
+              title={dirOptions.length > 1 ? 'התיקייה לא תואמת בין הבדיקות — בחרי' : 'הצעה לתיקיית יעד'}
+              options={dirOptions}
+              onPick={(v) => { applyDirHint(v); setDismissedDir(true); }}
+              onClose={() => setDismissedDir(true)}
+            />
+          )}
+
           {nameHint && (
             <Stack
               direction="row"
@@ -544,6 +805,30 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
               inputProps={{ dir: 'ltr' }}
             />
           </Stack>
+
+          {!dismissedPdf && pdfOptions.length > 0 && (
+            <HintCard
+              title={pdfOptions.length > 1 ? 'קובץ ה-PDF לא תואם בין הבדיקות — בחרי' : 'הצעה לקובץ PDF'}
+              options={pdfOptions}
+              onPick={(v) => { setEditedLesson((prev: any) => ({ ...prev, PdfFileName: v })); setDismissedPdf(true); }}
+              onClose={() => setDismissedPdf(true)}
+            />
+          )}
+
+          {editedLesson.youtube_id && (
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Button
+                size="small"
+                onClick={recheckHints}
+                disabled={hintsLoading}
+                startIcon={hintsLoading ? <CircularProgress size={14} sx={{ color: colors.gold }} /> : <RefreshIcon fontSize="small" />}
+                sx={{ color: COLORS.BROWN_DARK, fontWeight: 700 }}
+              >
+                בדוק תיקייה ו-PDF מתיאור היוטיוב
+              </Button>
+              {hintsMsg && <Typography variant="caption" sx={{ color: COLORS.TEXT_GRAY }}>{hintsMsg}</Typography>}
+            </Stack>
+          )}
 
           <TextField
             fullWidth

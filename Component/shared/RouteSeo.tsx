@@ -44,10 +44,6 @@ const PAGES: Record<string, PageMeta> = {
     title: 'צור קשר',
     description: 'פרטי הקשר של ישיבת עטרת מרדכי, כתובות, מפה וטופס פנייה.',
   },
-  '/rabbiquestionform': {
-    title: 'שאל את הרב',
-    description: 'שאלו את רבני ישיבת עטרת מרדכי — שליחת שאלה לרב.',
-  },
   '/videogallery': {
     title: 'גלריית סרטונים',
     description: 'גלריית הסרטונים של ישיבת עטרת מרדכי — שיעורים, אירועים ודברי גדולי ישראל.',
@@ -75,7 +71,8 @@ export default function RouteSeo() {
   }
 
   // /AllLessons/:lessonId — עד שיהיה כותרת פר־שיעור, משתמשים בכותרת הארכיון
-  const key = pathname.toLowerCase().startsWith('/alllessons') ? '/alllessons' : pathname.toLowerCase();
+  const lower = pathname.toLowerCase();
+  const key = lower.startsWith('/alllessons') ? '/alllessons' : lower.startsWith('/bookdetailspage') ? '/bookdetailspage' : lower;
   const meta = PAGES[key] ?? { title: SITE_NAME, description: DEFAULT_DESC };
   const isHome = key === '/';
   const fullTitle = isHome ? meta.title : `${meta.title} | ${SITE_NAME}`;

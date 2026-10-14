@@ -7,13 +7,18 @@ import SearchIcon from '@mui/icons-material/Search';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import {
   Box, Typography, CardMedia,
-  Button, Skeleton
+  Skeleton
 } from '@mui/material';
+import AppButton from './shared/AppButton';
 import PageHeader from './shared/PageHeader';
+import { cardHoverSx } from './shared/cardHover';
 import { Crown } from './Header';
-import { colors, fonts, fontSize, gradients, goldButtonStyle, goldTextFill, radius, bookCard, bookPurchaseCard } from '../src/theme/tokens';
+import { site } from '../src/content/site';
 
-const CHIP_ACTIVE_TEXT = colors.goldLight;
+/** טלפון הזמנת ספרים כקישור tel: — 03-6815542 → +97236815542 */
+const booksPhoneHref = `tel:+972${site.phones.books.replace(/^0/, '').replace(/-/g, '')}`;
+
+const CHIP_ACTIVE_TEXT = 'var(--gold-light)';
 
 const FullBooksPage = () => {
   const navigate = useNavigate();
@@ -65,7 +70,7 @@ const FullBooksPage = () => {
   const categoryNames = categories.map((cat: any) => cat.attributes?.name || cat.name).filter(Boolean);
 
   return (
-    <Box sx={{ direction: 'rtl', backgroundColor: colors.creamAlt, minHeight: '100vh' }}>
+    <Box sx={{ direction: 'rtl', backgroundColor: 'var(--parchment)', minHeight: '100vh' }}>
       <PageHeader eyebrow="אחד־עשר כרכים" title="ספרי הישיבה" />
 
       <Box sx={{ maxWidth: '1200px', mx: 'auto', p: { xs: 2, md: 4 } }}>
@@ -81,19 +86,19 @@ const FullBooksPage = () => {
                 type="button"
                 onClick={() => setSelectedCategory(name)}
                 sx={{
-                  minHeight: '42px',
+                  minHeight: 'var(--btn-h)',
                   px: '22px',
-                  borderRadius: radius.pill,
-                  border: `1px solid ${colors.gold}`,
-                  bgcolor: isActive ? colors.wine : colors.cream,
-                  color: isActive ? CHIP_ACTIVE_TEXT : colors.goldText,
-                  fontFamily: fonts.body,
-                  fontSize: fontSize.sm,
+                  borderRadius: 'var(--radius-pill)',
+                  border: `1px solid var(--gold)`,
+                  bgcolor: isActive ? 'var(--wine)' : 'var(--surface)',
+                  color: isActive ? CHIP_ACTIVE_TEXT : 'var(--gold-text)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--t2)',
                   fontWeight: 600,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   transition: '0.2s',
-                  '&:hover': { bgcolor: isActive ? colors.wine : `${colors.gold}1F` },
+                  '&:hover': { bgcolor: isActive ? 'var(--wine)' : `color-mix(in srgb, var(--gold) 12.157%, transparent)` },
                 }}
               >
                 {name}
@@ -110,19 +115,19 @@ const FullBooksPage = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                minHeight: '42px',
+                minHeight: 'var(--btn-h)',
                 px: '22px',
-                borderRadius: radius.pill,
-                border: `1px solid ${colors.gold}`,
-                bgcolor: colors.cream,
-                color: colors.goldText,
-                fontFamily: fonts.body,
-                fontSize: fontSize.sm,
+                borderRadius: 'var(--radius-pill)',
+                border: `1px solid var(--gold)`,
+                bgcolor: 'var(--surface)',
+                color: 'var(--gold-text)',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--t2)',
                 fontWeight: 600,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 transition: '0.2s',
-                '&:hover': { bgcolor: `${colors.gold}1F` },
+                '&:hover': { bgcolor: `color-mix(in srgb, var(--gold) 12.157%, transparent)` },
               }}
             >
               <RestartAltIcon sx={{ fontSize: '1.1rem' }} />
@@ -138,7 +143,7 @@ const FullBooksPage = () => {
               {loading ? (
                 [1, 2, 3, 4, 5, 6].map(i => (
                   <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
-                    <Skeleton variant="rounded" height={380} sx={{ borderRadius: `${bookCard.radius}px` }} />
+                    <Skeleton variant="rounded" height={380} sx={{ borderRadius: `var(--book-card-radius)` }} />
                   </Grid>
                 ))
               ) : filteredBooks.length > 0 ? filteredBooks.map((book: any) => {
@@ -147,26 +152,25 @@ const FullBooksPage = () => {
                 return (
                   <Grid size={{ xs: 12, sm: 6, md: 4 }} key={book.id}>
                     <Box
-                      onClick={() => navigate('/BookDetailsPage', { state: { book } })}
+                      onClick={() => navigate(`/BookDetailsPage/${book.id}`, { state: { book } })}
                       sx={{
-                        bgcolor: bookCard.bg,
-                        border: `1px solid ${bookCard.border}`,
-                        borderRadius: `${bookCard.radius}px`,
+                        bgcolor: 'var(--surface)',
+                        border: `1px solid var(--gold)`,
+                        borderRadius: `var(--book-card-radius)`,
                         p: '9px',
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
                         cursor: 'pointer',
-                        transition: '0.25s',
                         boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                        '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 10px 28px rgba(74,15,20,.14)' },
+                        ...cardHoverSx,
                       }}
                     >
                       <Box sx={{
-                        border: `1px solid ${bookCard.innerBorder}`,
-                        borderRadius: `${bookCard.innerRadius}px`,
+                        border: `1px solid var(--book-card-inner-border)`,
+                        borderRadius: `var(--book-card-inner-radius)`,
                         bgcolor: '#fff',
-                        height: `${bookCard.imageHeight}px`,
+                        height: `var(--book-card-image-height)`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         overflow: 'hidden', mb: '16px',
                       }}>
@@ -180,38 +184,29 @@ const FullBooksPage = () => {
 
                       <Box sx={{ flex: 1, textAlign: 'center', px: '6px' }}>
                         <Typography sx={{
-                          fontFamily: fonts.heading, fontWeight: 700, fontSize: fontSize.lg,
-                          color: bookCard.titleColor, lineHeight: 1.3, mb: '6px',
+                          fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--t4)',
+                          color: 'var(--ink-wine)', lineHeight: 1.3, mb: '6px',
                         }}>
                           {item.book_name}
                         </Typography>
-                        <Typography sx={{ color: bookCard.rabbiColor, fontFamily: fonts.body, fontSize: fontSize.sm, fontWeight: 600 }}>
+                        <Typography sx={{ color: 'var(--gold-text)', fontFamily: 'var(--font-body)', fontSize: 'var(--t2)', fontWeight: 600 }}>
                           {item.rabbi}
                         </Typography>
                       </Box>
 
-                      <Button
-                        onClick={(e) => { e.stopPropagation(); navigate('/BookDetailsPage', { state: { book } }); }}
-                        sx={{
-                          ...goldButtonStyle,
-                          fontFamily: fonts.body,
-                          fontWeight: 600,
-                          fontSize: fontSize.sm,
-                          borderRadius: radius.control,
-                          minHeight: '44px',
-                          width: '100%',
-                          mt: '14px',
-                        }}
+                      <AppButton
+                        onClick={(e) => { e.stopPropagation(); navigate(`/BookDetailsPage/${book.id}`, { state: { book } }); }}
+                        sx={{ width: '100%', mt: '14px' }}
                       >
                         לפרטים
-                      </Button>
+                      </AppButton>
                     </Box>
                   </Grid>
                 );
               }) : (
                 <Grid size={12}>
-                  <Box sx={{ textAlign: 'center', py: 10, bgcolor: colors.cream, borderRadius: '1.5rem', border: `1px dashed ${colors.goldText}` }}>
-                    <Typography sx={{ color: bookCard.titleColor, fontWeight: 'bold' }}>לא נמצאו ספרים</Typography>
+                  <Box sx={{ textAlign: 'center', py: 10, bgcolor: 'var(--surface)', borderRadius: '1.5rem', border: `1px dashed var(--gold-text)` }}>
+                    <Typography sx={{ color: 'var(--ink-wine)', fontWeight: 'bold' }}>לא נמצאו ספרים</Typography>
                   </Box>
                 </Grid>
               )}
@@ -224,9 +219,9 @@ const FullBooksPage = () => {
 
               {/* כרטיס רכישה */}
               <Box sx={{
-                bgcolor: bookPurchaseCard.bg,
-                border: `1px solid ${bookPurchaseCard.border}`,
-                borderRadius: `${bookPurchaseCard.radius}px`,
+                bgcolor: 'var(--wine)',
+                border: `1px solid var(--gold)`,
+                borderRadius: `var(--book-purchase-card-radius)`,
                 p: '28px 24px',
                 textAlign: 'center',
                 mb: 3,
@@ -235,8 +230,8 @@ const FullBooksPage = () => {
                 <Crown width={44} height={37} />
 
                 <Typography sx={{
-                  ...goldTextFill,
-                  fontFamily: fonts.headingOrnate,
+                  background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent',
+                  fontFamily: 'var(--font-heading-ornate)',
                   fontSize: '28px',
                   fontWeight: 700,
                   mt: '10px',
@@ -246,9 +241,9 @@ const FullBooksPage = () => {
                 </Typography>
 
                 <Typography sx={{
-                  fontFamily: fonts.body,
+                  fontFamily: 'var(--font-body)',
                   fontSize: '15px',
-                  color: bookPurchaseCard.subTextColor,
+                  color: 'var(--book-purchase-card-sub-text-color)',
                   mb: '18px',
                 }}>
                   להזמנה טלפונית ולפרטים על משלוח
@@ -256,15 +251,15 @@ const FullBooksPage = () => {
 
                 <Box
                   component="a"
-                  href="tel:+97236815542"
+                  href={booksPhoneHref}
                   sx={{
                     display: 'block',
-                    background: gradients.goldButton,
-                    color: bookPurchaseCard.buttonTextColor,
-                    fontFamily: fonts.heading,
+                    background: 'var(--gradient-gold-button)',
+                    color: 'var(--ink-dark)',
+                    fontFamily: 'var(--font-heading)',
                     fontWeight: 700,
                     fontSize: '22px',
-                    borderRadius: radius.control,
+                    borderRadius: 'var(--radius-control)',
                     py: '14px',
                     mb: '16px',
                     textDecoration: 'none',
@@ -272,35 +267,40 @@ const FullBooksPage = () => {
                     '&:hover': { filter: 'brightness(1.06)' },
                   }}
                 >
-                  03-6815542
+                  {site.phones.books}
                 </Box>
 
-                <Typography sx={{ fontFamily: fonts.body, fontSize: fontSize.sm, fontWeight: 700, color: bookPurchaseCard.mutedTextColor, mb: '4px' }}>
-                  ברזני יעקב
+                <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t2)', fontWeight: 700, color: 'var(--book-purchase-card-muted-text-color)', mb: '4px' }}>
+                  {site.booksContact}
                 </Typography>
-                <Typography sx={{ fontFamily: fonts.body, fontSize: fontSize.sm, color: bookPurchaseCard.mutedTextColor, mb: '2px' }}>
-                  פקס: 03-6823013
+                <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t2)', color: 'var(--book-purchase-card-muted-text-color)', mb: '2px' }}>
+                  פקס: {site.phones.fax}
                 </Typography>
-                <Typography sx={{ fontFamily: fonts.body, fontSize: fontSize.sm, color: bookPurchaseCard.mutedTextColor }}>
-                  העליה 8, תל אביב יפו 6606107
+                <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t2)', color: 'var(--book-purchase-card-muted-text-color)', mb: site.hours ? '2px' : 0 }}>
+                  {site.addresses.office}
                 </Typography>
+                {site.hours && (
+                  <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t2)', color: 'var(--book-purchase-card-muted-text-color)' }}>
+                    {site.hours}
+                  </Typography>
+                )}
               </Box>
 
               {/* כרטיס חיפוש */}
               <Box sx={{
-                bgcolor: colors.cream,
-                border: `1px solid ${colors.gold}`,
+                bgcolor: 'var(--surface)',
+                border: `1px solid var(--gold)`,
                 borderRadius: '12px',
                 p: '20px',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
               }}>
-                <Typography sx={{ fontFamily: fonts.heading, fontWeight: 700, fontSize: fontSize.lg, color: bookCard.titleColor, mb: '8px' }}>
+                <Typography sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--t4)', color: 'var(--ink-wine)', mb: '8px' }}>
                   חיפוש לפי שם
                 </Typography>
-                <Box sx={{ width: '30px', height: '1px', bgcolor: colors.goldButtonBorder, ml: 'auto', mr: 0, mb: '14px' }} />
+                <Box sx={{ width: '30px', height: '1px', bgcolor: 'var(--gold-button-border)', ml: 'auto', mr: 0, mb: '14px' }} />
                 <Box sx={{
                   display: 'flex', flexDirection: 'row', alignItems: 'stretch',
-                  border: `1px solid ${colors.gold}`, borderRadius: radius.control, overflow: 'hidden', height: '46px',
+                  border: `1px solid var(--gold)`, borderRadius: 'var(--radius-control)', overflow: 'hidden', height: '46px',
                 }}>
                   <Box
                     component="button"
@@ -308,11 +308,11 @@ const FullBooksPage = () => {
                     aria-label="חיפוש"
                     sx={{
                       width: '46px', border: 'none', cursor: 'default',
-                      bgcolor: colors.sand,
+                      bgcolor: 'var(--sand)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}
                   >
-                    <SearchIcon sx={{ color: colors.goldDeep, fontSize: 18 }} />
+                    <SearchIcon sx={{ color: 'var(--gold-deep)', fontSize: 18 }} />
                   </Box>
                   <input
                     type="text"
@@ -322,8 +322,8 @@ const FullBooksPage = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{
                       flex: 1, minWidth: 0, border: 'none', outline: 'none',
-                      padding: '0 14px', fontSize: fontSize.sm, direction: 'rtl',
-                      textAlign: 'right', fontFamily: fonts.body, background: 'transparent',
+                      padding: '0 14px', fontSize: 'var(--t2)', direction: 'rtl',
+                      textAlign: 'right', fontFamily: 'var(--font-body)', background: 'transparent',
                     }}
                   />
                 </Box>

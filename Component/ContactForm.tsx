@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
-  Box, Typography, TextField, Button, MenuItem,
+  Box, Typography, TextField, MenuItem,
 } from '@mui/material';
 import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined';
-import HomeWorkOutlinedIcon from '@mui/icons-material/HomeWorkOutlined';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import AppButton from './shared/AppButton';
 import PageHeader from './shared/PageHeader';
 import { site } from '../src/content/site';
-import {
-  colors, fonts, fontSize, goldButtonStyle, radius, contactCard, contactMap, contactForm,
-} from '../src/theme/tokens';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -21,10 +19,11 @@ const EXPLANATION_TEXT =
   'לכל פנייה יש לציין את שם הרב שאליו השאלה מופנית, נושא ברור וממוקד, וסוג השאלה. כך נוכל להעביר את שאלתך לגורם המתאים ולחזור אליך בהקדם.';
 
 /** טלפון הזמנת ספרים כקישור tel: — 03-6815542 → +97236815542, כמו ב-Footer וב-FullBooksPage */
-const booksPhoneHref = `tel:+972${site.phones.books.replace(/^0/, '').replace(/-/g, '')}`;
+const toTelHref = (phone: string) => `tel:+972${phone.replace(/^0/, '').replace(/-/g, '')}`;
+const booksPhoneHref = toTelHref(site.phones.books);
+const generalPhoneHref = toTelHref(site.phones.general);
 
-/** העיר לא מופיעה בכתובת הישיבה עצמה — נלקחת מכתובת המשרד (אותה עיר) לצורך חיפוש במפה בלבד */
-const yeshivaMapQuery = `${site.addresses.yeshiva}, תל אביב-יפו`;
+const yeshivaMapQuery = site.addresses.yeshiva;
 const mapEmbedSrc = `https://www.google.com/maps?q=${encodeURIComponent(yeshivaMapQuery)}&output=embed`;
 const googleMapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(yeshivaMapQuery)}`;
 const wazeHref = `https://waze.com/ul?q=${encodeURIComponent(yeshivaMapQuery)}`;
@@ -33,17 +32,17 @@ const fieldStyle = {
   direction: 'rtl',
   '& .MuiOutlinedInput-root': {
     bgcolor: '#fff',
-    '&:hover fieldset': { borderColor: colors.gold },
-    '&.Mui-focused fieldset': { borderColor: colors.gold },
+    '&:hover fieldset': { borderColor: 'var(--gold)' },
+    '&.Mui-focused fieldset': { borderColor: 'var(--gold)' },
     '& fieldset': { textAlign: 'right' },
-    '& input, & textarea': { textAlign: 'right', fontFamily: fonts.body },
+    '& input, & textarea': { textAlign: 'right', fontFamily: 'var(--font-body)' },
   },
   '& .MuiInputLabel-root': {
     left: 'auto',
     right: 0,
     transformOrigin: 'top right',
-    fontFamily: fonts.body,
-    '&.Mui-focused': { color: colors.gold },
+    fontFamily: 'var(--font-body)',
+    '&.Mui-focused': { color: 'var(--gold)' },
     '&.Mui-error': { color: 'error.main' },
   },
   '& .MuiInputLabel-outlined:not(.MuiInputLabel-shrink)': {
@@ -53,11 +52,24 @@ const fieldStyle = {
     transform: 'translate(-14px, -9px) scale(0.75)',
   },
   '& .MuiOutlinedInput-notchedOutline legend': { textAlign: 'right' },
-  '& .MuiSelect-select': { textAlign: 'right', fontFamily: fonts.body },
+  '& .MuiSelect-select': { textAlign: 'right', fontFamily: 'var(--font-body)' },
   '& .MuiSelect-icon': { right: 'auto', left: 7 },
   '& .MuiSelect-select.MuiSelect-outlined': { paddingRight: '14px', paddingLeft: '32px' },
   '& .MuiFormHelperText-root': { textAlign: 'right', mx: '14px' },
 };
+
+/** תווית קבועה מעל השדה (לא placeholder ולא תווית צפה). הכוכבית aria-hidden — השדה עצמו נושא required */
+const FieldLabel = ({ id, children, required }: { id: string; children: React.ReactNode; required?: boolean }) => (
+  <Box
+    component="label"
+    id={`${id}-label`}
+    htmlFor={id}
+    sx={{ display: 'block', mb: '6px', fontFamily: 'var(--font-body)', fontSize: 'var(--t2)', fontWeight: 600, color: 'var(--body)' }}
+  >
+    {children}
+    {required && <Box component="span" aria-hidden="true" sx={{ color: 'var(--contact-form-required)', mr: '4px' }}>*</Box>}
+  </Box>
+);
 
 interface ContactCardDef {
   key: string;
@@ -133,10 +145,26 @@ const ContactForm: React.FC = () => {
     {
       key: 'phone',
       icon: <PhoneOutlinedIcon sx={{ fontSize: 22 }} />,
-      label: 'טלפון',
+      label: 'משרד הישיבה',
+      value: site.phones.general,
+      href: generalPhoneHref,
+      subText: ['בירורים על הישיבה והשיעורים (לא לרכישת ספרים)', site.hours].filter(Boolean).join(' · '),
+    },
+    {
+      key: 'booksPhone',
+      icon: <PhoneOutlinedIcon sx={{ fontSize: 22 }} />,
+      label: 'משרד והזמנת ספרים',
       value: site.phones.books,
       href: booksPhoneHref,
-      subText: ['ראשון–חמישי', site.hours].filter(Boolean).join(' · '),
+      subText: `${site.addresses.office} · פקס ${site.phones.fax}`,
+    },
+    {
+      key: 'lessonsArchive',
+      icon: <PhoneOutlinedIcon sx={{ fontSize: 22 }} />,
+      label: 'מאגר שיעורים טלפוני',
+      value: site.phones.lessonsArchive,
+      href: site.phones.lessonsArchive ? toTelHref(site.phones.lessonsArchive) : undefined,
+      subText: 'שיעורי רבני הישיבה, ובהם הרב אליהו מרגי שליט"א ועוד, זמינים להאזנה בטלפון. המערכת כוללת שלוחות.',
     },
     ...(site.whatsapp ? [{
       key: 'whatsapp',
@@ -151,19 +179,12 @@ const ContactForm: React.FC = () => {
       icon: <RoomOutlinedIcon sx={{ fontSize: 22 }} />,
       label: 'בניין הישיבה',
       value: site.addresses.yeshiva,
-      subText: `שיעור שבועי · ${site.weeklyLesson.day.replace(/^יום\s/, '')} ${site.weeklyLesson.time}`,
-    },
-    {
-      key: 'office',
-      icon: <HomeWorkOutlinedIcon sx={{ fontSize: 22 }} />,
-      label: 'משרד והזמנת ספרים',
-      value: site.addresses.office,
-      subText: `פקס ${site.phones.fax}`,
+      subText: `שיעור יומי · ${site.weeklyLesson.time}`,
     },
   ];
 
   return (
-    <Box component="main" sx={{ direction: 'rtl', bgcolor: colors.creamAlt, minHeight: '100vh' }}>
+    <Box component="div" sx={{ direction: 'rtl', bgcolor: 'var(--parchment)', minHeight: '100vh' }}>
       <PageHeader title="צור קשר" />
 
       <Box sx={{ maxWidth: '1200px', mx: 'auto', p: { xs: 2, md: 6 } }}>
@@ -178,7 +199,7 @@ const ContactForm: React.FC = () => {
           <Box sx={{ order: { xs: 2, md: 1 } }}>
             <Typography
               component="h2"
-              sx={{ fontFamily: fonts.heading, fontWeight: 700, fontSize: fontSize.xl, color: colors.inkWine, mb: 3 }}
+              sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--t5)', color: 'var(--ink-wine)', mb: 3 }}
             >
               פרטי הישיבה
             </Typography>
@@ -189,30 +210,30 @@ const ContactForm: React.FC = () => {
                   key={card.key}
                   sx={{
                     display: 'flex', alignItems: 'center', gap: '18px',
-                    bgcolor: contactCard.bg,
-                    border: `1px solid ${contactCard.border}`,
-                    borderRadius: `${contactCard.radius}px`,
+                    bgcolor: 'var(--surface)',
+                    border: `1px solid var(--gold)`,
+                    borderRadius: `var(--contact-card-radius)`,
                     p: '18px 20px',
                   }}
                 >
                   <Box
                     aria-hidden="true"
                     sx={{
-                      width: `${contactCard.iconCircle.size}px`,
-                      height: `${contactCard.iconCircle.size}px`,
+                      width: `var(--contact-card-icon-circle-size)`,
+                      height: `var(--contact-card-icon-circle-size)`,
                       borderRadius: '50%',
                       flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      bgcolor: i === 0 ? contactCard.iconCircle.firstBg : contactCard.iconCircle.restBg,
-                      color: i === 0 ? contactCard.iconCircle.firstIcon : contactCard.iconCircle.restIcon,
+                      bgcolor: i === 0 ? 'var(--wine)' : 'var(--sand)',
+                      color: i === 0 ? 'var(--gold-light)' : 'var(--gold-deep)',
                     }}
                   >
                     {card.icon}
                   </Box>
                   <Box sx={{ minWidth: 0 }}>
                     <Typography sx={{
-                      fontSize: `${contactCard.label.size}px`, letterSpacing: contactCard.label.letterSpacing,
-                      color: contactCard.label.color, fontWeight: contactCard.label.weight, fontFamily: fonts.body, mb: '2px',
+                      fontSize: `var(--contact-card-label-size)`, letterSpacing: 'var(--contact-card-label-letter-spacing)',
+                      color: 'var(--gold-text)', fontWeight: 'var(--contact-card-label-weight)', fontFamily: 'var(--font-body)', mb: '2px',
                     }}>
                       {card.label}
                     </Typography>
@@ -221,23 +242,23 @@ const ContactForm: React.FC = () => {
                         component="a"
                         href={card.href}
                         sx={{
-                          display: 'block', fontFamily: fonts.heading,
-                          fontSize: `${contactCard.value.size}px`, fontWeight: contactCard.value.weight,
-                          color: contactCard.value.color, textDecoration: 'none', direction: 'ltr', textAlign: 'right',
+                          display: 'block', fontFamily: 'var(--font-heading)',
+                          fontSize: `var(--contact-card-value-size)`, fontWeight: 'var(--contact-card-value-weight)',
+                          color: 'var(--wine)', textDecoration: 'none', direction: 'ltr', textAlign: 'right',
                         }}
                       >
                         {card.value}
                       </Box>
                     ) : (
                       <Typography sx={{
-                        fontFamily: fonts.heading, fontSize: `${contactCard.value.size}px`,
-                        fontWeight: contactCard.value.weight, color: contactCard.value.color,
+                        fontFamily: 'var(--font-heading)', fontSize: `var(--contact-card-value-size)`,
+                        fontWeight: 'var(--contact-card-value-weight)', color: 'var(--wine)',
                       }}>
                         {card.value}
                       </Typography>
                     )}
                     {card.subText && (
-                      <Typography sx={{ fontFamily: fonts.body, fontSize: `${contactCard.subText.size}px`, color: contactCard.subText.color, mt: '2px' }}>
+                      <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: `var(--contact-card-sub-text-size)`, color: 'var(--muted)', mt: '2px' }}>
                         {card.subText}
                       </Typography>
                     )}
@@ -253,31 +274,17 @@ const ContactForm: React.FC = () => {
               src={mapEmbedSrc}
               loading="lazy"
               sx={{
-                width: '100%', aspectRatio: '16/9', border: `1px solid ${contactMap.border}`,
-                borderRadius: `${contactMap.radius}px`, mb: 2, bgcolor: contactMap.bg,
+                width: '100%', aspectRatio: '16/9', border: `1px solid var(--gold)`,
+                borderRadius: `var(--contact-map-radius)`, mb: 2, bgcolor: 'var(--sand)',
               }}
             />
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                component="a" href={wazeHref} target="_blank" rel="noopener noreferrer"
-                fullWidth
-                sx={{
-                  minHeight: '46px', border: `1px solid ${colors.gold}`, color: colors.goldText,
-                  fontFamily: fonts.body, fontWeight: 600, borderRadius: radius.control,
-                }}
-              >
+              <AppButton variant="outline" component="a" href={wazeHref} target="_blank" rel="noopener noreferrer" fullWidth>
                 ניווט ב-Waze
-              </Button>
-              <Button
-                component="a" href={googleMapsHref} target="_blank" rel="noopener noreferrer"
-                fullWidth
-                sx={{
-                  minHeight: '46px', border: `1px solid ${colors.gold}`, color: colors.goldText,
-                  fontFamily: fonts.body, fontWeight: 600, borderRadius: radius.control,
-                }}
-              >
+              </AppButton>
+              <AppButton variant="outline" component="a" href={googleMapsHref} target="_blank" rel="noopener noreferrer" fullWidth>
                 Google Maps
-              </Button>
+              </AppButton>
             </Box>
           </Box>
 
@@ -285,54 +292,63 @@ const ContactForm: React.FC = () => {
           <Box sx={{ order: { xs: 1, md: 2 } }}>
             <Box
               sx={{
-                bgcolor: colors.cream,
-                border: `1px solid ${contactForm.outer.border}`,
-                borderRadius: `${contactForm.outer.radius}px`,
-                p: `${contactForm.outer.pad}px`,
+                bgcolor: 'var(--surface)',
+                border: `1px solid var(--gold)`,
+                borderRadius: `var(--contact-form-outer-radius)`,
+                p: `var(--contact-form-outer-pad)`,
               }}
             >
               <Box
                 sx={{
-                  border: `1px solid ${contactForm.inner.border}`,
-                  borderRadius: `${contactForm.inner.radius}px`,
+                  border: `1px solid var(--contact-form-inner-border)`,
+                  borderRadius: `var(--contact-form-inner-radius)`,
                   bgcolor: '#fff',
-                  p: `${contactForm.inner.pad}px`,
+                  p: `var(--contact-form-inner-pad)`,
                 }}
               >
                 <Typography
                   component="h2"
-                  sx={{ fontFamily: fonts.heading, fontWeight: 700, fontSize: fontSize.xl, color: colors.inkWine, mb: 1 }}
+                  sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--t5)', color: 'var(--ink-wine)', mb: 1 }}
                 >
                   שאלה לרב
                 </Typography>
-                <Typography sx={{ mb: 3, color: contactForm.label.color, fontFamily: fonts.body, lineHeight: 1.8, fontSize: fontSize.sm }}>
+                <Typography sx={{ mb: 3, color: 'var(--body)', fontFamily: 'var(--font-body)', lineHeight: 1.8, fontSize: 'var(--t2)' }}>
                   {EXPLANATION_TEXT}
                 </Typography>
 
                 <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                   <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <FieldLabel id="cf-phone" required>טלפון</FieldLabel>
                     <TextField
-                      fullWidth size="small" required
-                      name="phone" label="טלפון"
+                      id="cf-phone" fullWidth size="small" required
+                      name="phone"
                       value={formData.phone} onChange={handleChange}
                       error={!!errors.phone} helperText={errors.phone}
                       inputProps={{ 'aria-required': true }}
                       sx={fieldStyle}
                     />
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <FieldLabel id="cf-fullName" required>שם מלא</FieldLabel>
                     <TextField
-                      fullWidth size="small" required
-                      name="fullName" label="שם מלא"
+                      id="cf-fullName" fullWidth size="small" required
+                      name="fullName"
                       value={formData.fullName} onChange={handleChange}
                       error={!!errors.fullName} helperText={errors.fullName}
                       inputProps={{ 'aria-required': true }}
                       sx={fieldStyle}
                     />
+                    </Box>
                   </Box>
 
                   <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <FieldLabel id="cf-rabbiName">הפנייה לרב</FieldLabel>
                     <TextField
-                      select fullWidth size="small"
-                      name="rabbiName" label="הפנייה לרב"
+                      id="cf-rabbiName" select fullWidth size="small"
+                      name="rabbiName"
+                      SelectProps={{ labelId: 'cf-rabbiName-label' }}
                       value={formData.rabbiName} onChange={handleChange}
                       sx={fieldStyle}
                     >
@@ -342,19 +358,26 @@ const ContactForm: React.FC = () => {
                         </MenuItem>
                       ))}
                     </TextField>
+                    </Box>
 
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <FieldLabel id="cf-email">דוא"ל</FieldLabel>
                     <TextField
-                      fullWidth size="small"
-                      name="email" label='דוא"ל'
+                      id="cf-email" fullWidth size="small"
+                      name="email"
                       value={formData.email} onChange={handleChange}
                       error={!!errors.email} helperText={errors.email}
                       sx={fieldStyle}
                     />
+                    </Box>
                   </Box>
 
+                  <Box>
+                  <FieldLabel id="cf-questionType" required>נושא הפנייה</FieldLabel>
                   <TextField
-                    select fullWidth size="small" required
-                    name="questionType" label="נושא הפנייה"
+                    id="cf-questionType" select fullWidth size="small" required
+                    name="questionType"
+                    SelectProps={{ labelId: 'cf-questionType-label' }}
                     value={formData.questionType} onChange={handleChange}
                     error={!!errors.questionType} helperText={errors.questionType}
                     inputProps={{ 'aria-required': true }}
@@ -366,48 +389,43 @@ const ContactForm: React.FC = () => {
                       </MenuItem>
                     ))}
                   </TextField>
+                  </Box>
 
+                  <Box>
+                  <FieldLabel id="cf-message" required>תוכן הפנייה</FieldLabel>
                   <TextField
-                    fullWidth multiline required
+                    id="cf-message" fullWidth multiline required
                     minRows={6}
-                    name="message" label="תוכן הפנייה"
+                    name="message"
                     value={formData.message} onChange={handleChange}
                     error={!!errors.message} helperText={errors.message}
                     inputProps={{ 'aria-required': true }}
-                    sx={{ ...fieldStyle, '& .MuiOutlinedInput-root': { ...fieldStyle['& .MuiOutlinedInput-root'], minHeight: `${contactForm.textareaHeight}px` } }}
+                    sx={{ ...fieldStyle, '& .MuiOutlinedInput-root': { ...fieldStyle['& .MuiOutlinedInput-root'], minHeight: `var(--contact-form-textarea-height)` } }}
                   />
+                  </Box>
 
                   {submitStatus === 'success' && (
-                    <Typography role="status" sx={{ color: 'green', textAlign: 'center', fontFamily: fonts.body }}>
+                    <Typography role="status" sx={{ color: 'var(--gold-text)', fontWeight: 700, textAlign: 'center', fontFamily: 'var(--font-body)' }}>
                       הפנייה נשלחה בהצלחה! נחזור אליך בהקדם.
                     </Typography>
                   )}
                   {submitStatus === 'error' && (
-                    <Typography role="alert" sx={{ color: 'red', textAlign: 'center', fontFamily: fonts.body }}>
+                    <Typography role="alert" sx={{ color: 'var(--contact-form-required)', fontWeight: 600, textAlign: 'center', fontFamily: 'var(--font-body)' }}>
                       שגיאה בשליחה, נסו שוב.
                     </Typography>
                   )}
 
-                  <Button
-                    type="submit"
-                    fullWidth
-                    disabled={submitStatus === 'loading'}
-                    sx={{
-                      minHeight: `${contactForm.submitButton.minHeight}px`,
-                      borderRadius: radius.control,
-                      ...goldButtonStyle,
-                      fontWeight: 800,
-                      fontSize: fontSize.lg,
-                      fontFamily: fonts.body,
-                    }}
-                  >
+                  <AppButton type="submit" fullWidth disabled={submitStatus === 'loading'}>
                     {submitStatus === 'loading' ? 'שולח...' : 'שליחת הפנייה'}
-                  </Button>
+                  </AppButton>
 
-                  <Typography sx={{ fontSize: fontSize.xs, color: contactCard.subText.color, textAlign: 'center', fontFamily: fonts.body }}>
-                    התשובה תפורסם באתר ללא פרטים מזהים.
-                    {site.responseDays && ` נחזור אליך תוך ${site.responseDays} ימי עבודה.`}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--muted)' }}>
+                    <InfoOutlinedIcon aria-hidden="true" sx={{ fontSize: 16, color: 'var(--gold-text)', flexShrink: 0 }} />
+                    <Typography sx={{ fontSize: 'var(--t1)', color: 'inherit', fontFamily: 'var(--font-body)' }}>
+                      התשובה תפורסם באתר ללא פרטים מזהים.
+                      {site.responseDays && ` נחזור אליך תוך ${site.responseDays} ימי עבודה.`}
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
             </Box>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { fonts, pageHeader } from '../../src/theme/tokens';
 import SectionFlourish from './SectionFlourish';
 import SectionArch from './SectionArch';
 
@@ -17,12 +16,12 @@ const PageHeader: React.FC<PageHeaderProps> = ({ eyebrow, title }) => (
   <Box
     component="header"
     sx={{
-      bgcolor: pageHeader.bg,
-      borderBottom: `1px solid ${pageHeader.borderColor}`,
+      bgcolor: 'var(--parchment-2)',
+      borderBottom: `1px solid var(--gold)`,
       textAlign: 'center',
-      pt: { xs: '14px', md: `${pageHeader.padding.top}px` },
-      pb: { xs: '12px', md: `${pageHeader.padding.bottom}px` },
-      px: { xs: '20px', md: `${pageHeader.padding.x}px` },
+      pt: { xs: '14px', md: `var(--page-header-padding-top)` },
+      pb: { xs: '12px', md: `var(--page-header-padding-bottom)` },
+      px: { xs: '20px', md: `var(--page-header-padding-x)` },
     }}
   >
     <SectionArch mb="5px" />
@@ -30,11 +29,11 @@ const PageHeader: React.FC<PageHeaderProps> = ({ eyebrow, title }) => (
     {eyebrow && (
       <Typography
         sx={{
-          fontSize: `${pageHeader.eyebrow.size}px`,
-          letterSpacing: pageHeader.eyebrow.letterSpacing,
-          color: pageHeader.eyebrow.color,
-          fontWeight: pageHeader.eyebrow.weight,
-          fontFamily: fonts.body,
+          fontSize: `var(--page-header-eyebrow-size)`,
+          letterSpacing: 'var(--page-header-eyebrow-letter-spacing)',
+          color: 'var(--gold-text)',
+          fontWeight: 'var(--page-header-eyebrow-weight)',
+          fontFamily: 'var(--font-body)',
           mb: '2px',
         }}
       >
@@ -45,10 +44,10 @@ const PageHeader: React.FC<PageHeaderProps> = ({ eyebrow, title }) => (
     <Typography
       component="h1"
       sx={{
-        fontFamily: fonts.heading,
-        fontSize: { xs: '28px', md: `${pageHeader.title.size}px` },
-        fontWeight: pageHeader.title.weight,
-        color: pageHeader.title.color,
+        fontFamily: 'var(--font-heading)',
+        fontSize: { xs: '28px', md: `var(--page-header-title-size)` },
+        fontWeight: 'var(--page-header-title-weight)',
+        color: 'var(--ink-wine)',
         lineHeight: 1.2,
         m: 0,
       }}

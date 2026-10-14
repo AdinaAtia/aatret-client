@@ -1,23 +1,20 @@
-import React, { useRef,useState, useEffect, useLayoutEffect } from 'react';
+import React, { useRef,useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
-  Button,
-  Card,
-  CardMedia,
-  CardContent,
   IconButton,
 } from '@mui/material';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
-import PlayBadge from './shared/PlayBadge';
-import { colors, fonts, fontSize, goldButtonStyle, goldTextFill, rabbiCard, lessonCard, radius, weeklyBar } from '../src/theme/tokens';
+import LessonThumb, { youtubeThumbSources } from './shared/LessonThumb';
 
-import Grid from '@mui/material/Grid';
 import LecturesGrid from './LecturesGrid';
+import AppButton from './shared/AppButton';
+import RabbiSchedule from './shared/RabbiSchedule';
 import SectionFlourish from './shared/SectionFlourish';
 import SectionArch from './shared/SectionArch';
+import { cardHoverSx } from './shared/cardHover';
 import CarouselProgress, { carouselArrowSx } from "./shared/CarouselProgress";
 import { useCarousel } from './shared/useCarousel';
 import HeroVideo from './HeroVideo';
@@ -26,63 +23,14 @@ import BooksCarousel from './BooksCarousel'; // ודאי שהנתיב לקובץ
 import { Crown } from './Header';
 import founderContent from './founderContent.json';
 import weeklyLesson from './weeklyLesson.json';
-import donationLetterContent from './donationLetterContent.json';
 
 const MEDIA_BASE_URL = `${import.meta.env.VITE_MEDIA_URL}/About`;
 
 // --- 1. הגדרות רוחב וצבעים ---
 
-interface LetterSegment {
-  text: string;
-  bold?: boolean;
-  link?: string;
-}
-interface LetterParagraph {
-  segments: LetterSegment[];
-  sx?: Record<string, unknown>;
-}
-
-const donationLetterParagraphs: LetterParagraph[] = donationLetterContent.paragraphs as LetterParagraph[];
-
-const donationLetterPlainText = donationLetterParagraphs
-  .map((p) => p.segments.map((s) => s.text).join(''))
-  .join('\n\n');
-
-const CLOSING_START = 10;
-const mainLetterLen = donationLetterParagraphs
-  .slice(0, CLOSING_START)
-  .reduce((acc, p) => acc + p.segments.map((s) => s.text).join('').length + 2, 0);
-
-function renderClosingParagraphs(maxLen: number) {
-  let consumed = 0;
-  const nodes: React.ReactNode[] = [];
-  for (let p = CLOSING_START; p < donationLetterParagraphs.length; p++) {
-    if (consumed >= maxLen) break;
-    const para = donationLetterParagraphs[p];
-    const paraText = para.segments.map((s) => s.text).join('');
-    const remaining = maxLen - consumed;
-    const revealLen = Math.min(remaining, paraText.length);
-    let segConsumed = 0;
-    const segNodes: React.ReactNode[] = [];
-    for (let s = 0; s < para.segments.length; s++) {
-      if (segConsumed >= revealLen) break;
-      const seg = para.segments[s];
-      const segText = seg.text.length <= revealLen - segConsumed ? seg.text : seg.text.slice(0, revealLen - segConsumed);
-      segNodes.push(seg.bold || seg.link ? (
-        <Box key={s} component={seg.link ? 'a' : 'span'} href={seg.link} sx={{ fontWeight: 800, color: seg.link ? colors.gold : undefined }}>{segText}</Box>
-      ) : segText);
-      segConsumed += seg.text.length;
-    }
-    nodes.push(<Typography component="p" key={p} sx={{ mb: 0.08, fontFamily: "'Yetzira-Regular', sans-serif !important", ...(para.sx || {}) }}>{segNodes}</Typography>);
-    consumed += paraText.length + 2;
-    if (revealLen < paraText.length) break;
-  }
-  return nodes;
-}
-
 const rabbiVideos = [
   { youtubeId: 'FWJGuXlBQ88', name: 'הראשון לציון הרב מרדכי אליהו זצ"ל', date: 'תשס"א מסיבה על הוצאת ספר עטרת מרדכי על הקדיש' },
-  { youtubeId: 'elWVs7nSbCs', name: 'המקובל הרב דוד שלום שליט"א ראש ישיבת השלום', date: 'תשס"א מסיבה על הוצאת ספר עטרת מרדכי על הקדיש' },
+  { youtubeId: 'elWVs7nSbCs', name: 'המקובל הרב דוד שלום זצ"ל ראש ישיבת השלום', date: 'תשס"א מסיבה על הוצאת ספר עטרת מרדכי על הקדיש' },
   { youtubeId: '1-aGtlCP4Kk', name: 'הראשון לציון הרב דוד יוסף שליט"א', date: 'הילולת הרש"ש י\' שבט תשפ"ה ההילולה נערכה לרגל הוצאה לאור של סידור הרש"ש ע"י הנדיב ה"ה יעקב ג"ק אורפלי' },
   { youtubeId: '-Wd4It5Ap_k', name: 'הרב בן ציון מוצפי שליט״א', date: '' },
   { youtubeId: 'Y-nZHTds7Tw', name: 'הרב יצחק מאיר מורגנשטרן שליט"א', thumbnail: `${MEDIA_BASE_URL}/צילום מסך 2026-06-22 110957.png`, date: 'תשס"א מסיבה על הוצאת ספר עטרת מרדכי על הקדיש' },
@@ -95,53 +43,7 @@ const rabbiVideos = [
   { youtubeId: '8kWZWx7W010', name: 'תדמית הישיבה', date: '2026' },
 ];
 
-function renderDonationLetterUpTo(maxLen: number) {
-  let consumed = 0;
-  const nodes: React.ReactNode[] = [];
-  for (let p = 0; p < donationLetterParagraphs.length; p++) {
-    if (consumed >= maxLen) break;
-    const para = donationLetterParagraphs[p];
-    const paraText = para.segments.map((s) => s.text).join('');
-    const remaining = maxLen - consumed;
-    const revealLen = Math.min(remaining, paraText.length);
-
-    let segConsumed = 0;
-    const segNodes: React.ReactNode[] = [];
-    for (let s = 0; s < para.segments.length; s++) {
-      if (segConsumed >= revealLen) break;
-      const seg = para.segments[s];
-      const segRemaining = revealLen - segConsumed;
-      const segText = seg.text.length <= segRemaining ? seg.text : seg.text.slice(0, segRemaining);
-      segNodes.push(
-        seg.bold || seg.link ? (
-          <Box
-            key={s}
-            component={seg.link ? 'a' : 'span'}
-            href={seg.link}
-            sx={{ fontWeight: 800, color: seg.link ? colors.gold : undefined }}
-          >
-            {segText}
-          </Box>
-        ) : (
-          segText
-        )
-      );
-      segConsumed += seg.text.length;
-    }
-
-    nodes.push(
-      <Typography component="p" key={p} sx={{ mb: 0.08, fontFamily: "'Yetzira-Regular', sans-serif !important", ...(para.sx || {}) }}>
-        {segNodes}
-      </Typography>
-    );
-
-    consumed += paraText.length + 2; // +2 = מפריד הפסקאות (\n\n)
-    if (revealLen < paraText.length) break;
-  }
-  return nodes;
-}
-
-function LazyYouTube({ youtubeId, thumbnail }: { youtubeId: string; thumbnail?: string }) {
+function LazyYouTube({ youtubeId, thumbnail, caption }: { youtubeId: string; thumbnail?: string; caption?: string }) {
   const [active, setActive] = useState(false);
   if (active) {
     return (
@@ -157,13 +59,18 @@ function LazyYouTube({ youtubeId, thumbnail }: { youtubeId: string; thumbnail?: 
   }
   return (
     <Box onClick={() => setActive(true)} sx={{ position: 'relative', width: '100%', height: '100%', cursor: 'pointer' }}>
-      <Box
-        component="img"
-        src={thumbnail || `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
-        alt=""
-        sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+      <LessonThumb
+        src={thumbnail ? [thumbnail] : youtubeThumbSources(youtubeId)}
+        imagePosition={caption ? '60% center' : 'center'}
+        playSize={52}
+        crownWidth={64}
+        sx={{ width: '100%', height: '100%' }}
       />
-      <PlayBadge size={52} />
+      {caption && (
+        <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, p: '24px 16px 12px', pointerEvents: 'none', textAlign: 'center', background: `linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--ink) 80%, transparent) 100%)` }}>
+          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--t4)', color: 'var(--gold-light)' }}>{caption}</Typography>
+        </Box>
+      )}
     </Box>
   );
 }
@@ -179,66 +86,11 @@ const Home: React.FC = () => {
   //   event.preventDefault();
   // };
 
-  const [videoHeight, setVideoHeight] = useState<string>('100vh');
   const [rabbiCardsData, setRabbiCardsData] = useState<any[]>([]);
   const [rabbiLatestLessons, setRabbiLatestLessons] = useState<Record<number, any>>({});
   const rabbisInRow = rabbiCardsData.filter((r) => !r.name.includes('מרדכי עטי'));
   const sagesCarousel = useCarousel(rabbiVideos.length);
   const rabbisCarousel = useCarousel(rabbisInRow.length);
-  const [donationLetterTypedLength, setDonationLetterTypedLength] = useState(0);
-  const donationLetterIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const letterContainerRef = useRef<HTMLDivElement>(null);
-  const letterMeasureRef = useRef<HTMLDivElement>(null);
-  const [letterFontSize, setLetterFontSize] = useState<number>(8.8);
-
-  useLayoutEffect(() => {
-    const container = letterContainerRef.current;
-    const measure = letterMeasureRef.current;
-    if (!container || !measure) return;
-
-    const fitFontSize = () => {
-      const maxFontSize = window.innerWidth >= 900 ? 12 : 10;
-      const minFontSize = 4.5;
-      let fontSize = maxFontSize;
-      measure.style.fontSize = `${fontSize}px`;
-      while (measure.scrollHeight > container.clientHeight && fontSize > minFontSize) {
-        fontSize -= 0.2;
-        measure.style.fontSize = `${fontSize}px`;
-      }
-      setLetterFontSize(fontSize);
-    };
-
-    fitFontSize();
-    document.fonts?.ready?.then(fitFontSize).catch(() => {});
-    window.addEventListener('resize', fitFontSize);
-    return () => window.removeEventListener('resize', fitFontSize);
-  }, []);
-
- useEffect(() => {
-  const updateVideoHeight = () => {
-    const headerEl = document.querySelector('[role="banner"]');
-    const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0;
-    setVideoHeight(`calc(100vh - ${Math.round(headerHeight + 65)}px)`);
-  };
-  updateVideoHeight();
-  window.addEventListener('resize', updateVideoHeight);
-  return () => window.removeEventListener('resize', updateVideoHeight);
-}, []);
-
- useEffect(() => {
-  setDonationLetterTypedLength(0);
-  let i = 0;
-  donationLetterIntervalRef.current = setInterval(() => {
-    if (i < donationLetterPlainText.length) {
-      i++;
-      setDonationLetterTypedLength(i);
-    } else {
-      clearInterval(donationLetterIntervalRef.current!);
-    }
-  }, 12);
-  return () => clearInterval(donationLetterIntervalRef.current!);
-}, []);
-
  useEffect(() => {
   if (hasFetchedRabbis.current) return;
   hasFetchedRabbis.current = true;
@@ -278,6 +130,7 @@ const Home: React.FC = () => {
           title,
           imageSrc,
           priority: Number(attr.Priority) ?? 999,
+          schedule: attr.schedule || [],
         };
       });
 
@@ -334,7 +187,7 @@ const Home: React.FC = () => {
   height: { xs: '80vh', md: '90vh' },
   overflow: 'hidden',
   direction: 'rtl',
-  bgcolor: colors.cream,
+  bgcolor: 'var(--surface)',
 }}>
   {/* סרטון רקע — פרוס על כל השטח. בנייד מוגשת תמונה סטטית במקומו (HeroVideo.tsx) */}
   <HeroVideo
@@ -354,7 +207,7 @@ const Home: React.FC = () => {
     inset: 0,
     zIndex: 1,
     pointerEvents: 'none',
-    background: `linear-gradient(180deg, ${colors.cream}D4 0%, ${colors.creamAlt}C4 45%, ${colors.sand}CC 100%)`,
+    background: `linear-gradient(180deg, color-mix(in srgb, var(--surface) 83.137%, transparent) 0%, color-mix(in srgb, var(--parchment) 76.863%, transparent) 45%, color-mix(in srgb, var(--sand) 80%, transparent) 100%)`,
   }} />
 
   {/* מסגרת הקשת — שני פסי זהב דקים מעל הסרטון */}
@@ -363,16 +216,16 @@ const Home: React.FC = () => {
     inset: { xs: '12px', md: '26px' },
     zIndex: 2,
     pointerEvents: 'none',
-    borderRadius: radius.arch,
-    border: `1px solid ${colors.goldDeep}A6`,
+    borderRadius: 'var(--radius-arch)',
+    border: `1px solid color-mix(in srgb, var(--gold-deep) 65.098%, transparent)`,
   }} />
   <Box sx={{
     position: 'absolute',
     inset: { xs: '19px', md: '36px' },
     zIndex: 2,
     pointerEvents: 'none',
-    borderRadius: radius.arch,
-    border: `1px solid ${colors.goldDeep}5C`,
+    borderRadius: 'var(--radius-arch)',
+    border: `1px solid color-mix(in srgb, var(--gold-deep) 36.078%, transparent)`,
   }} />
 
   {/* כיתוב מעל הסרטון */}
@@ -399,10 +252,10 @@ const Home: React.FC = () => {
     </Box>
 
     <Typography sx={{
-      fontFamily: fonts.heading,
-      fontSize: { xs: '11px', md: fontSize.sm },
+      fontFamily: 'var(--font-heading)',
+      fontSize: { xs: '11px', md: 'var(--t2)' },
       fontWeight: 400,
-      color: `${colors.wine}D9`,
+      color: `color-mix(in srgb, var(--wine) 85.098%, transparent)`,
       letterSpacing: { xs: '0.5em', md: '0.75em' },
       textIndent: { xs: '0.5em', md: '0.75em' },
       mb: { xs: 0.5, md: 1 },
@@ -411,10 +264,10 @@ const Home: React.FC = () => {
     </Typography>
 
     <Typography sx={{
-      fontFamily: fonts.headingOrnate,
+      fontFamily: 'var(--font-heading-ornate)',
       fontSize: 'clamp(2.75rem, 7.5vw, 6rem)',
       fontWeight: 400,
-      color: colors.wine,
+      color: 'var(--wine)',
       lineHeight: 1.05,
       letterSpacing: '0.02em',
       textAlign: 'center',
@@ -424,18 +277,18 @@ const Home: React.FC = () => {
 
     {/* קו מפריד עם מעוינים */}
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, my: { xs: 2, md: 2.5 } }}>
-      <Box sx={{ width: { xs: '55px', md: '105px' }, height: '1px', background: `linear-gradient(90deg, transparent 0%, ${colors.goldDeep} 100%)` }} />
-      <Box sx={{ width: '5px', height: '5px', transform: 'rotate(45deg)', bgcolor: colors.gold }} />
-      <Box sx={{ width: '4px', height: '4px', transform: 'rotate(45deg)', bgcolor: colors.goldDeep, opacity: 0.6 }} />
-      <Box sx={{ width: '5px', height: '5px', transform: 'rotate(45deg)', bgcolor: colors.gold }} />
-      <Box sx={{ width: { xs: '55px', md: '105px' }, height: '1px', background: `linear-gradient(90deg, ${colors.goldDeep} 0%, transparent 100%)` }} />
+      <Box sx={{ width: { xs: '55px', md: '105px' }, height: '1px', background: `linear-gradient(90deg, transparent 0%, var(--gold-deep) 100%)` }} />
+      <Box sx={{ width: '5px', height: '5px', transform: 'rotate(45deg)', bgcolor: 'var(--gold)' }} />
+      <Box sx={{ width: '4px', height: '4px', transform: 'rotate(45deg)', bgcolor: 'var(--gold-deep)', opacity: 0.6 }} />
+      <Box sx={{ width: '5px', height: '5px', transform: 'rotate(45deg)', bgcolor: 'var(--gold)' }} />
+      <Box sx={{ width: { xs: '55px', md: '105px' }, height: '1px', background: `linear-gradient(90deg, var(--gold-deep) 0%, transparent 100%)` }} />
     </Box>
 
     <Typography sx={{
-      fontFamily: fonts.heading,
-      fontSize: { xs: fontSize.md, md: fontSize.lg },
+      fontFamily: 'var(--font-heading)',
+      fontSize: { xs: 'var(--t3)', md: 'var(--t4)' },
       fontWeight: 400,
-      color: colors.wine,
+      color: 'var(--wine)',
       lineHeight: 1.5,
       letterSpacing: '0.03em',
     }}>
@@ -443,10 +296,10 @@ const Home: React.FC = () => {
     </Typography>
 
     <Typography sx={{
-      fontFamily: fonts.body,
-      fontSize: { xs: fontSize.xs, md: fontSize.sm },
+      fontFamily: 'var(--font-body)',
+      fontSize: { xs: 'var(--t1)', md: 'var(--t2)' },
       fontWeight: 400,
-      color: `${colors.wine}B8`,
+      color: `color-mix(in srgb, var(--wine) 72.157%, transparent)`,
       letterSpacing: '0.05em',
       mt: { xs: 0.5, md: 1 },
     }}>
@@ -461,46 +314,16 @@ const Home: React.FC = () => {
       gap: { xs: 1.5, md: 2 },
       mt: { xs: 3.5, md: 5 },
     }}>
-      <Button
-        onClick={() => navigate('/About')}
-        sx={{
-          fontFamily: fonts.body,
-          fontSize: fontSize.md,
-          fontWeight: 500,
-          py: 1.3,
-          px: { xs: 4, md: 5.5 },
-          whiteSpace: 'nowrap',
-          borderRadius: radius.sm,
-          ...goldButtonStyle,
-          transition: '0.3s',
-        }}
-      >
+      <AppButton onClick={() => navigate('/About')}>
         אודות הישיבה
-      </Button>
+      </AppButton>
 
-      <Button
-        onClick={() => navigate('/AllLessons')}
-        sx={{
-          fontFamily: fonts.body,
-          fontSize: fontSize.md,
-          fontWeight: 500,
-          py: 1.3,
-          px: { xs: 4, md: 5.5 },
-          whiteSpace: 'nowrap',
-          borderRadius: radius.sm,
-          color: colors.wine,
-          backgroundColor: `${colors.cream}8C`,
-          border: `1px solid ${colors.goldDeep}`,
-          '&:hover': { backgroundColor: `${colors.cream}D9` },
-          transition: '0.3s',
-        }}
-      >
+      <AppButton variant="outline" onClick={() => navigate('/AllLessons')}>
         ארכיון השיעורים
-      </Button>
+      </AppButton>
     </Box>
   </Box>
 </Box>
- {/* <LatestLessonCard onLessonSelect={(lesson) => setSelectedLesson(lesson)} /> */}
   </Box>
 
 {/* --- פס השיעור השבועי ---
@@ -510,11 +333,11 @@ const Home: React.FC = () => {
 <Box sx={{
   width: '100%',
   boxSizing: 'border-box',
-  bgcolor: weeklyBar.bg,
-  borderTop: `${weeklyBar.ruleWidth}px solid ${weeklyBar.rule}`,
-  borderBottom: `${weeklyBar.ruleWidth}px solid ${weeklyBar.rule}`,
-  height: { xs: 'auto', lg: `${weeklyBar.height.desktop}px` },
-  minHeight: { xs: `${weeklyBar.height.mobile}px`, md: 'unset' },
+  bgcolor: 'var(--sand)',
+  borderTop: `var(--weekly-bar-rule-width) solid var(--gold)`,
+  borderBottom: `var(--weekly-bar-rule-width) solid var(--gold)`,
+  height: { xs: 'auto', lg: `var(--weekly-bar-height-desktop)` },
+  minHeight: { xs: `var(--weekly-bar-height-mobile)`, md: 'unset' },
   py: { xs: 0, md: 2, lg: 0 },
   px: { xs: '20px', md: 3 },
   display: 'flex',
@@ -524,30 +347,30 @@ const Home: React.FC = () => {
   direction: 'rtl',
   overflow: 'hidden',
   pb: { xs: '30px', md: 0 },
-  gap: { xs: 0, md: '20px', lg: `${weeklyBar.gap}px` },
+  gap: { xs: 0, md: '20px', lg: `var(--weekly-bar-gap)` },
 }}>
   {/* ימין: מעוין + כותרת הפס */}
   <Box sx={{
     display: 'flex',
     alignItems: 'center',
     flexDirection: 'row',
-    gap: `${weeklyBar.diamond.gap}px`,
+    gap: `var(--weekly-bar-diamond-gap)`,
     justifyContent: 'flex-start',
     mt: { xs: '30px', md: 0 },
   }}>
     {/* המעוין — ריבוע מסובב, 13px באלכסון (מדויק יותר מתו גופן) */}
     <Box sx={{
-      width: weeklyBar.diamond.diagonal / Math.SQRT2,
-      height: weeklyBar.diamond.diagonal / Math.SQRT2,
-      bgcolor: weeklyBar.title.color,
+      width: `calc(var(--weekly-bar-diamond-diagonal) / ${Math.SQRT2})`,
+      height: `calc(var(--weekly-bar-diamond-diagonal) / ${Math.SQRT2})`,
+      bgcolor: 'var(--wine)',
       transform: 'rotate(45deg)',
       flexShrink: 0,
     }} />
     <Typography sx={{
-      fontFamily: fonts.heading,
-      fontSize: { xs: `${weeklyBar.title.mobile}px`, lg: `${weeklyBar.title.desktop}px` },
+      fontFamily: 'var(--font-heading)',
+      fontSize: { xs: `var(--weekly-bar-title-mobile)`, lg: `var(--weekly-bar-title-desktop)` },
       fontWeight: 700,
-      color: weeklyBar.title.color,
+      color: 'var(--wine)',
       lineHeight: 1.2,
       whiteSpace: 'nowrap',
     }}>{weeklyLesson.title}</Typography>
@@ -555,35 +378,35 @@ const Home: React.FC = () => {
 
   <Box sx={{
     display: { xs: 'none', md: 'block' },
-    width: `${weeklyBar.divider.w}px`,
-    height: `${weeklyBar.divider.h}px`,
-    bgcolor: weeklyBar.rule,
+    width: `var(--weekly-bar-divider-w)`,
+    height: `var(--weekly-bar-divider-h)`,
+    bgcolor: 'var(--gold)',
     flexShrink: 0,
   }} />
 
   {/* אמצע: יום ושעה + הכתובית — מיושר לימין, לא למרכז */}
   <Box sx={{ textAlign: 'right', mt: { xs: '22px', md: 0 }, minWidth: 0, flex: { md: '0 1 auto' } }}>
     <Typography sx={{
-      fontFamily: fonts.body,
-      fontSize: `${weeklyBar.time.size}px`,
+      fontFamily: 'var(--font-body)',
+      fontSize: `var(--weekly-bar-time-size)`,
       fontWeight: 700,
-      color: weeklyBar.time.color,
-      lineHeight: `${weeklyBar.timeLineHeight}px`,
+      color: 'var(--gold-text)',
+      lineHeight: 'var(--weekly-bar-time-line-height)',
       whiteSpace: 'nowrap',
-    }}>{weeklyLesson.day} · {weeklyLesson.time}</Typography>
+    }}>{weeklyLesson.schedule}</Typography>
     <Typography sx={{
-      fontFamily: fonts.body,
-      fontSize: `${weeklyBar.subtitle.size}px`,
-      color: weeklyBar.subtitle.color,
+      fontFamily: 'var(--font-body)',
+      fontSize: `var(--weekly-bar-subtitle-size)`,
+      color: 'var(--weekly-bar-subtitle-color)',
       lineHeight: 1.5,
     }}>{weeklyLesson.subtitle}</Typography>
   </Box>
 
   <Box sx={{
     display: { xs: 'none', md: 'block' },
-    width: `${weeklyBar.divider.w}px`,
-    height: `${weeklyBar.divider.h}px`,
-    bgcolor: weeklyBar.rule,
+    width: `var(--weekly-bar-divider-w)`,
+    height: `var(--weekly-bar-divider-h)`,
+    bgcolor: 'var(--gold)',
     flexShrink: 0,
   }} />
 
@@ -598,17 +421,18 @@ const Home: React.FC = () => {
     minWidth: 0,
     flex: { md: '0 1 auto' },
   }}>
-    <PlaceOutlinedIcon sx={{ display: { xs: 'none', md: 'inline-block' }, fontSize: weeklyBar.pin.size, color: weeklyBar.pin.color, flexShrink: 0 }} />
+    <PlaceOutlinedIcon sx={{ display: { xs: 'none', md: 'inline-block' }, fontSize: 'var(--weekly-bar-pin-size)', color: 'var(--gold-deep)', flexShrink: 0 }} />
     <Typography sx={{
-      fontFamily: fonts.body,
-      fontSize: { xs: `${weeklyBar.place.mobile}px`, lg: `${weeklyBar.place.desktop}px` },
-      color: { xs: weeklyBar.subtitle.color, lg: weeklyBar.place.color },
+      fontFamily: 'var(--font-body)',
+      fontSize: { xs: `var(--weekly-bar-place-mobile)`, lg: `var(--weekly-bar-place-desktop)` },
+      color: { xs: 'var(--weekly-bar-subtitle-color)', lg: 'var(--body)' },
       lineHeight: 1.5,
     }}>{weeklyLesson.location} · {weeklyLesson.address}</Typography>
   </Box>
 
   {/* שמאל: כפתור — מסגרת בלבד. הטקסט והניווט ללא שינוי. */}
-  <Button
+  <AppButton
+    variant="outline"
     onClick={() => {
       const roshHayeshiva = rabbiCardsData.find((r) => r.name.includes('מרדכי עטי'));
       navigate('/AllLessons', { state: { rabbiId: roshHayeshiva?.id } });
@@ -618,22 +442,9 @@ const Home: React.FC = () => {
       width: { xs: '100%', md: 'auto' },
       maxWidth: { xs: '100%', md: 'none' },
       mt: { xs: '26px', md: 0 },
-      height: `${weeklyBar.button.h}px`,
-      px: { xs: 0, md: '18px', lg: `${weeklyBar.button.px}px` },
-      backgroundColor: 'transparent',
-      color: weeklyBar.title.color,
-      border: `1px solid ${weeklyBar.button.border}`,
-      borderRadius: `${weeklyBar.button.radius}px`,
-      fontFamily: fonts.body,
-      fontWeight: 700,
-      fontSize: `${weeklyBar.button.size}px`,
-      whiteSpace: 'nowrap',
-      boxShadow: 'none',
       flexShrink: 0,
-      '&:hover': { bgcolor: `${colors.gold}26`, borderColor: weeklyBar.button.border, boxShadow: 'none' },
-      transition: '0.2s',
     }}
-  >{weeklyLesson.buttonText}</Button>
+  >{weeklyLesson.buttonText}</AppButton>
 </Box>
 
  <LecturesGrid onLessonSelect={(lesson) => setSelectedLesson(lesson)} />
@@ -644,9 +455,9 @@ const Home: React.FC = () => {
 <Box sx={{
   width: '100%',
   boxSizing: 'border-box',
-  bgcolor: colors.sectionBg,
-  borderTop: `1px solid ${colors.gold}`,
-  borderBottom: `1px solid ${colors.gold}`,
+  bgcolor: 'var(--section-bg)',
+  borderTop: `1px solid var(--gold)`,
+  borderBottom: `1px solid var(--gold)`,
   minHeight: { xs: 'auto', md: 650 },
   display: 'flex',
   alignItems: 'center',
@@ -664,7 +475,7 @@ const Home: React.FC = () => {
     boxSizing: 'border-box',
     width: { xs: 258, sm: 310, md: 340, lg: 387 },
     height: { xs: 341, sm: 410, md: 450, lg: 512 },
-    border: `1px solid ${colors.gold}`,
+    border: `1px solid var(--gold)`,
     borderRadius: { xs: '129px 129px 6px 6px', sm: '155px 155px 6px 6px', md: '170px 170px 8px 8px', lg: '193px 193px 8px 8px' },
     p: { xs: '9px', sm: '11px', lg: '13px' },
   }}>
@@ -672,7 +483,7 @@ const Home: React.FC = () => {
     <Box sx={{
       width: '100%',
       height: '100%',
-      bgcolor: colors.gold,
+      bgcolor: 'var(--gold)',
       overflow: 'hidden',
       borderRadius: { xs: '120px 120px 4px 4px', sm: '144px 144px 4px 4px', md: '159px 159px 4px 4px', lg: '180px 180px 4px 4px' },
     }}>
@@ -704,29 +515,29 @@ const Home: React.FC = () => {
   }}>
     {/* כותרת־על */}
     <Typography sx={{
-      fontFamily: fonts.body,
-      fontSize: fontSize.xs,
+      fontFamily: 'var(--font-body)',
+      fontSize: 'var(--t1)',
       fontWeight: 500,
       letterSpacing: '0.35em',
-      color: colors.goldDeep,
+      color: 'var(--gold-deep)',
       mb: 2,
     }}>ראש הישיבה</Typography>
 
     {/* השם */}
     <Typography sx={{
-      fontFamily: fonts.heading,
-      fontSize: { xs: fontSize.xl, md: '40px', lg: '56px' }, /* PDF: 56px */
-      fontWeight: 400,
+      fontFamily: 'var(--font-heading)',
+      fontSize: { xs: 'var(--t5)', md: '40px', lg: '56px' }, /* PDF: 56px */
+      fontWeight: 700,
       lineHeight: 1.15,
-      color: colors.wine,
+      color: 'var(--wine)',
     }}>הרב מרדכי עטייה</Typography>
 
     <Typography sx={{
-      fontFamily: fonts.heading,
-      fontSize: { xs: fontSize.md, md: fontSize.lg, lg: '30px' }, /* PDF: 30px */
+      fontFamily: 'var(--font-heading)',
+      fontSize: { xs: 'var(--t3)', md: 'var(--t4)', lg: '30px' }, /* PDF: 30px */
       fontWeight: 400,
       lineHeight: 1.4,
-      color: `${colors.wine}A6`,
+      color: 'var(--muted)', /* PDF: #6E6152, גופן רגיל */
       mt: 0.5,
     }}>שליט״א</Typography>
 
@@ -737,10 +548,10 @@ const Home: React.FC = () => {
 
     {/* טקסט תיאור */}
     <Typography sx={{
-      fontFamily: fonts.body,
-      fontSize: { xs: fontSize.sm, md: fontSize.md, lg: '18px' }, /* PDF: 18px */
+      fontFamily: 'var(--font-body)',
+      fontSize: { xs: 'var(--t2)', md: 'var(--t3)', lg: '18px' }, /* PDF: 18px */
       lineHeight: 1.95,
-      color: `${colors.ink}E0`,
+      color: `color-mix(in srgb, var(--ink) 87.843%, transparent)`,
     }}>{founderContent.newSectionDescription}</Typography>
 
     {/* כפתורים */}
@@ -752,66 +563,43 @@ const Home: React.FC = () => {
       width: { xs: '100%', sm: 'auto' },
       justifyContent: { xs: 'center', md: 'flex-start' },
     }}>
-      <Button
+      <AppButton
         onClick={() => {
           const roshHayeshiva = rabbiCardsData.find((r) => r.name.includes('מרדכי עטי'));
           navigate('/AllLessons', { state: { rabbiId: roshHayeshiva?.id } });
         }}
-        sx={{
-          ...goldButtonStyle,
-          fontFamily: fonts.body,
-          fontWeight: 600,
-          fontSize: { xs: fontSize.sm, lg: fontSize.md }, /* PDF: 16px */
-          borderRadius: radius.control,
-          width: { xs: '100%', sm: 201 },
-          height: 51,
-          whiteSpace: 'nowrap',
-          transition: '0.2s',
-        }}
-      >לשיעורי ראש הישיבה</Button>
+        sx={{ width: { xs: '100%', sm: 201 } }}
+      >לשיעורי ראש הישיבה</AppButton>
 
-      <Button
+      <AppButton
+        variant="outline"
         onClick={() => navigate('/About')}
-        sx={{
-          backgroundColor: 'transparent',
-          color: colors.wine,
-          border: `1px solid ${colors.gold}`,
-          fontFamily: fonts.body,
-          fontWeight: 600,
-          fontSize: { xs: fontSize.sm, lg: fontSize.md }, /* PDF: 16px */
-          borderRadius: radius.control,
-          width: { xs: '100%', sm: 165 },
-          height: 51,
-          boxShadow: 'none',
-          whiteSpace: 'nowrap',
-          '&:hover': { bgcolor: `${colors.gold}26`, borderColor: colors.goldDeep, boxShadow: 'none' },
-          transition: '0.2s',
-        }}
-      >אודות הישיבה</Button>
+        sx={{ width: { xs: '100%', sm: 165 } }}
+      >אודות הישיבה</AppButton>
     </Box>
   </Box>
 </Box>
 
       {/* --- רבני הישיבה --- */}
-      <Box id="rabbis-section" sx={{ width: '100%', bgcolor: colors.creamAlt, py: { xs: '48px', md: '80px' }, direction: 'rtl', scrollMarginTop: '80px' }}>
+      <Box id="rabbis-section" sx={{ width: '100%', bgcolor: 'var(--parchment)', py: { xs: '48px', md: '80px' }, direction: 'rtl', scrollMarginTop: '80px' }}>
         <Box sx={{
           width: '100%',
-          maxWidth: `${Math.min(rabbiCard.width * Math.max(rabbisInRow.length, 5) + rabbiCard.gap * (Math.max(rabbisInRow.length, 5) - 1) + 48, 1440)}px`,
+          maxWidth: `min(calc(var(--rabbi-card-width) * ${Math.max(rabbisInRow.length, 5)} + var(--rabbi-card-gap) * ${Math.max(rabbisInRow.length, 5) - 1} + 48px), 1440px)`,
           mx: 'auto',
           px: { xs: '16px', md: '24px' },
           boxSizing: 'border-box',
         }}>
 
           {/* כותרת הקטע */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: '32px', md: '40px' } }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: '32px', md: '48px' } }}>
             <SectionArch mb="16px" />
 
             <Typography sx={{
-              fontFamily: fonts.headingOrnate,
-              fontSize: { xs: fontSize.xl, md: fontSize.xxl },
+              fontFamily: 'var(--font-heading-ornate)',
+              fontSize: { xs: 'var(--t5)', md: 'var(--t6)' },
               fontWeight: 400,
               lineHeight: 1.2,
-              color: rabbiCard.heading.color,
+              color: 'var(--wine)',
             }}>
               רבני הישיבה
             </Typography>
@@ -827,7 +615,7 @@ const Home: React.FC = () => {
             sx={{
             display: { xs: 'flex', md: 'grid' },
             gridTemplateColumns: { md: `repeat(${Math.max(rabbisInRow.length, 1)}, minmax(0, 1fr))` },
-            gap: { xs: '16px', md: `${rabbiCard.gap}px` },
+            gap: { xs: '16px', md: `var(--rabbi-card-gap)` },
             overflowX: { xs: 'auto', md: 'visible' },
             scrollSnapType: { xs: 'x proximity', md: 'none' },
             '&::-webkit-scrollbar': { display: 'none' },
@@ -850,19 +638,22 @@ const Home: React.FC = () => {
                   onClick={() => lesson && setSelectedLesson(lesson)}
                   sx={{
                     cursor: lesson ? 'pointer' : 'default',
-                    transition: 'transform 0.25s ease, filter 0.25s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      filter: `drop-shadow(0 10px 20px ${colors.wine}26)`,
-                    },
+                    display: 'flex',
+                    boxSizing: 'border-box',
+                    bgcolor: 'var(--surface)',
+                    border: `1px solid var(--gold)`,
+                    borderRadius: `var(--book-card-radius)`,
+                    p: '8px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                    ...cardHoverSx,
                   }}
                 >
-                  {/* הכרטיס: מסגרת 1px זהב, פינות מעוגלות 12px */}
+                  {/* מסגרת פנימית דקה — כמו בכרטיס הספר */}
                   <Box sx={{
-                    height: '100%',
-                    border: `1px solid ${rabbiCard.border}`,
-                    borderRadius: `${rabbiCard.radius}px`,
-                    bgcolor: rabbiCard.bg,
+                    flex: 1,
+                    minWidth: 0,
+                    border: `1px solid var(--book-card-inner-border)`,
+                    borderRadius: `var(--book-card-inner-radius)`,
                     overflow: 'hidden',
                     boxSizing: 'border-box',
                     display: 'flex',
@@ -873,8 +664,8 @@ const Home: React.FC = () => {
                       width: '100%',
                       aspectRatio: '1 / 1',
                       flexShrink: 0,
-                      bgcolor: rabbiCard.arch.fill,
-                      borderRadius: radius.arch,
+                      bgcolor: 'var(--rabbi-card-arch-fill)',
+                      borderRadius: 'var(--radius-arch)',
                       overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
@@ -889,7 +680,7 @@ const Home: React.FC = () => {
                           sx={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }}
                         />
                       ) : (
-                        <Crown width={rabbiCard.crown.w} height={rabbiCard.crown.h} />
+                        <Crown width="var(--rabbi-card-crown-w)" height="var(--rabbi-card-crown-h)" />
                       )}
                     </Box>
 
@@ -899,54 +690,38 @@ const Home: React.FC = () => {
                       flexDirection: 'column',
                       alignItems: 'center',
                       textAlign: 'center',
-                      pt: `${rabbiCard.pad.top}px`,
+                      pt: `var(--rabbi-card-pad-top)`,
                       px: '12px',
-                      pb: `${rabbiCard.pad.bottom}px`,
+                      pb: `var(--rabbi-card-pad-bottom)`,
                     }}>
                       <Typography sx={{
-                        fontFamily: fonts.heading,
-                        fontSize: `${rabbiCard.name.size}px`,
-                        fontWeight: 400,
+                        fontFamily: 'var(--font-heading)',
+                        fontSize: `var(--rabbi-card-name-size)`,
+                        fontWeight: 'var(--rabbi-card-name-weight)',
                         lineHeight: 1.2,
-                        color: rabbiCard.name.color,
+                        color: 'var(--ink-wine)',
                       }}>
                         {rabbi.name}
                       </Typography>
 
                       <Box sx={{
-                        width: `${rabbiCard.rule.w}px`,
-                        height: `${rabbiCard.rule.h}px`,
-                        bgcolor: rabbiCard.rule.color,
-                        mt: `${rabbiCard.pad.ruleTop}px`,
+                        width: `var(--rabbi-card-rule-w)`,
+                        height: `var(--rabbi-card-rule-h)`,
+                        bgcolor: 'var(--gold-button-border)',
+                        mt: `var(--rabbi-card-pad-rule-top)`,
                       }} />
 
-                      <Box sx={{ flexGrow: 1, minHeight: `${rabbiCard.pad.ruleBottom}px` }} />
+                      <RabbiSchedule slots={rabbi.schedule} />
+
+                      <Box sx={{ flexGrow: 1, minHeight: `var(--rabbi-card-pad-rule-bottom)` }} />
 
                       {/* הכפתור: מסגרת 1px זהב ללא מילוי, רדיוס 6px */}
-                      <Button
-                        disableRipple
+                      <AppButton
                         onClick={(e) => { e.stopPropagation(); navigate('/AllLessons', { state: { rabbiId: rabbi.id } }); }}
-                        sx={{
-                          width: `${rabbiCard.button.w}px`,
-                          maxWidth: '100%',
-                          height: `${rabbiCard.button.h}px`,
-                          flexShrink: 0,
-                          minWidth: 0,
-                          p: 0,
-                          boxSizing: 'border-box',
-                          border: `1px solid ${rabbiCard.button.border}`,
-                          borderRadius: `${rabbiCard.button.radius}px`,
-                          bgcolor: 'transparent',
-                          fontFamily: fonts.body,
-                          fontSize: `${rabbiCard.button.size}px`,
-                          fontWeight: 500,
-                          color: rabbiCard.button.color,
-                          transition: 'background-color 0.2s ease',
-                          '&:hover': { bgcolor: rabbiCard.arch.fill },
-                        }}
+                        sx={{ width: '100%', flexShrink: 0, minWidth: 0 }}
                       >
                         לשיעורי הרב
-                      </Button>
+                      </AppButton>
                     </Box>
                   </Box>
                 </Box>
@@ -968,7 +743,7 @@ const Home: React.FC = () => {
 <Box sx={{
   width: '100%',
   position: 'relative',
-  bgcolor: colors.creamAlt,
+  bgcolor: 'var(--parchment)',
   py: { xs: '48px', md: '80px' },
   direction: 'rtl',
 }}>
@@ -979,12 +754,12 @@ const Home: React.FC = () => {
       <SectionArch mb="16px" />
 
       <Typography component="h2" sx={{
-        fontFamily: fonts.headingOrnate,
-        fontSize: { xs: fontSize.xl, md: fontSize.xxl },
+        fontFamily: 'var(--font-heading-ornate)',
+        fontSize: { xs: 'var(--t5)', md: 'var(--t6)' },
         fontWeight: 400,
         lineHeight: 1.2,
         textAlign: 'center',
-        color: rabbiCard.heading.color,
+        color: 'var(--wine)',
       }}>
         דברי גדולי ישראל על הישיבה
       </Typography>
@@ -1039,16 +814,12 @@ const Home: React.FC = () => {
               display: 'flex',
               flexDirection: 'column',
               boxSizing: 'border-box',
-              bgcolor: colors.cream,
-              border: `1px solid ${colors.gold}`,
+              bgcolor: 'var(--surface)',
+              border: `1px solid var(--gold)`,
               borderRadius: '12px',
               overflow: 'hidden',
-              boxShadow: lessonCard.shadow,
-              transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: `0 12px 24px ${colors.wine}26`,
-              },
+              boxShadow: 'var(--lesson-card-shadow)',
+              ...cardHoverSx,
             }}>
               {/* מסגרת פנימית כפולה, כמו כריכת הספר */}
               <Box sx={{ p: '10px 10px 0' }}>
@@ -1057,8 +828,8 @@ const Home: React.FC = () => {
                   aspectRatio: '16/9',
                   overflow: 'hidden',
                   borderRadius: '7px',
-                  border: `1px solid ${colors.gold}`,
-                  bgcolor: colors.ink,
+                  border: `1px solid var(--gold)`,
+                  bgcolor: 'var(--ink)',
                 }}>
                   <LazyYouTube youtubeId={v.youtubeId} thumbnail={(v as any).thumbnail} />
                 </Box>
@@ -1075,11 +846,11 @@ const Home: React.FC = () => {
                 textAlign: 'center',
               }}>
                 <Typography sx={{
-                  fontFamily: fonts.heading,
-                  fontSize: { xs: fontSize.md, md: fontSize.lg },
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: { xs: 'var(--t3)', md: 'var(--t4)' },
                   fontWeight: 400,
                   lineHeight: 1.3,
-                  color: rabbiCard.name.color,
+                  color: 'var(--ink-wine)',
                   minHeight: '2.6em',
                   display: 'flex',
                   alignItems: 'center',
@@ -1087,12 +858,12 @@ const Home: React.FC = () => {
 
                 {caption && (
                   <>
-                    <Box sx={{ width: `${rabbiCard.rule.w}px`, height: '1px', bgcolor: rabbiCard.rule.color, my: '14px' }} />
+                    <Box sx={{ width: `var(--rabbi-card-rule-w)`, height: '1px', bgcolor: 'var(--gold-button-border)', my: '14px' }} />
                     <Typography sx={{
-                      fontFamily: fonts.body,
-                      fontSize: fontSize.sm,
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 'var(--t2)',
                       lineHeight: 1.6,
-                      color: colors.muted,
+                      color: 'var(--muted)',
                       display: '-webkit-box',
                       WebkitLineClamp: 3,
                       WebkitBoxOrient: 'vertical',
@@ -1118,6 +889,144 @@ const Home: React.FC = () => {
 
     {/* פס התקדמות — מראה איפה בקרוסלה אנחנו */}
     <CarouselProgress progress={sagesCarousel.progress} onSeek={sagesCarousel.seek} />
+  </Box>
+</Box>
+
+{/* --- החזקת התורה + מכתב "עץ חיים היא למחזיקים בה" ---
+    מידות מ-donationSection ב-tokens.ts (נמדד מ-ateret-mordechai-design.pdf עמ' 1).
+    הסרטון תופס את מקום שורת "נוסח המכתב המלא". */}
+<Box sx={{
+  width: '100%',
+  boxSizing: 'border-box',
+  background: `linear-gradient(180deg, var(--section-bg) 0%, var(--surface) 18%)`,
+  borderTop: `1px solid var(--gold)`,
+  direction: 'rtl',
+  py: { xs: '48px', md: `var(--donation-section-pad-y)` },
+  px: { xs: '16px', md: '24px' },
+}}>
+  <Box sx={{
+    maxWidth: 'var(--donation-section-max-width)',
+    mx: 'auto',
+    display: 'flex',
+    flexDirection: { xs: 'column', md: 'row' },
+    alignItems: 'stretch',
+    /* מלבן אחד גדול: מסגרת זהב ופינות פעם אחת, והיין והבהיר מתחלקים בתוכו */
+    border: `1px solid var(--gold)`,
+    borderRadius: `var(--donation-section-radius)`,
+    overflow: 'hidden',
+  }}>
+    {/* החלק היין */}
+    <Box sx={{
+      flexShrink: 0,
+      width: { xs: '100%', md: 'var(--donation-section-card-wine-width)' },
+      boxSizing: 'border-box',
+      bgcolor: 'var(--wine)',
+      p: { xs: '32px 24px', md: `var(--donation-section-wine-pad)` },
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      zIndex: 1,
+    }}>
+      <Typography sx={{
+        fontFamily: 'var(--font-body)',
+        fontSize: 'var(--donation-section-wine-eyebrow-size)',
+        fontWeight: 700,
+        letterSpacing: 'var(--donation-section-wine-eyebrow-letter-spacing)',
+        color: 'var(--gold)',
+        mb: `var(--s3)`,
+      }}>שותפות נצח</Typography>
+
+      <Typography component="h2" sx={{
+        fontFamily: 'var(--font-heading-ornate)',
+        fontSize: 'var(--donation-section-wine-title-size)',
+        fontWeight: 400,
+        lineHeight: 1.2,
+        background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent',
+      }}>החזקת התורה</Typography>
+
+      <Typography sx={{
+        fontFamily: 'var(--font-body)',
+        fontSize: 'var(--donation-section-wine-subtitle-size)',
+        color: 'var(--gold-light)',
+        mt: `var(--s4)`,
+      }}>בחרו סכום, או קבעו הוראת קבע חודשית</Typography>
+
+      <Box sx={{ flexGrow: 1, minHeight: `var(--s5)` }} />
+
+      <AppButton onClick={() => navigate('/DonateLetter')} sx={{ width: '100%' }}>
+        אני רוצה להיות שותף
+      </AppButton>
+    </Box>
+
+    {/* החלק הבהיר — המכתב */}
+    <Box sx={{
+      flex: 1,
+      minWidth: 0,
+      boxSizing: 'border-box',
+      bgcolor: 'var(--surface)',
+      p: `var(--donation-section-letter-inner-inset)`,
+    }}>
+      <Box sx={{
+        height: '100%',
+        boxSizing: 'border-box',
+        border: `1px solid color-mix(in srgb, var(--gold) 34.902%, transparent)`,
+        borderRadius: `var(--donation-section-letter-inner-radius)`,
+        p: { xs: '24px 16px', md: 'var(--donation-section-letter-pad)' },
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: '32px', md: '48px' } }}>
+          <SectionArch mb="16px" />
+          <Typography component="h2" sx={{
+            fontFamily: 'var(--font-heading-ornate)',
+            fontSize: { xs: 'var(--t5)', md: 'var(--t6)' },
+            fontWeight: 400,
+            lineHeight: 1.2,
+            textAlign: 'center',
+            color: 'var(--wine)',
+          }}>עץ חיים היא למחזיקים בה</Typography>
+          <SectionFlourish mt="24px" />
+        </Box>
+
+        <Typography sx={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--donation-section-letter-text-size)',
+          lineHeight: 'var(--donation-section-letter-text-line-height)',
+          color: 'var(--body)',
+        }}>
+          בזכות לימוד קדוש זה נזכה לקרב את הגאולה ולאוקמא שכינתא מעפרא. פונים אנו בבקשה קדושה לכל מי שיכול להרים תרומה, קטנה או גדולה, להמשך תורת הקבלה בעולם כולו.
+        </Typography>
+
+        {/* הסרטון — במקום "נוסח המכתב המלא" */}
+        <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', py: `var(--s3)` }}>
+          <Box sx={{
+            width: '100%',
+            maxWidth: 'var(--donation-section-video-max-width)',
+            aspectRatio: '16/9',
+            overflow: 'hidden',
+            borderRadius: `var(--donation-section-video-radius)`,
+            border: `1px solid var(--gold)`,
+            bgcolor: 'var(--ink)',
+          }}>
+            <LazyYouTube youtubeId="7YVDVwYOM3E" thumbnail="/video-poster.jpg" caption="דברי ראש הישיבה" />
+          </Box>
+        </Box>
+
+        <Box sx={{ borderTop: `1px solid var(--rule-soft)`, pt: `var(--s2)`, display: 'flex', alignItems: 'baseline', gap: `var(--s2)` }}>
+          <Typography sx={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: 'var(--donation-section-letter-name-size)',
+            fontWeight: 700,
+            color: 'var(--ink-wine)',
+          }}>הרב מרדכי עטייה</Typography>
+          <Typography sx={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--donation-section-letter-role-size)',
+            color: 'var(--muted)',
+          }}>· ראש הישיבה</Typography>
+        </Box>
+      </Box>
+    </Box>
   </Box>
 </Box>
 

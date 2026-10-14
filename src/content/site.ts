@@ -13,24 +13,28 @@ export const site = {
   phones: {
     /** הזמנת ספרים — אומת ב-FullBooksPage.tsx:210 */
     books: '03-6815542',
-    /** מספר כללי של הישיבה — טרם נמסר */
-    general: '',
+    /** משרד הישיבה — בירורים על הישיבה והשיעורים, לא לרכישת ספרים */
+    general: '02-6239080',
+    /** מאגר שיעורים טלפוני (עם שלוחות) */
+    lessonsArchive: '02-5619465',
     /** אומת ב-FullBooksPage.tsx:217 */
     fax: '03-6823013',
   },
+  /** איש הקשר להזמנת ספרים — אומת ב-FullBooksPage.tsx (הכתיב כפי שהיה באתר) */
+  booksContact: 'ברזני יעקב',
   /** בפורמט בינלאומי ללא +, למשל 9725XXXXXXXX — טרם נמסר */
   whatsapp: '',
   /** למשל 'ראשון–חמישי 09:00–16:00' — טרם נמסר */
   hours: '',
   addresses: {
     /** אומת ב-weeklyLesson.json */
-    yeshiva: 'יוסף בן מתתיהו 18',
+    yeshiva: 'יוסף בן מתתיהו 18, ירושלים',
     /** אומת ב-FullBooksPage.tsx:216 (כולל מיקוד) */
     office: 'העלייה 8, תל אביב־יפו 6606107',
   },
   /** אומת ב-Component/weeklyLesson.json */
   weeklyLesson: {
-    day: 'יום חמישי',
+    day: 'כל יום',
     time: '17:30',
     place: 'בניין הישיבה',
   },

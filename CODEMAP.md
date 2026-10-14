@@ -30,11 +30,10 @@ src/
 │   └── BA HaYetzira Regular.woff2
 └── theme/tokens.ts    ← קובץ טוקנים קיים (ראו סעיף 11)
 
-Component/   (35 קבצים)
+Component/   (31 קבצים)
 ├── ציבורי:  Home · About · AllLessons · LessonPlayer · FullBooksPage · BookDetailsPage
-│            ContactForm · Header · Footer · LecturesGrid · LatestLessonCard
+│            ContactForm · Header · Footer · LecturesGrid
 │            BooksCarousel · ModernScrollDonation · DonateLetter · VideoGallery
-│            GlobalSearch · AskRabbiForm · RabbiQuestionForm
 ├── ניהול:   ManageLessons · ManageRabbis · ManageBooks · CategoryManager
 │   (לא לגעת) AddNewCategory · SubCategoryTable · EditLessonDialog · AudioUploader
 │            AdminLayout · AdminLogin · AdminSearchBar · DraftLessons · DraftCategories
@@ -54,7 +53,6 @@ Component/   (35 קבצים)
 | `LecturesGrid.tsx` | 381 |
 | `FullBooksPage.tsx` | 321 |
 | `ContactForm.tsx` | 246 |
-| `LatestLessonCard.tsx` | 233 |
 | `ModernScrollDonation.tsx` | 219 |
 | `BooksCarousel.tsx` | 183 |
 | `BookDetailsPage.tsx` | 173 |
@@ -89,7 +87,7 @@ const theme = createTheme({
 
 ```
 / · /About · /AllLessons · /AllLessons/:lessonId · /FullBooksPage · /BookDetailsPage
-/ContactForm · /RabbiQuestionForm · /VideoGallery · /ModernScrollDonation · /DonateLetter
+/ContactForm · /VideoGallery · /ModernScrollDonation · /DonateLetter
 /manager/{manage,categories,AddNewCategory,AudioUploader,archive,drafts,rabbis,books}
 ```
 
@@ -128,7 +126,6 @@ const theme = createTheme({
 | `VideoGallery.tsx` | 82, 124, 172, 182 |
 | `AllLessons.tsx` | 408, 437, 545, 654 |
 | `ModernScrollDonation.tsx` | 117 |
-| `AskRabbiForm.tsx` | 13 |
 | **ניהול — לא לגעת** | `AdminLayout` 72,75,111,135 · `AdminLogin` 113,116,222 · `AddNewCategory` 138 · `DraftCategories` 62 · `DraftLessons` 347 · `ManageLessons` 308 · `EditLessonDialog` 496 |
 
 **`!important`** מופיע בכ־25 מהם — אלה שיתנגדו ל־theme וחייבים מחיקה ידנית.
@@ -209,14 +206,13 @@ const theme = createTheme({
 
 | כרטיס | קובץ | הערה |
 |---|---|---|
-| שיעור (דף הבית) | `Component/LatestLessonCard.tsx` | 233 שורות |
 | רשת שיעורים | `Component/LecturesGrid.tsx` | 381 שורות — כבר משתמש ב־`tokens.ts` |
 | ספר (קרוסלה) | `Component/BooksCarousel.tsx` | 183 שורות |
 | ספר (רשת מלאה) | `Component/FullBooksPage.tsx` | 321 שורות — הכרטיס בתוך הקובץ, לא מופרד |
 | רב | `src/theme/tokens.ts:178` (`rabbiCard`) + `Component/Home.tsx` | הטוקנים קיימים |
 
 **אין קומפוננטת `<LessonCard>` משותפת.** `BRIEF-PAGES.md` דורש אחת — היא תצטרך להיבנות
-מאפס, ולאחד בין `LatestLessonCard` ל־`LecturesGrid`.
+מאפס, על בסיס `LecturesGrid`.
 
 ---
 

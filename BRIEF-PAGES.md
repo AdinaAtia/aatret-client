@@ -24,7 +24,7 @@
 | **E** | צור קשר | `/ContactForm` | טופס בלבד — אפס פרטי קשר |
 | **F** | אודות הישיבה | `/About` | הירו בלי כותרת, אפס `h1`/`h2` |
 
-מסכים שלא נכללים: `/RabbiQuestionForm`, `/VideoGallery`, `/DonateLetter`, `/ModernScrollDonation` (האחרון כבר מעוצב היטב), ו־`/manager/*` (מערכת ניהול — **לא לגעת**).
+מסכים שלא נכללים: `/VideoGallery`, `/DonateLetter`, `/ModernScrollDonation` (האחרון כבר מעוצב היטב), ו־`/manager/*` (מערכת ניהול — **לא לגעת**).
 
 ---
 
@@ -583,5 +583,5 @@ return play
 ## מה שלא כלול כאן
 
 - **עיצוב מובייל לששת המסכים האלה.** המוקאפ הוא דסקטופ בלבד. המערכת זהה אז ההמרה ישירה, אבל צריך לעבור מסך־מסך ולבדוק ב־390px.
-- **`/RabbiQuestionForm`, `/VideoGallery`, `/DonateLetter`** — לא עוצבו.
+- **`/VideoGallery`, `/DonateLetter`** — לא עוצבו.
 - **`/ModernScrollDonation`** — כבר מעוצב היטב ולא נגענו בו.

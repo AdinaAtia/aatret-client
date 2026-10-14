@@ -1,9 +1,8 @@
+import AppButton from './shared/AppButton';
 import { useEffect } from 'react';
-import { Box, Typography, Button, Container, Divider, Stack } from '@mui/material';
+import { Box, Typography, Container, Divider, Stack } from '@mui/material';
 import content from './donationContent.json';
-
-import { colors, goldButtonStyle } from '../src/theme/tokens';
-const GOLD = colors.gold;
+const GOLD = 'var(--gold)';
 const DARK = '#000000';
 
 const DonateLetter = () => {
@@ -101,10 +100,9 @@ const DonateLetter = () => {
 
             {/* כפתור תרומה */}
             <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <Button variant="contained" href={nedarimUrl} target="_blank" rel="noopener noreferrer"
-                sx={{ ...goldButtonStyle, py: 2, px: 6, borderRadius: '50px', fontWeight: 900, fontSize: '1.1rem' }}>
+              <AppButton href={nedarimUrl} target="_blank" rel="noopener noreferrer">
                 לתרומה בכרטיס אשראי
-              </Button>
+              </AppButton>
             </Box>
 
           </Box>

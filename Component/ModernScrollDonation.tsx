@@ -1,12 +1,11 @@
 
+import AppButton from './shared/AppButton';
 import { useEffect, useState } from 'react';
 import { Box, Typography, Button, Container, Stack, Paper, Divider, Dialog, DialogContent, IconButton } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Globe, Users,  Heart, ShieldCheck } from 'lucide-react';
 import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from 'react-router-dom';
-
-import { colors, goldButtonStyle } from '../src/theme/tokens';
 const MEDIA_BASE_URL = `${import.meta.env.VITE_MEDIA_URL}/About`;
 
 const LuxuryDonationPage = () => {
@@ -115,7 +114,7 @@ useEffect(() => {
                 backdropFilter: 'blur(10px)',
                 boxShadow: '0 30px 60px rgba(0, 0, 0, 0.5)'
               }}>
-                <Typography variant="h4" sx={{ fontWeight: 900, color: colors.gold, mb: 1, fontFamily: "'Yetzira-Choppy', sans-serif !important" }}>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: 'var(--gold)', mb: 1, fontFamily: "'Yetzira-Choppy', sans-serif !important" }}>
                   שותפות נצח
                 </Typography>
                 <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.75)', mb: 4 }}>
@@ -136,13 +135,13 @@ useEffect(() => {
                         borderRadius: '16px',
                         borderColor: 'rgba(197, 160, 89, 0.3)',
                         '&:hover': {
-                          borderColor: colors.gold,
+                          borderColor: 'var(--gold)',
                           backgroundColor: 'rgba(197, 160, 89, 0.08)',
                           transform: 'scale(1.02)'
                         }
                       }}
                     >
-                      <Box sx={{ color: colors.gold, ml: 2 }}>
+                      <Box sx={{ color: 'var(--gold)', ml: 2 }}>
                         {option.icon}
                       </Box>
                       <Box>
@@ -158,23 +157,12 @@ useEffect(() => {
                 </Stack>
 
                 <Divider sx={{ my: 4, borderColor: 'rgba(197, 160, 89, 0.3)' }}>
-                  <Typography variant="caption" sx={{ color: colors.gold, fontWeight: 'bold' }}>עץ חיים היא למחזיקים בה</Typography>
+                  <Typography variant="caption" sx={{ color: 'var(--gold)', fontWeight: 'bold' }}>עץ חיים היא למחזיקים בה</Typography>
                 </Divider>
 
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={() => navigate('/DonateLetter')}
-                  sx={{
-                    ...goldButtonStyle,
-                    py: 2.2,
-                    borderRadius: '50px',
-                    fontWeight: 'bold',
-                    fontSize: '1.2rem',
-                  }}
-                >
+                <AppButton fullWidth onClick={() => navigate('/DonateLetter')}>
                   אני רוצה להיות שותף
-                </Button>
+                </AppButton>
 
                 <Stack direction="row" justifyContent="center" spacing={1} mt={3} sx={{ opacity: 0.5 }}>
                   <ShieldCheck size={16} color="#ffffff" />
@@ -198,7 +186,7 @@ useEffect(() => {
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, bgcolor: '#fdfbf7' }}>
-          <IconButton onClick={() => setOpenDonation(false)}>
+          <IconButton onClick={() => setOpenDonation(false)} aria-label="סגירה">
             <CloseIcon />
           </IconButton>
         </Box>

@@ -1,6 +1,5 @@
 import { useRef } from 'react';
 import { Box } from '@mui/material';
-import { colors, radius } from '../../src/theme/tokens';
 
 /** חצי קרוסלה בדסקטופ — אחידים בכל הקטעים; בנייד מוסתרים ומשתמשים בסרגל */
 export const carouselArrowSx = {
@@ -8,13 +7,13 @@ export const carouselArrowSx = {
   width: '44px',
   height: '44px',
   flexShrink: 0,
-  color: colors.goldText,
-  border: `1px solid ${colors.gold}`,
-  borderRadius: radius.pill,
+  color: 'var(--gold-text)',
+  border: `1px solid var(--gold)`,
+  borderRadius: 'var(--radius-pill)',
   backgroundColor: 'transparent',
   transition: 'background-color 0.25s ease, opacity 0.2s ease',
-  '&:hover': { backgroundColor: colors.sand },
-  '&.Mui-disabled': { opacity: 0.3, color: colors.goldText },
+  '&:hover': { backgroundColor: 'var(--sand)' },
+  '&.Mui-disabled': { opacity: 0.3, color: 'var(--gold-text)' },
 } as const;
 
 const THUMB = 0.32; // רוחב הידית מתוך הפס
@@ -71,11 +70,11 @@ const CarouselProgress = ({
         userSelect: 'none',
       }}
     >
-      <Box sx={{ position: 'relative', width: '100%', height: '6px', bgcolor: `${colors.gold}40`, borderRadius: '3px' }}>
+      <Box sx={{ position: 'relative', width: '100%', height: '6px', bgcolor: `color-mix(in srgb, var(--gold) 25.098%, transparent)`, borderRadius: '3px' }}>
         <Box sx={{
           position: 'absolute', top: 0, bottom: 0, width: `${THUMB * 100}%`,
           right: `${progress * (1 - THUMB) * 100}%`,
-          bgcolor: colors.gold, borderRadius: '3px',
+          bgcolor: 'var(--gold)', borderRadius: '3px',
           transition: 'right 0.1s linear',
         }} />
       </Box>

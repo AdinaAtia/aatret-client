@@ -4,13 +4,12 @@ import {
   Typography,
   Box,
   Stack,
-  Button,
   CircularProgress
 } from "@mui/material";
 import { Search, ChevronLeft } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
-import { colors, fonts } from '../src/theme/tokens';
+import AppButton from './shared/AppButton';
 import SectionFlourish from './shared/SectionFlourish';
 import SectionArch from './shared/SectionArch';
 import LessonCard from './shared/LessonCard';
@@ -52,10 +51,15 @@ const LecturesGrid = (_props: LecturesGridProps) => {
     }
   }, []);
 
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', my: 10 }}><CircularProgress sx={{ color: colors.gold }} /></Box>;
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', my: 10 }}><CircularProgress sx={{ color: 'var(--gold)' }} /></Box>;
 
   /** השרת ממשיך להחזיר 9 — כאן רק נבחר כמה מהם מוצגים */
-  const visibleLessons = lectures.slice(0, VISIBLE_COUNT);
+  const visibleLessons = lectures
+    .filter((l) => {
+      const a = l.attributes || l;
+      return a.youtube_id && a.title?.trim();
+    })
+    .slice(0, VISIBLE_COUNT);
 
   const getLessonData = (lesson: any) => {
     const attrs = lesson.attributes || lesson;
@@ -65,7 +69,7 @@ const LecturesGrid = (_props: LecturesGridProps) => {
       dateHebrew: attrs.lesson_date_hebrew,
       dateGregorian: attrs.lesson_date_gregorian,
       duration: attrs.duration || "00:00",
-      rabbiName: attrs.rabbi?.data?.attributes?.name || attrs.rabbi?.name || "הרב מרדכי עטייה",
+      rabbiName: attrs.rabbi?.data?.attributes?.name || attrs.rabbi?.name || "",
       audioFileName: attrs.AudioFileName || null,
       audioDir: attrs.AudioDir || '',
     };
@@ -83,7 +87,7 @@ const LecturesGrid = (_props: LecturesGridProps) => {
   };
 
   return (
-    <Box sx={{ width: '100%', direction: 'rtl', bgcolor: colors.creamAlt, py: { xs: 6, md: 8 } }}>
+    <Box sx={{ width: '100%', direction: 'rtl', bgcolor: 'var(--parchment)', py: { xs: 6, md: 8 } }}>
       <Box sx={{
         width: '100%',
         maxWidth: '1550px',
@@ -97,11 +101,11 @@ const LecturesGrid = (_props: LecturesGridProps) => {
           <Typography
             component="h2"
             sx={{
-              fontFamily: `${fonts.heading} !important`,
+              fontFamily: `var(--font-heading) !important`,
               fontSize: { xs: '2.2rem', md: '3.2rem' },
               lineHeight: 1.35,
               fontWeight: 400,
-              color: colors.wine,
+              color: 'var(--wine)',
               m: 0,
             }}
           >
@@ -125,7 +129,7 @@ const LecturesGrid = (_props: LecturesGridProps) => {
                     lesson={{
                       id: lecture.id,
                       title: data.title,
-                      rabbiName: data.rabbiName.includes('שליט"א') ? data.rabbiName : `${data.rabbiName} שליט"א`,
+                      rabbiName: !data.rabbiName || data.rabbiName.includes('שליט"א') ? data.rabbiName : `${data.rabbiName} שליט"א`,
                       dateHebrew: data.dateHebrew,
                       youtubeId: data.youtubeId,
                       duration: hasDuration ? data.duration : undefined,
@@ -149,52 +153,25 @@ const LecturesGrid = (_props: LecturesGridProps) => {
           alignItems="center"
           sx={{ mt: { xs: 4, md: 5 }, gap: '14px' }}
         >
-          <Button
+          <AppButton
+            variant="dark"
             onClick={() => navigate('/AllLessons', { state: { focusSearch: true } })}
             startIcon={<Search size={17} />}
-            sx={{
-              bgcolor: colors.inkWine,
-              color: colors.goldLight,
-              fontFamily: fonts.body,
-              fontSize: '1rem',
-              fontWeight: 500,
-              borderRadius: '6px',
-              height: '52px',
-              px: 3,
-              py: 0,
-              textTransform: 'none',
-              width: { xs: '100%', sm: '202px' },
-              '& .MuiButton-startIcon': { ml: 1, mr: -0.25 },
-              '&:hover': { bgcolor: colors.ink },
-            }}
+            sx={{ width: { xs: '100%', sm: '202px' }, '& .MuiButton-startIcon': { ml: 1, mr: -0.25 } }}
           >
             חיפוש בשיעורים
-          </Button>
+          </AppButton>
 
-          <Button
+          <AppButton
+            variant="outline"
             onClick={() =>
               document.getElementById('rabbis-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }
             endIcon={<ChevronLeft size={17} />}
-            sx={{
-              bgcolor: 'transparent',
-              color: colors.goldText,
-              fontFamily: fonts.body,
-              fontSize: '1rem',
-              fontWeight: 500,
-              border: `1px solid ${colors.gold}`,
-              borderRadius: '6px',
-              height: '52px',
-              px: 3,
-              py: 0,
-              textTransform: 'none',
-              width: { xs: '100%', sm: '312px' },
-              '& .MuiButton-endIcon': { mr: 1, ml: -0.25 },
-              '&:hover': { bgcolor: `${colors.sand}66`, borderColor: colors.goldDeep },
-            }}
+            sx={{ width: { xs: '100%', sm: '312px' }, '& .MuiButton-endIcon': { mr: 1, ml: -0.25 } }}
           >
             לשיעורי רבני הישיבה
-          </Button>
+          </AppButton>
         </Stack>
 
       </Box>

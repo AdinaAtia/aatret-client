@@ -1,27 +1,28 @@
-import { Box, Button, Dialog, IconButton, Typography } from '@mui/material';
+import { Box, Dialog, IconButton, Typography } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PlayBadge from './shared/PlayBadge';
+import LessonThumb, { youtubeThumbSources } from './shared/LessonThumb';
 import founderContent from './founderContent.json';
 import kdoshimContent from './לקדושים אשר בארץ.json';
 import HeroVideo from './HeroVideo';
 import { Crown } from './Header';
+import AppButton from './shared/AppButton';
 import SectionFlourish from './shared/SectionFlourish';
 import SectionArch from './shared/SectionArch';
-import { colors, fonts, goldButtonStyle, goldTextFill, radius, rabbiCard } from '../src/theme/tokens';
+import { cardHoverSx } from './shared/cardHover';
 import mahaImg1 from '../src/assets/about/maha-1.jpg';
 import mahaImg2 from '../src/assets/about/maha-2.png';
 import mahaImg3 from '../src/assets/about/maha-3.png';
 import mahaImg4 from '../src/assets/about/maha-4.png';
 import mahaImg5 from '../src/assets/about/maha-5.png';
+import { cssNumber } from '../src/styles/cssVar';
 
-const GOLD = colors.gold;
-const DARK = colors.ink;
+const GOLD = 'var(--gold)';
+const DARK = 'var(--ink)';
 const MEDIA_BASE_URL = `${import.meta.env.VITE_MEDIA_URL}/About`;
 const ARCH = '50% 50% 0 0 / 34% 34% 0 0';
 // נמדד מ-ateret-mordechai-about.pdf: כפתורי כרטיס המייסד
-const PDF_INK = colors.inkWine;
-const PDF_GOLD_LIGHT = colors.goldLight;
 
 // ביוגרפיית המייסד: הפסקה השנייה מתחילה ב"אליהו חצני הלוי…"
 const founderFull: string = kdoshimContent.text;
@@ -67,57 +68,44 @@ const archImages: { src: string; label: string; sub?: string }[] = [
 ];
 
 /** תמונה ממוזערת מיוטיוב לפי מזהה: maxres → sd → hq (ל־hq יש פסים שחורים, לכן cover ב־16/9) */
-const YtThumb = ({ video, alt = '' }: { video: Video; alt?: string }) => {
-  const sources = video.thumbnail
-    ? [video.thumbnail]
-    : ['maxresdefault', 'sddefault', 'hqdefault'].map((q) => `https://i.ytimg.com/vi/${video.youtubeId}/${q}.jpg`);
-  const [idx, setIdx] = useState(0);
-  const next = () => setIdx((i) => (i < sources.length - 1 ? i + 1 : i));
-  return (
-    <Box
-      component="img"
-      src={sources[idx]}
-      alt={alt}
-      loading="lazy"
-      onError={next}
-      // יוטיוב מחזיר ל־404 תמונה אפורה קטנה (120×90) שנטענת "בהצלחה" — מדלגים לאיכות הבאה
-      onLoad={(e: React.SyntheticEvent<HTMLImageElement>) => {
-        if (!video.thumbnail && e.currentTarget.naturalWidth <= 120) next();
-      }}
-      sx={{ width: '100%', height: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
-    />
-  );
-};
+const YtThumb = ({ video, alt = '', playSize }: { video: Video; alt?: string; playSize: number }) => (
+  <LessonThumb
+    src={video.thumbnail ? [video.thumbnail] : youtubeThumbSources(video.youtubeId)}
+    alt={alt}
+    playSize={playSize}
+    sx={{ width: '100%', height: '100%', aspectRatio: '16/9' }}
+  />
+);
 
 const PlayMark = PlayBadge;
+
+/** מירכאות מוזהבות: 54px לפי ה-PDF, בגופן הגוף (Heebo) ולא בגופן שלישי. open = פותחות */
+const QuoteMark = ({ open = false }: { open?: boolean }) => (
+  <Typography aria-hidden sx={{ fontFamily: 'var(--font-body)', fontSize: '60px', lineHeight: 0.7, textAlign: 'center', background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}>{open ? '“' : '”'}</Typography>
+);
 
 /** כפתור סרטון עדין: מסגרת זהב דקה, עיגול נגן זהב כמו בשאר הסרטונים, ושם הרב */
 const FounderVideoLink = ({ label, onClick }: { label: string; onClick: () => void }) => (
   <Box
     component="button" type="button" onClick={onClick} aria-label={`${label} — צפייה בסרטון`}
     sx={{
-      all: 'unset', boxSizing: 'border-box', cursor: 'pointer', width: '100%', height: `${rabbiCard.button.h}px`,
+      all: 'unset', boxSizing: 'border-box', cursor: 'pointer', width: '100%', height: `var(--rabbi-card-button-h)`,
       display: 'flex', alignItems: 'center', gap: '12px', px: '12px', direction: 'rtl',
-      border: `1px solid ${rabbiCard.button.border}`, borderRadius: `${rabbiCard.button.radius}px`,
-      transition: 'background-color 0.2s ease', '&:hover': { bgcolor: rabbiCard.arch.fill },
+      border: `1px solid var(--gold)`, borderRadius: `var(--rabbi-card-button-radius)`,
+      transition: 'background-color 0.2s ease', '&:hover': { bgcolor: 'var(--rabbi-card-arch-fill)' },
       '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
     }}
   >
     <Box sx={{ position: 'relative', width: 28, height: 28, flexShrink: 0 }}>
       <PlayMark size={28} />
     </Box>
-    <Typography sx={{ fontFamily: fonts.body, fontSize: `${rabbiCard.button.size}px`, fontWeight: 500, color: rabbiCard.button.color }}>{label}</Typography>
+    <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '16px', fontWeight: 500, color: 'var(--gold-text)' }}>{label}</Typography>
   </Box>
 );
 
 /** כרטיס סרטון: תמונה ממוזערת, סמן נגן, וכיתוב (שם + שנה/שורת משנה) */
 // נמדד מ-ateret-mordechai-about.pdf (דסקטופ 1440px): כרטיס סרטון במדור "מהנעשה והנשמע"
-const MAHA_CARD = { radius: 10, border: 1, playSize: 40, titleSize: 13, titleLine: 18 };
-
-const MahaPlayMark = () => <PlayBadge size={MAHA_CARD.playSize} />;
-
-// נמדד מ-ateret-mordechai-about.pdf (דסקטופ 1440px): כרטיס עדות/רשת עם פס כיתוב נפרד מתחת לתמונה
-const CAPTION_CARD = { radius: 10, pad: 0, titleSize: 16, titleLine: 22, subSize: 13, playSize: 43, hoverBg: '#350913', bg: '#0C0607' };
+const MAHA_CARD = { radius: 10, border: 1, playSize: 40, titleSize: 14, titleLine: 18 };
 
 const VideoCard = ({ video, onPlay, showDate = true, small = false, maha = false }: { video: Video; onPlay: () => void; showDate?: boolean; small?: boolean; maha?: boolean }) => {
   if (!maha) {
@@ -129,28 +117,27 @@ const VideoCard = ({ video, onPlay, showDate = true, small = false, maha = false
         aria-label={video.name}
         sx={{
           all: 'unset', boxSizing: 'border-box', cursor: 'pointer', display: 'flex', flexDirection: 'column', width: '100%',
-          p: `${CAPTION_CARD.pad}px`, overflow: 'hidden', bgcolor: CAPTION_CARD.bg, borderRadius: `${CAPTION_CARD.radius}px`,
-          border: '1px solid rgba(197,160,89,0.45)', transition: 'border-color .25s, box-shadow .25s',
-          '&:hover, &:focus-visible': { borderColor: colors.goldLight, boxShadow: `inset 0 0 0 1px ${colors.goldLight}` },
-          '&:hover .vc-caption, &:focus-visible .vc-caption': { bgcolor: CAPTION_CARD.hoverBg },
+          overflow: 'hidden', bgcolor: 'var(--video-card-bg)', borderRadius: `var(--video-card-radius)`,
+          border: `1px solid var(--video-card-border)`, transition: 'border-color .25s, box-shadow .25s',
+          '&:hover, &:focus-visible': { borderColor: 'var(--gold-light)', boxShadow: `inset 0 0 0 1px var(--gold-light)` },
+          '&:hover .vc-caption, &:focus-visible .vc-caption': { bgcolor: 'var(--video-card-hover-bg)' },
           '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
         }}
       >
-        <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', borderRadius: `${CAPTION_CARD.radius - CAPTION_CARD.pad}px`, bgcolor: '#000' }}>
-          <YtThumb video={video} />
-          <PlayMark size={small ? 32 : CAPTION_CARD.playSize} />
+        <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', borderRadius: `var(--video-card-radius)`, bgcolor: '#000' }}>
+          <YtThumb video={video} playSize={small ? 32 : cssNumber('--video-card-play-size')} />
         </Box>
         <Box
           className="vc-caption"
           sx={{
             direction: 'rtl', textAlign: small ? 'center' : 'right', px: '12px', py: small ? '10px' : '12px',
-            minHeight: small ? 0 : 76, borderRadius: `0 0 ${CAPTION_CARD.radius - CAPTION_CARD.pad}px ${CAPTION_CARD.radius - CAPTION_CARD.pad}px`,
+            minHeight: small ? 0 : 'var(--video-card-caption-min-height)', borderRadius: `0 0 var(--video-card-radius) var(--video-card-radius)`,
             transition: 'background-color .25s',
           }}
         >
-          <Typography sx={{ fontFamily: fonts.body, fontWeight: 400, fontSize: { xs: '0.9rem', md: `${CAPTION_CARD.titleSize}px` }, lineHeight: { xs: 1.4, md: `${CAPTION_CARD.titleLine}px` }, color: colors.goldLight }}>{video.name}</Typography>
+          <Typography sx={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: { xs: '14px', md: '16px' }, lineHeight: { xs: 1.4, md: `var(--video-card-title-line)` }, color: 'var(--gold-light)' }}>{video.name}</Typography>
           {showDate && video.date && (
-            <Typography sx={{ fontFamily: fonts.body, fontSize: { xs: '0.75rem', md: `${CAPTION_CARD.subSize}px` }, color: 'rgba(235,213,154,0.6)', lineHeight: 1.5, mt: '4px' }}>{video.date}</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '12px', md: '14px' }, color: 'var(--video-card-sub-color)', lineHeight: 1.5, mt: '4px' }}>{video.date}</Typography>
           )}
         </Box>
       </Box>
@@ -168,21 +155,19 @@ const VideoCard = ({ video, onPlay, showDate = true, small = false, maha = false
       borderRadius: maha ? { xs: '6px', md: `${MAHA_CARD.radius}px` } : '6px',
       border: maha ? { xs: `1.5px solid ${GOLD}`, md: `${MAHA_CARD.border}px solid ${GOLD}` } : `1.5px solid ${GOLD}`,
       bgcolor: '#000',
-      transition: 'transform .3s, box-shadow .3s',
-      '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 22px rgba(197,160,89,0.3)' },
+      ...cardHoverSx,
       '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
     }}
   >
-    <YtThumb video={video} />
-    {maha ? <MahaPlayMark /> : <PlayMark size={small ? 32 : 44} />}
+    <YtThumb video={video} playSize={maha ? MAHA_CARD.playSize : small ? 32 : 44} />
     <Box sx={maha
       ? { position: 'absolute', bottom: 0, left: 0, right: 0, px: '12px', pt: '8px', pb: '9px', direction: 'rtl', textAlign: 'center', background: 'linear-gradient(to top, rgba(12,6,7,0.92), rgba(12,6,7,0.55))' }
       : { position: 'absolute', bottom: 0, left: 0, right: 0, px: 1, py: 0.6, direction: 'rtl', textAlign: 'center', background: 'linear-gradient(180deg, transparent, rgba(18,9,11,0.92) 55%)' }}>
       <Typography sx={maha
-        ? { fontFamily: fonts.body, fontWeight: 400, fontSize: `${MAHA_CARD.titleSize}px`, color: colors.goldLight, lineHeight: `${MAHA_CARD.titleLine}px` }
-        : { fontFamily: fonts.heading, fontSize: small ? { xs: '0.75rem', md: '14px' } : { xs: '0.8rem', md: '15px' }, color: colors.goldLight, lineHeight: 1.3 }}>{video.name}</Typography>
+        ? { fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: `${MAHA_CARD.titleSize}px`, color: 'var(--gold-light)', lineHeight: `${MAHA_CARD.titleLine}px` }
+        : { fontFamily: 'var(--font-heading)', fontSize: small ? { xs: '12px', md: '14px' } : { xs: '0.8rem', md: '15px' }, color: 'var(--gold-light)', lineHeight: 1.3 }}>{video.name}</Typography>
       {showDate && video.date && (
-        <Typography sx={{ fontFamily: fonts.body, fontSize: { xs: '0.68rem', md: '13px' }, color: 'rgba(235,213,154,0.75)', lineHeight: 1.3 }}>{video.date}</Typography>
+        <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '12px', md: '14px' }, color: 'rgba(235,213,154,0.75)', lineHeight: 1.3 }}>{video.date}</Typography>
       )}
     </Box>
   </Box>
@@ -190,11 +175,11 @@ const VideoCard = ({ video, onPlay, showDate = true, small = false, maha = false
 };
 
 const goldNameSx = {
-  fontFamily: fonts.headingOrnate,
+  fontFamily: 'var(--font-heading-ornate)',
   fontWeight: 800,
   lineHeight: 0.95,
   textAlign: 'center' as const,
-  ...goldTextFill,
+  background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent',
 };
 
 /* מסגרת הקשת — זהה לזו של "ראש הישיבה" בדף הבית: מסגרת זהב 1px, ריפוד פנימי, מילוי זהב, וחצי עיגול למעלה */
@@ -229,47 +214,58 @@ const About = () => {
   return (
     <>
       {/* ───────────── 1. הירו ───────────── */}
-      <Box component="header" sx={{ position: 'relative', width: '100%', height: { xs: '80vh', md: '90vh' }, overflow: 'hidden', direction: 'rtl', bgcolor: colors.cream }}>
-        <HeroVideo sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, filter: 'brightness(1.10)' }} />
-        <Box sx={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', background: `linear-gradient(180deg, ${colors.cream}D4 0%, ${colors.creamAlt}C4 45%, ${colors.sand}CC 100%)` }} />
-        <Box sx={{ position: 'absolute', inset: { xs: '12px', md: '26px' }, zIndex: 2, pointerEvents: 'none', borderRadius: radius.arch, border: `1px solid ${colors.goldDeep}A6` }} />
-        <Box sx={{ position: 'absolute', inset: { xs: '19px', md: '36px' }, zIndex: 2, pointerEvents: 'none', borderRadius: radius.arch, border: `1px solid ${colors.goldDeep}5C` }} />
+      <Box component="header" sx={{ position: 'relative', width: '100%', height: { xs: '80vh', md: '90vh' }, overflow: 'hidden', direction: 'rtl', bgcolor: 'var(--surface)' }}>
+        <HeroVideo sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, filter: 'grayscale(1) sepia(0.4) contrast(1.05) brightness(1.10)' }} />
+        <Box sx={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', background: `linear-gradient(180deg, color-mix(in srgb, var(--surface) 83.137%, transparent) 0%, color-mix(in srgb, var(--parchment) 76.863%, transparent) 45%, color-mix(in srgb, var(--sand) 80%, transparent) 100%)` }} />
+        <Box sx={{ position: 'absolute', inset: { xs: '12px', md: '26px' }, zIndex: 2, pointerEvents: 'none', borderRadius: 'var(--radius-arch)', border: `1px solid color-mix(in srgb, var(--gold-deep) 65.098%, transparent)` }} />
+        <Box sx={{ position: 'absolute', inset: { xs: '19px', md: '36px' }, zIndex: 2, pointerEvents: 'none', borderRadius: 'var(--radius-arch)', border: `1px solid color-mix(in srgb, var(--gold-deep) 36.078%, transparent)` }} />
 
         <Box sx={{ position: 'absolute', inset: 0, zIndex: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', px: 2 }}>
           <Box sx={{ mb: { xs: 1.5, md: 2 }, '& svg': { width: { xs: '34px', md: '46px' }, height: 'auto' } }}>
             <Crown width={46} height={39} />
           </Box>
-          <Typography component="h1" sx={{ fontFamily: fonts.heading, fontSize: { xs: '34px', md: '60px' }, fontWeight: 700, color: colors.wine, lineHeight: 1.15, m: 0 }}>
+          <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '30px', md: '60px' }, fontWeight: 700, color: 'var(--wine)', lineHeight: 1.15, m: 0 }}>
             ישיבת החיים והשלום
           </Typography>
-          <SectionFlourish mt="18px" mb="28px" />
-          <Button
-            onClick={() => navigate('/ModernScrollDonation')}
-            sx={{
-              ...goldButtonStyle, fontFamily: fonts.body, fontWeight: 600, fontSize: '17px',
-              borderRadius: radius.control, height: 51, px: { xs: 4, md: 6 }, whiteSpace: 'nowrap', transition: '0.2s',
-            }}
-          >
-            לתרומות
-          </Button>
+          <SectionFlourish mt="18px" mb="0px" />
         </Box>
 
         <Box
+          component="button"
+          type="button"
+          aria-label="גלילה לתוכן העמוד"
           onClick={() => window.scrollBy({ top: window.innerHeight, behavior: 'smooth' })}
-          sx={{ position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)', zIndex: 3, cursor: 'pointer', textAlign: 'center' }}
+          sx={{
+            all: 'unset', boxSizing: 'border-box', position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)', zIndex: 3,
+            cursor: 'pointer', textAlign: 'center', p: '6px 10px', borderRadius: 'var(--radius-sm)',
+            '&:focus-visible': { outline: '2px solid var(--gold)', outlineOffset: 3 },
+          }}
         >
-          <Typography sx={{ fontFamily: fonts.heading, fontSize: '13px', color: colors.goldText, letterSpacing: 1 }}>גלול למטה</Typography>
+          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '16px', fontWeight: 700, color: 'var(--gold-deep)', letterSpacing: 1 }}>גלול למטה</Typography>
+          <Box
+            component="svg"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            sx={{
+              display: 'block', mx: 'auto', width: { xs: 40, md: 48 }, height: { xs: 40, md: 48 }, color: 'var(--gold-deep)',
+              animation: 'scrollHintBounce 1.6s ease-in-out infinite',
+              '@keyframes scrollHintBounce': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(8px)' } },
+              '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+            }}
+          >
+            <path d="M5 4l7 7 7-7M5 11l7 7 7-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          </Box>
         </Box>
       </Box>
 
       {/* ───────────── 2. ביוגרפיית המייסד ───────────── */}
-      <Box component="section" sx={{ bgcolor: colors.creamAlt, py: { xs: 5, md: 9 }, px: { xs: 2, md: 6 }, direction: 'rtl' }}>
+      <Box component="section" sx={{ bgcolor: 'var(--parchment)', py: { xs: 5, md: 9 }, px: { xs: 2, md: 6 }, direction: 'rtl' }}>
         <Box sx={{ maxWidth: 1180, mx: 'auto', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'center', md: 'flex-start' }, justifyContent: 'center', gap: { xs: 4, md: 6 } }}>
 
           {/* כרטיס הקלף בצורת קשת */}
           <Box sx={{ width: { xs: '100%', sm: 300, md: 240, lg: 320 }, maxWidth: { xs: 300, md: 320 }, flexShrink: 0, order: { xs: 2, md: 0 } }}>
             <Box sx={{
-              bgcolor: colors.cream, border: `1px solid ${GOLD}`, borderRadius: { xs: archOuter(300), md: archOuter(240), lg: archOuter(320) }, boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
+              bgcolor: 'var(--surface)', border: `1px solid ${GOLD}`, borderRadius: { xs: archOuter(), md: archOuter(), lg: archOuter() }, boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
               height: { xs: 'auto', md: FOUNDER_ARCH_H.md, lg: FOUNDER_ARCH_H.lg },
               px: { xs: '26px', md: '20px', lg: '30px' }, pt: { xs: '70px', md: '60px', lg: '64px' }, pb: 3, direction: 'rtl', boxSizing: 'border-box',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
@@ -280,15 +276,15 @@ const About = () => {
                 scrollbarWidth: 'thin', scrollbarColor: `${GOLD} transparent`,
                 '&::-webkit-scrollbar': { width: '3px' },
                 '&::-webkit-scrollbar-button': { display: 'none' },
-                '&::-webkit-scrollbar-track': { background: `${GOLD}1A`, borderRadius: '2px' },
+                '&::-webkit-scrollbar-track': { background: `${`color-mix(in srgb, ${GOLD} 10.196%, transparent)`}`, borderRadius: '2px' },
                 '&::-webkit-scrollbar-thumb': { background: GOLD, borderRadius: '2px' },
-                '&::-webkit-scrollbar-thumb:hover': { background: colors.goldDeep },
+                '&::-webkit-scrollbar-thumb:hover': { background: 'var(--gold-deep)' },
               }}>
                 <Box sx={{ direction: 'rtl' }}>
-                  <Typography sx={{ fontFamily: fonts.body, fontSize: { xs: '0.8125rem', md: '11px', lg: '12px' }, lineHeight: { xs: 1.75, md: 1.6 }, color: colors.body, textAlign: 'right', whiteSpace: 'pre-line' }}>
+                  <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '14px', md: '12px', lg: '16px' }, lineHeight: { xs: 1.75, md: 1.6, lg: 1.95 }, color: 'var(--body)', textAlign: 'right', whiteSpace: 'pre-line' }}>
                     {founderFirst}
                   </Typography>
-                  <Typography sx={{ fontFamily: fonts.body, fontSize: { xs: '0.8125rem', md: '11px', lg: '12px' }, lineHeight: { xs: 1.75, md: 1.6 }, color: colors.body, textAlign: 'right', whiteSpace: 'pre-line', mt: 1 }}>
+                  <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '14px', md: '12px', lg: '16px' }, lineHeight: { xs: 1.75, md: 1.6, lg: 1.95 }, color: 'var(--body)', textAlign: 'right', whiteSpace: 'pre-line', mt: 1 }}>
                     {founderSecond}
                   </Typography>
                 </Box>
@@ -303,16 +299,16 @@ const About = () => {
           }}>
             <Box sx={{ display: { xs: 'none', md: 'block' }, height: 1 }} />
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-              <Typography sx={{ fontFamily: fonts.heading, fontSize: { xs: '1.5rem', md: '24px', lg: '30px' }, fontWeight: 700, color: colors.ink, lineHeight: 1.1 }}>הגאון המוקובל רבי</Typography>
-              <Typography component="h2" sx={{ ...goldNameSx, fontSize: { xs: '2.8rem', md: '46px', lg: '60px' }, m: 0 }}>מרדכי עטיה</Typography>
-              <Typography sx={{ fontFamily: fonts.heading, fontSize: { xs: '1.5rem', md: '24px', lg: '30px' }, fontWeight: 700, color: colors.ink, lineHeight: 1.1 }}>זצ"ל</Typography>
+              <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '24px', md: '24px', lg: '30px' }, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.1 }}>הגאון המקובל רבי</Typography>
+              <Typography component="h2" sx={{ ...goldNameSx, fontSize: { xs: '40px', md: '40px', lg: '60px' }, m: 0 }}>מרדכי עטיה</Typography>
+              <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '24px', md: '24px', lg: '30px' }, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.1 }}>זצ"ל</Typography>
             </Box>
             <Box sx={{ width: '100%', maxWidth: 260, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <Typography sx={{ fontFamily: fonts.heading, fontSize: '16px', fontWeight: 700, color: colors.goldText, lineHeight: 1.2 }}>דברי הרבנים על הגאון</Typography>
-              <Box sx={{ width: 34, height: '1px', bgcolor: rabbiCard.rule.color, my: '10px' }} />
+              <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '16px', fontWeight: 700, color: 'var(--gold-text)', lineHeight: 1.2 }}>דברי הרבנים על הגאון</Typography>
+              <Box sx={{ width: 34, height: '1px', bgcolor: 'var(--gold-button-border)', my: '10px' }} />
               <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <FounderVideoLink label="לדברי הרב יצחק בן זיכר" onClick={() => setOpenVideoUrl('https://www.youtube.com/embed/J0oyTQ12TRA?autoplay=1')} />
-                <FounderVideoLink label="לדברי הרב יעקב הלל" onClick={() => setOpenVideoUrl('https://www.youtube.com/embed/iGNYFMQXWzc?autoplay=1')} />
+                <FounderVideoLink label='לדברי הרב יצחק בן זכרי שליט"א' onClick={() => setOpenVideoUrl('https://www.youtube.com/embed/J0oyTQ12TRA?autoplay=1')} />
+                <FounderVideoLink label='לדברי הרב יעקב הלל שליט"א' onClick={() => setOpenVideoUrl('https://www.youtube.com/embed/iGNYFMQXWzc?autoplay=1')} />
               </Box>
             </Box>
           </Box>
@@ -326,9 +322,9 @@ const About = () => {
 
       {/* ───────────── 3. ביוגרפיית ראש הישיבה ───────────── */}
       <Box component="section" sx={{
-        bgcolor: colors.parchmentHeader, direction: 'rtl', py: { xs: 5, md: '63px' }, px: { xs: 2, md: 6 },
+        bgcolor: 'var(--parchment-2)', direction: 'rtl', py: { xs: 5, md: '63px' }, px: { xs: 2, md: 6 },
         borderTop: `1px solid ${GOLD}`, borderBottom: `1px solid ${GOLD}`,
-        background: `radial-gradient(ellipse 60% 80% at 22% 50%, rgba(235,213,154,0.55), transparent 70%), ${colors.parchmentHeader}`,
+        background: `radial-gradient(ellipse 60% 80% at 22% 50%, rgba(235,213,154,0.55), transparent 70%), var(--parchment-2)`,
       }}>
         {/* מידות מהמוקאפ (1440px): דיוקן 387×512 מימין, רווח 43, עמודת טקסט 600 מיושרת לימין, הכול מיושר לראש הדיוקן */}
         <Box sx={{ maxWidth: 1306, mx: 'auto', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: { md: 'flex-start' }, alignItems: { xs: 'center', md: 'flex-start' }, gap: { xs: 3, md: '43px' } }}>
@@ -336,11 +332,11 @@ const About = () => {
             <ArchPortrait src={`${MEDIA_BASE_URL}/דד (1) (1).png`} alt="ראש הישיבה הרב מרדכי עטיה שליט״א" width={HOME_ARCH_W} height={HOME_ARCH_H} />
           </Box>
           <Box sx={{ width: '100%', maxWidth: 600, pt: { md: '12px' }, display: 'flex', flexDirection: 'column', alignItems: { xs: 'center', md: 'flex-start' }, textAlign: { xs: 'center', md: 'right' } }}>
-            <Typography sx={{ fontFamily: fonts.heading, fontSize: { xs: '1.3rem', md: '24px', lg: '30px' }, fontWeight: 700, color: colors.ink, lineHeight: 1.1 }}>ראש הישיבה הרב</Typography>
-            <Typography component="h2" sx={{ ...goldNameSx, fontSize: { xs: '2.6rem', md: '46px', lg: '62px' }, m: 0, mt: '10px' }}>מרדכי עטיה</Typography>
-            <Typography sx={{ fontFamily: fonts.heading, fontSize: { xs: '1.3rem', md: '24px', lg: '30px' }, fontWeight: 700, color: colors.ink, lineHeight: 1.1, mt: '8px' }}>שליט"א</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '24px', md: '24px', lg: '30px' }, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.1 }}>ראש הישיבה הרב</Typography>
+            <Typography component="h2" sx={{ ...goldNameSx, fontSize: { xs: '40px', md: '40px', lg: '60px' }, m: 0, mt: '10px' }}>מרדכי עטיה</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '24px', md: '24px', lg: '30px' }, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.1, mt: '8px' }}>שליט"א</Typography>
             <SectionFlourish mt="28px" mb="26px" lineW={120} justify={{ xs: 'center', md: 'flex-start' }} />
-            <Typography sx={{ fontFamily: fonts.body, fontSize: { xs: '0.95rem', md: '15px', lg: '17px' }, fontWeight: 400, lineHeight: 2, color: colors.body, textAlign: 'right' }}>
+            <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '16px', md: '16px', lg: '18px' }, fontWeight: 400, lineHeight: 2, color: 'var(--body)', textAlign: 'right' }}>
               {founderContent.newSectionDescription}
             </Typography>
           </Box>
@@ -351,13 +347,13 @@ const About = () => {
       <Box component="section" sx={{ bgcolor: DARK, direction: 'rtl', py: { xs: 5, md: 8 }, px: { xs: 2, md: 6 } }}>
         <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 } }}>
           <SectionArch mb="6px" />
-          <Typography component="h2" sx={{ fontFamily: fonts.heading, fontSize: { xs: '1.8rem', md: '42px' }, fontWeight: 700, m: 0, ...goldTextFill }}>דברי גדולי ישראל</Typography>
+          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '30px', md: '40px' }, fontWeight: 700, m: 0, background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}>דברי גדולי ישראל</Typography>
           <SectionFlourish />
         </Box>
 
         <Box sx={{ maxWidth: 1240, mx: 'auto', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'center', md: 'stretch' }, gap: { xs: 4, md: 5 } }}>
           {/* סרטון בקשת: קו זהב דק מבחוץ, רווח כהה, והתמונה בפנים (לפי המוקאפ) */}
-          <Box sx={{ width: { xs: 240, md: 360 }, height: { xs: 330, md: 500 }, flexShrink: 0, borderRadius: ARCH, border: `1px solid ${colors.goldDeep}`, p: { xs: '6px', md: '8px' }, boxSizing: 'border-box', bgcolor: DARK, alignSelf: 'center', position: 'relative' }}>
+          <Box sx={{ width: { xs: 240, md: 360 }, height: { xs: 330, md: 500 }, flexShrink: 0, borderRadius: ARCH, border: `1px solid var(--gold-deep)`, p: { xs: '6px', md: '8px' }, boxSizing: 'border-box', bgcolor: DARK, alignSelf: 'center', position: 'relative' }}>
             <Box sx={{ position: 'relative', width: '100%', height: '100%', borderRadius: ARCH, overflow: 'hidden', bgcolor: '#000' }}>
               <Box component="video" src={`${MEDIA_BASE_URL}/שיעור הרב עטייה מקוצר (1).mp4`} autoPlay loop muted playsInline preload="metadata"
                 sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -367,15 +363,15 @@ const About = () => {
 
           {/* הציטוט */}
           <Box sx={{ flex: 1, alignSelf: 'center', display: 'flex', flexDirection: 'column' }}>
-            <Typography aria-hidden sx={{ fontFamily: 'Georgia, serif', fontSize: '54px', lineHeight: 0.7, textAlign: 'center', ...goldTextFill }}>❝</Typography>
-            <Typography component="blockquote" sx={{ m: 0, fontFamily: fonts.body, fontSize: { xs: '0.95rem', md: '18px' }, color: '#F0EAD8', textAlign: 'right', lineHeight: 2, whiteSpace: 'pre-line' }}>
+            <QuoteMark open />
+            <Typography component="blockquote" sx={{ m: 0, fontFamily: 'var(--font-body)', fontSize: { xs: '16px', md: '18px' }, color: '#F0EAD8', textAlign: 'right', lineHeight: 2, whiteSpace: 'pre-line' }}>
               {`אני עומד ומשתומם. אינך יודע מי האיש מי דיברת. רבי מרדכי מקובל גאון של הדור שלנו. אולי אינך יודע דרכי להפריז ולהגזים בשבחים ובתוארים.\n\nאך דע שאם יש מקובל אמיתי בדורנו חכם ובקי. צנוע ונחבא אל הכלים זה האיש זה המקובל. הוא אשר השם יתברך בחר בו להיות בדורינו השם יאריך ימיו. ודע שכל הנקראים "מקובלים" לא יגיעו אפילו למחצית מידיעותיו ומחכמתו. אשרי הדור אשר רואה פניו.`}
             </Typography>
-            <Typography aria-hidden sx={{ fontFamily: 'Georgia, serif', fontSize: '54px', lineHeight: 0.7, textAlign: 'center', mt: 1, ...goldTextFill }}>❞</Typography>
+            <QuoteMark />
             <Box sx={{ borderTop: `1px solid rgba(197,160,89,0.4)`, mt: 1.5, pt: 1.5, textAlign: 'center' }}>
-              <Typography sx={{ fontFamily: fonts.heading, fontSize: '17px', color: GOLD }}>— הרב בן ציון מוצפי שליט״א</Typography>
+              <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '18px', color: GOLD }}>— הרב בן ציון מוצפי שליט״א</Typography>
               <Box component="a" href="https://www.doresh-tzion.co.il/qas/142200" target="_blank" rel="noopener noreferrer"
-                sx={{ fontFamily: fonts.body, fontSize: '13px', color: 'rgba(197,160,89,0.7)', textDecoration: 'none', display: 'inline-block', direction: 'ltr', '&:hover': { color: GOLD } }}>
+                sx={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'rgba(197,160,89,0.7)', textDecoration: 'none', display: 'inline-block', direction: 'ltr', '&:hover': { color: GOLD } }}>
                 doresh-tzion.co.il · שאלה 142200
               </Box>
             </Box>
@@ -393,16 +389,9 @@ const About = () => {
 
         {/* כפתור לגלריה המלאה */}
         <Box sx={{ textAlign: 'center', mt: { xs: 4, md: 6 } }}>
-          <Button
-            onClick={() => navigate('/VideoGallery')}
-            sx={{
-              fontFamily: fonts.heading, fontSize: { xs: '1rem', md: '16px' }, color: colors.goldLight, border: `1px solid ${GOLD}`, borderRadius: radius.sm,
-              px: { xs: 3, md: 5 }, py: 1, textTransform: 'none', transition: '0.3s',
-              '&:hover': { bgcolor: GOLD, color: colors.ink },
-            }}
-          >
+          <AppButton variant="outlineLight" onClick={() => navigate('/VideoGallery')}>
             לגלריית הסרטונים המלאים
-          </Button>
+          </AppButton>
         </Box>
 
         {/* ───────────── 5. רשת הסרטונים ───────────── */}
@@ -414,23 +403,23 @@ const About = () => {
       </Box>
 
       {/* ───────────── 6. אירועים והוצאות ספרים ───────────── */}
-      <Box component="section" sx={{ bgcolor: colors.creamAlt, direction: 'rtl', py: { xs: 5, md: 8 }, px: { xs: 2, md: 6 }, borderBottom: `1px solid ${GOLD}` }}>
+      <Box component="section" sx={{ bgcolor: 'var(--parchment)', direction: 'rtl', py: { xs: 5, md: 8 }, px: { xs: 2, md: 6 }, borderBottom: `1px solid ${GOLD}` }}>
         <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
           <SectionArch mb="6px" />
-          <Typography component="h2" sx={{ fontFamily: fonts.heading, fontSize: { xs: '1.6rem', md: '40px' }, fontWeight: 700, color: colors.inkWine, m: 0 }}>אירועים והוצאות ספרים</Typography>
+          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '24px', md: '40px' }, fontWeight: 700, color: 'var(--ink-wine)', m: 0 }}>אירועים והוצאות ספרים</Typography>
           <SectionFlourish />
         </Box>
         <Box sx={{ maxWidth: 1240, mx: 'auto', display: 'grid', gap: { xs: 2, md: '22px' }, alignItems: 'stretch', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' } }}>
           {archImages.map((item, i) => (
             <Box component="figure" key={i} sx={{ m: 0, display: 'flex', flexDirection: 'column', p: '9px', bgcolor: '#FFFBF2', border: `1.5px solid ${GOLD}`, borderRadius: '14px', boxShadow: '0 2px 10px rgba(122,95,27,0.08)' }}>
-              <Box sx={{ width: '100%', aspectRatio: '4/3', borderRadius: '8px', overflow: 'hidden', bgcolor: colors.sand }}>
+              <Box sx={{ width: '100%', aspectRatio: '4/3', borderRadius: '8px', overflow: 'hidden', bgcolor: 'var(--sand)' }}>
                 <Box component="img" src={item.src} alt={item.label} loading="lazy"
                   onError={(e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.onerror = null; e.currentTarget.closest('figure')?.remove(); }}
                   sx={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
               </Box>
               <Box component="figcaption" sx={{ px: '6px', pt: '14px', pb: '10px', textAlign: 'right' }}>
-                <Typography component="span" sx={{ display: 'block', fontFamily: fonts.heading, fontSize: { xs: '0.9rem', md: '17px' }, fontWeight: 700, color: colors.inkWine, lineHeight: 1.5 }}>{item.label}</Typography>
-                {item.sub && <Typography component="span" sx={{ display: 'block', mt: '6px', fontSize: { xs: '0.8rem', md: '14px' }, color: colors.goldText, lineHeight: 1.6 }}>{item.sub}</Typography>}
+                <Typography component="span" sx={{ display: 'block', fontFamily: 'var(--font-heading)', fontSize: { xs: '14px', md: '18px' }, fontWeight: 700, color: 'var(--ink-wine)', lineHeight: 1.5 }}>{item.label}</Typography>
+                {item.sub && <Typography component="span" sx={{ display: 'block', mt: '6px', fontSize: { xs: '12px', md: '14px' }, color: 'var(--gold-text)', lineHeight: 1.6 }}>{item.sub}</Typography>}
               </Box>
             </Box>
           ))}
@@ -442,7 +431,7 @@ const About = () => {
         {/* נמדד מ-ateret-mordechai-about.pdf: כותרת 648px משמאל, תמונת ישיבה 420×237 מימין, מפריד זהב מתחת לכותרת */}
         <Box sx={{ maxWidth: { xs: 1240, md: 1336 }, mx: 'auto', display: 'flex', alignItems: { xs: 'center', md: 'flex-start' }, justifyContent: { xs: 'center', md: 'space-between' }, gap: { xs: 2, md: 0 }, mb: { xs: 4, md: '52px' }, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
           <Box sx={{ order: { xs: 1, md: 2 }, width: { md: 648 }, flexShrink: 0, mt: { md: '73px' } }}>
-            <Typography component="h2" sx={{ fontFamily: fonts.heading, fontSize: { xs: '1.8rem', md: '50px' }, lineHeight: { md: '62px' }, fontWeight: 700, m: 0, pr: { md: '14px' }, textAlign: { md: 'right' }, ...goldTextFill }}>
+            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '30px', md: '40px' }, lineHeight: { md: '62px' }, fontWeight: 700, m: 0, pr: { md: '14px' }, textAlign: { md: 'right' }, background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}>
               מהנעשה והנשמע בישיבה
             </Typography>
             <Box aria-hidden sx={{ display: { xs: 'none', md: 'block' }, position: 'relative', height: 0, mt: '25px' }}>

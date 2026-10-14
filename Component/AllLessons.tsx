@@ -4,9 +4,12 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Search as SearchIcon } from 'lucide-react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import {
   Box, Typography, Paper, IconButton, Checkbox, Tooltip, Select, MenuItem,
-  Accordion, AccordionSummary, AccordionDetails, Stack, Skeleton, Button, Drawer,
+  Accordion, AccordionSummary, AccordionDetails, Stack, Skeleton, Drawer,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -15,13 +18,26 @@ import SearchOffIcon from '@mui/icons-material/SearchOff';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import axios from 'axios';
 import LessonPlayer from './LessonPlayer';
+import AppButton from './shared/AppButton';
 import PageHeader from './shared/PageHeader';
 import ActionButtons from './shared/ActionButtons';
-import { colors, fonts, fontSize, gradients, goldButtonStyle, lessonCard } from '../src/theme/tokens';
+import LessonThumb from './shared/LessonThumb';
+import { cardHoverSx } from './shared/cardHover';
+
+const DEFAULT_SORT = 'date:desc';
+// שדה מיון + כיוון ברירת מחדל + תיאור הכיוון (לתיאור הכפתור)
+const SORT_FIELDS: { value: string; label: string; defaultDir: 'asc' | 'desc'; asc: string; desc: string }[] = [
+  { value: 'date', label: 'תאריך', defaultDir: 'desc', asc: 'מהישן לחדש', desc: 'מהחדש לישן' },
+  { value: 'title', label: 'שם', defaultDir: 'asc', asc: 'א-ת', desc: 'ת-א' },
+  { value: 'duration', label: 'אורך', defaultDir: 'asc', asc: 'מהקצר לארוך', desc: 'מהארוך לקצר' },
+  { value: 'topic', label: 'נושא', defaultDir: 'asc', asc: 'א-ת', desc: 'ת-א' },
+  { value: 'rabbi', label: 'רב', defaultDir: 'asc', asc: 'א-ת', desc: 'ת-א' },
+  { value: 'views', label: 'צפיות', defaultDir: 'desc', asc: 'מהפחות לנצפה ביותר', desc: 'מהנצפה ביותר' },
+];
 
 const AllLessons = () => {
-  const BLUE_TEXT = lessonCard.titleColor;
-  const GOLD_TEXT = colors.goldText;
+  const BLUE_TEXT = 'var(--ink-wine)';
+  const GOLD_TEXT = 'var(--gold-text)';
   const [selectedLesson, setSelectedLesson] = useState<any | null>(null);
 
   const location = useLocation();
@@ -48,7 +64,7 @@ const AllLessons = () => {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const [allTopics, setAllTopics] = useState<any[]>([]);
+  const [, setAllTopics] = useState<any[]>([]);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleBulkDownload = () => {
@@ -76,6 +92,17 @@ const AllLessons = () => {
   const hasFetched = useRef(false);
   const prevRabbiIdRef = useRef<number | null>(null);
   const prevSearchRef = useRef<string>('');
+  const [sort, setSort] = useState(DEFAULT_SORT);
+  const sortRef = useRef(DEFAULT_SORT);
+  const sortField = SORT_FIELDS.find(f => f.value === sort.split(':')[0]) || SORT_FIELDS[0];
+  const sortDir = sort.split(':')[1] === 'asc' ? 'asc' : 'desc';
+  const applySort = (next: string) => {
+    setSort(next);
+    sortRef.current = next;
+    setCurrentPage(1);
+    fetchLessons(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const exactCategoryRef = useRef(false); // true רק אחרי "לכל הסדרה" — התאמה מדויקת לקטגוריה
   const prevSeriesKeyRef = useRef<string | undefined>(undefined);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -130,6 +157,8 @@ const AllLessons = () => {
       if (subId) url += `&subCategoryId=${subId}`;
       if (exactCategoryRef.current) url += `&exact=1`;
       if (query) url += `&search=${encodeURIComponent(query)}`;
+      const [sortBy, sortDir] = sortRef.current.split(':');
+      if (sortRef.current !== DEFAULT_SORT) url += `&sortBy=${sortBy}&sortDir=${sortDir}`;
 
       const response = await axios.get(url);
       const newData = response.data.data || [];
@@ -164,7 +193,6 @@ const AllLessons = () => {
       setLoadingLecturers(true);
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/rabbis?fields[0]=name&populate[photo_url][fields][0]=url`);
       setLecturers(response.data.data);
-      console.log("1", response.data.data);
     } catch (error) {
       console.error("Error fetching lecturers:", error);
     } finally {
@@ -187,7 +215,6 @@ const AllLessons = () => {
     return valA - valB;
   });
 
-  console.log("Sorted:", sortedRabbis);
 
   useEffect(() => {
     const incomingRabbiId = location.state?.rabbiId ?? null;
@@ -290,19 +317,6 @@ const AllLessons = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleTopicClick = (id: number | string) => {
-    exactCategoryRef.current = false;
-    const newIds = selectedMainCatIds.includes(id)
-      ? selectedMainCatIds.filter(x => x !== id)
-      : [...selectedMainCatIds, id];
-    setSelectedMainCatIds(newIds);
-    setSelectedSubCatId(null);
-    setExpandedSubId(null);
-    setCurrentPage(1);
-    fetchLessons(1, selectedLecturerIds, newIds, null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const clearFilter = () => {
     exactCategoryRef.current = false;
     setSelectedLecturerIds([]);
@@ -319,15 +333,15 @@ const AllLessons = () => {
     <Box sx={{
       width: 18,
       height: 18,
-      border: `1.5px solid ${colors.gold}`,
+      border: `1.5px solid var(--gold)`,
       borderRadius: '4px',
-      bgcolor: isSelected ? colors.wine : 'transparent',
-      borderColor: isSelected ? colors.wine : colors.gold,
+      bgcolor: isSelected ? 'var(--wine)' : 'transparent',
+      borderColor: isSelected ? 'var(--wine)' : 'var(--gold)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       transition: '0.2s',
       flexShrink: 0,
     }}>
-      {isSelected && <CheckIcon sx={{ fontSize: 14, color: colors.goldLight }} />}
+      {isSelected && <CheckIcon sx={{ fontSize: 14, color: 'var(--gold-light)' }} />}
     </Box>
   );
 
@@ -359,7 +373,7 @@ const AllLessons = () => {
     if (currentLevelItems.length === 0) return null;
 
     return (
-      <Box sx={{ borderRight: level > 1 ? '1px solid #eee' : 'none', mr: level > 1 ? 2 : 0, pr: 1 }}>
+      <Box sx={{ borderRight: level > 1 ? '1px solid var(--rule-soft)' : 'none', mr: level > 1 ? 2 : 0, pr: 1 }}>
         {currentLevelItems.map((sub: any) => {
           const subId = sub.id;
           const name = sub.name;
@@ -393,20 +407,20 @@ const AllLessons = () => {
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  color: isSelected ? '#9c6644' : colors.ink,
+                  color: isSelected ? 'var(--gold-text)' : 'var(--ink)',
                   fontWeight: isSelected ? '600' : '400',
-                  '&:hover': { color: '#9c6644' },
+                  '&:hover': { color: 'var(--gold-text)' },
                 }}
               >
                 <Box sx={{
                   width: 5, height: 5,
-                  bgcolor: isSelected ? '#9c6644' : '#ccc',
+                  bgcolor: isSelected ? 'var(--gold-text)' : 'var(--rule-soft)',
                   borderRadius: '50%', ml: 1.5, flexShrink: 0
                 }} />
                 <Typography sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
                   {name}
                   {hasChildren && !isOpen && (
-                    <Box component="span" sx={{ mr: 0.8, fontSize: '0.75rem', color: '#bdbdbd' }}>
+                    <Box component="span" sx={{ mr: 0.8, fontSize: '0.75rem', color: 'var(--muted)' }}>
                       (+)
                     </Box>
                   )}
@@ -422,35 +436,28 @@ const AllLessons = () => {
 
   const renderDedicationCard = () => (
       <Box sx={{
-        bgcolor: colors.wine, border: `1px solid ${colors.gold}`, borderRadius: '24px',
+        bgcolor: 'var(--wine)', border: `1px solid var(--gold)`, borderRadius: 'var(--dedication-card-radius)',
         p: 2, textAlign: 'center', flexShrink: 0,
       }}>
         <Typography sx={{
-          fontFamily: fonts.heading, fontWeight: 700, fontSize: '18px', mb: 1,
-          backgroundImage: gradients.gold, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--dedication-card-title-size)', mb: 1,
+          backgroundImage: 'var(--gradient-gold)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
         }}>
           הקדשת שיעור
         </Typography>
-        <Typography sx={{ color: '#D6B7AE', fontSize: '13px', mb: 2 }}>
+        <Typography sx={{ color: 'var(--dedication-card-sub-color)', fontSize: 'var(--dedication-card-sub-size)', mb: 2 }}>
           אפשר להקדיש שיעור לעילוי נשמת, לרפואה או להצלחה.
         </Typography>
-        <Button
-          onClick={() => navigate('/ContactForm')}
-          fullWidth
-          sx={{
-            ...goldButtonStyle, fontWeight: 700,
-            borderRadius: '6px', minHeight: '44px', textTransform: 'none',
-          }}
-        >
+        <AppButton onClick={() => navigate('/ContactForm')} fullWidth>
           לפרטים
-        </Button>
+        </AppButton>
       </Box>
   );
 
   const renderSidebarContent = () => (
     <>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, px: 0.5 }}>
-        <Typography component="h2" sx={{ fontFamily: fonts.heading, fontWeight: 700, fontSize: '20px', color: lessonCard.titleColor, m: 0 }}>
+        <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--filter-title-size)', color: 'var(--ink-wine)', m: 0 }}>
           סינון
         </Typography>
         {selectedLecturerIds.length > 0 && (
@@ -461,12 +468,12 @@ const AllLessons = () => {
             sx={{
               position: 'relative',
               border: 'none', background: 'none', cursor: 'pointer', p: 0,
-              fontFamily: fonts.body, fontSize: '13px', fontWeight: 600, color: GOLD_TEXT,
+              fontFamily: 'var(--font-body)', fontSize: 'var(--filter-clear-size)', fontWeight: 600, color: GOLD_TEXT,
               '&::after': {
                 content: '""', position: 'absolute', left: 0, right: 0, bottom: '-4px',
                 height: '2px', borderRadius: '999px', bgcolor: 'currentColor',
               },
-              '&:hover': { color: colors.wine },
+              '&:hover': { color: 'var(--wine)' },
             }}
           >
             ניקוי
@@ -474,13 +481,13 @@ const AllLessons = () => {
         )}
       </Box>
 
-      <Accordion defaultExpanded elevation={0} sx={{ bgcolor: lessonCard.bg, borderRadius: '12px !important', border: `1px solid ${colors.gold}`, mb: 1.5, flexShrink: 0, '&:before': { display: 'none' } }}>
+      <Accordion defaultExpanded elevation={0} sx={{ bgcolor: 'var(--surface)', borderRadius: '12px !important', border: `1px solid var(--gold)`, mb: 1.5, flexShrink: 0, '&:before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: GOLD_TEXT }} />} sx={{ px: 2 }}>
           <Box sx={{ width: '100%' }}>
-            <Typography component="h2" sx={{ fontFamily: fonts.heading, fontWeight: 700, fontSize: '16px', color: lessonCard.titleColor, m: 0 }}>
+            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--filter-group-title-size)', color: 'var(--ink-wine)', m: 0 }}>
               הרב המוסר
             </Typography>
-            <Box sx={{ width: '30px', height: '2px', bgcolor: colors.gold, mt: 1 }} />
+            <Box sx={{ width: '30px', height: '2px', bgcolor: 'var(--gold)', mt: 1 }} />
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ pt: 0, px: 2 }}>
@@ -489,7 +496,7 @@ const AllLessons = () => {
               <Box key={item.id}>
                 <Box
                   onClick={() => { handleLecturerClick(item.id); setMobileFilterOpen(false); }}
-                  sx={{ fontFamily: fonts.body, fontSize: '1rem', py: 0.8, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', fontWeight: selectedLecturerIds.includes(item.id) ? 'bold' : 'normal', color: colors.ink }}
+                  sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--filter-label-size)', py: 0.8, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', fontWeight: selectedLecturerIds.includes(item.id) ? 'bold' : 'normal', color: 'var(--filter-label-color)' }}
                 >
                   <SquareIcon isSelected={selectedLecturerIds.includes(item.id)} />
                   {item.attributes?.name || item.name}
@@ -519,13 +526,13 @@ const AllLessons = () => {
                               fetchLessons(1, selectedLecturerIds, newIds, null);
                               window.scrollTo({ top: 0, behavior: 'smooth' });
                             }}
-                            sx={{ fontSize: '1rem', py: 0.8, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', color: colors.ink, fontWeight: isMainSelected ? 'bold' : 'normal', fontFamily: fonts.body }}
+                            sx={{ fontSize: 'var(--filter-label-size)', py: 0.8, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', color: 'var(--filter-label-color)', fontWeight: isMainSelected ? 'bold' : 'normal', fontFamily: 'var(--font-body)' }}
                           >
                             <SquareIcon isSelected={isMainSelected} />
                             {data.name}
                           </Box>
                           {isMainSelected && (
-                            <Box sx={{ borderRight: '2px solid #eee', mr: 1, pr: 0.5 }}>
+                            <Box sx={{ borderRight: '2px solid var(--rule-soft)', mr: 1, pr: 0.5 }}>
                               {renderSubCategories(allSubs, null)}
                             </Box>
                           )}
@@ -543,7 +550,7 @@ const AllLessons = () => {
   );
 
   return (
-    <Box sx={{ direction: 'rtl', backgroundColor: colors.creamAlt }}>
+    <Box sx={{ direction: 'rtl', backgroundColor: 'var(--parchment)' }}>
       {selectedLesson ? (
         <LessonPlayer
           lesson={selectedLesson}
@@ -559,7 +566,7 @@ const AllLessons = () => {
         <Box sx={{ maxWidth: '1200px', mx: 'auto', p: { xs: 2, md: 4 } }}>
         <Grid container spacing={4} alignItems="flex-start">
           <Grid size={{ xs: 12, md: 3 }} sx={{ position: 'relative', display: { xs: 'none', md: 'block' }, order: { md: 2 }, alignSelf: 'stretch' }}>
-            <Box ref={sidebarRef} sx={{ position: { md: 'sticky' }, top: { md: '90px' }, maxHeight: { md: 'calc(100vh - 100px)' }, overflowY: { md: 'auto' }, direction: { md: 'ltr' }, pr: { md: 1.5 }, '& > *': { direction: 'rtl' }, scrollbarWidth: 'thin', scrollbarColor: `${colors.gold} transparent`, '&::-webkit-scrollbar': { width: '6px' }, '&::-webkit-scrollbar-track': { background: 'transparent' }, '&::-webkit-scrollbar-thumb': { background: colors.gold, borderRadius: '10px' }, '&::-webkit-scrollbar-thumb:hover': { background: colors.wine }, display: { md: 'flex' }, flexDirection: 'column' }}>
+            <Box ref={sidebarRef} sx={{ position: { md: 'sticky' }, top: { md: '90px' }, maxHeight: { md: 'calc(100vh - 100px)' }, overflowY: { md: 'auto' }, direction: { md: 'ltr' }, pr: { md: 1.5 }, '& > *': { direction: 'rtl' }, scrollbarWidth: 'thin', scrollbarColor: `var(--gold) transparent`, '&::-webkit-scrollbar': { width: '6px' }, '&::-webkit-scrollbar-track': { background: 'transparent' }, '&::-webkit-scrollbar-thumb': { background: 'var(--gold)', borderRadius: '10px' }, '&::-webkit-scrollbar-thumb:hover': { background: 'var(--wine)' }, display: { md: 'flex' }, flexDirection: 'column' }}>
               {renderSidebarContent()}
               {renderDedicationCard()}
             </Box>
@@ -567,30 +574,21 @@ const AllLessons = () => {
 
           <Grid size={{ xs: 12, md: 9 }} sx={{ order: { md: 1 } }}>
             <Box sx={{ display: { xs: 'flex', md: 'none' }, mb: 2, gap: 1, alignItems: 'center' }}>
-              <Button
+              <AppButton
+                variant="outline"
                 onClick={() => setMobileFilterOpen(true)}
-                variant="outlined"
                 startIcon={<FilterListIcon />}
-                sx={{
-                  borderColor: GOLD_TEXT,
-                  color: GOLD_TEXT,
-                  borderRadius: '50px',
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  '&:hover': { bgcolor: 'rgba(197,160,89,0.08)', borderColor: GOLD_TEXT },
-                }}
               >
                 סינון{selectedLecturerIds.length > 0 ? ' (פעיל)' : ''}
-              </Button>
+              </AppButton>
               {selectedLecturerIds.length > 0 && (
-                <Button
+                <AppButton
+                  variant="dark"
                   onClick={clearFilter}
-                  variant="contained"
                   startIcon={<RestartAltIcon />}
-                  sx={{ bgcolor: GOLD_TEXT, color: '#fff', borderRadius: '50px', fontSize: '0.85rem', fontWeight: 700, '&:hover': { bgcolor: '#000', color: GOLD_TEXT } }}
                 >
                   נקה
-                </Button>
+                </AppButton>
               )}
             </Box>
 
@@ -599,7 +597,7 @@ const AllLessons = () => {
               open={mobileFilterOpen}
               onClose={() => setMobileFilterOpen(false)}
               sx={{ display: { xs: 'block', md: 'none' } }}
-              PaperProps={{ sx: { width: '280px', direction: 'ltr', p: 2, pr: 1.5, overflowY: 'auto', '& > *': { direction: 'rtl' }, scrollbarWidth: 'thin', scrollbarColor: `${colors.gold} transparent`, '&::-webkit-scrollbar': { width: '6px' }, '&::-webkit-scrollbar-track': { background: 'transparent' }, '&::-webkit-scrollbar-thumb': { background: colors.gold, borderRadius: '10px' }, '&::-webkit-scrollbar-thumb:hover': { background: colors.wine } } }}
+              PaperProps={{ sx: { width: '280px', direction: 'ltr', p: 2, pr: 1.5, overflowY: 'auto', '& > *': { direction: 'rtl' }, scrollbarWidth: 'thin', scrollbarColor: `var(--gold) transparent`, '&::-webkit-scrollbar': { width: '6px' }, '&::-webkit-scrollbar-track': { background: 'transparent' }, '&::-webkit-scrollbar-thumb': { background: 'var(--gold)', borderRadius: '10px' }, '&::-webkit-scrollbar-thumb:hover': { background: 'var(--wine)' } } }}
             >
               {renderSidebarContent()}
               {renderDedicationCard()}
@@ -608,8 +606,8 @@ const AllLessons = () => {
             <Box
               sx={{
                 mb: 2, maxWidth: '980px', mx: 'auto',
-                display: 'flex', flexDirection: 'row', bgcolor: lessonCard.bg,
-                borderRadius: '12px', border: `1px solid ${colors.gold}`, overflow: 'hidden',
+                display: 'flex', flexDirection: 'row', bgcolor: 'var(--surface)',
+                borderRadius: '12px', border: `1px solid var(--gold)`, overflow: 'hidden',
                 height: '50px', boxShadow: '0 2px 10px rgba(44,14,16,.07)',
               }}
             >
@@ -620,11 +618,11 @@ const AllLessons = () => {
                 onClick={() => fetchLessons(1, selectedLecturerIds, selectedMainCatIds, selectedSubCatId, searchQuery)}
                 sx={{
                   width: '48px', height: '48px', border: 'none', cursor: 'pointer',
-                  backgroundImage: gradients.goldButton, display: 'flex', alignItems: 'center',
+                  backgroundImage: 'var(--gradient-gold-button)', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', flexShrink: 0,
                 }}
               >
-                <SearchIcon size={18} strokeWidth={2} color={colors.inkDark} aria-hidden />
+                <SearchIcon size={18} strokeWidth={2} color={'var(--ink-dark)'} aria-hidden />
               </Box>
               <Box
                 component="input"
@@ -643,45 +641,65 @@ const AllLessons = () => {
                 sx={{
                   flex: 1, minWidth: 0, border: 'none', outline: 'none', px: '22px',
                   fontSize: '18px', direction: 'rtl', textAlign: 'right',
-                  fontFamily: fonts.body, background: 'transparent', color: colors.ink,
-                  '&::placeholder': { color: '#8B8272', opacity: 1 },
+                  fontFamily: 'var(--font-body)', background: 'transparent', color: 'var(--ink)',
+                  '&::placeholder': { color: 'var(--search-placeholder-color)', opacity: 1 },
                 }}
               />
             </Box>
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-              <Typography sx={{ fontSize: fontSize.sm, color: lessonCard.dateColor }}>
+              <Typography sx={{ fontSize: 'var(--t2)', color: 'var(--muted)' }}>
                 {totalCount > 0 && `מציג ${Math.min(lessons.length, totalCount).toLocaleString('he-IL')} מתוך ${totalCount.toLocaleString('he-IL')} שיעורים`}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Tooltip title={`כיוון: ${sortField[sortDir]} — לחצי להיפוך`}>
+                  <IconButton
+                    onClick={() => applySort(`${sortField.value}:${sortDir === 'asc' ? 'desc' : 'asc'}`)}
+                    aria-label={`היפוך כיוון המיון, כרגע ${sortField[sortDir]}`}
+                    sx={{
+                      color: GOLD_TEXT, border: '1px solid var(--gold)', borderRadius: 'var(--btn-radius)',
+                      bgcolor: 'var(--surface)', width: 'var(--btn-h)', height: 'var(--btn-h)',
+                      '&:hover': { bgcolor: 'color-mix(in srgb, var(--gold) 12%, transparent)' },
+                    }}
+                  >
+                    {sortDir === 'asc' ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />}
+                  </IconButton>
+                </Tooltip>
                 <Select
-                  value="newest"
-                  onChange={() => {}}
+                  value={sortField.value}
+                  onChange={(e) => {
+                    const field = SORT_FIELDS.find(f => f.value === e.target.value);
+                    if (field) applySort(`${field.value}:${field.defaultDir}`);
+                  }}
+                  renderValue={() => `מיון: ${sortField.label} (${sortField[sortDir]})`}
                   size="small"
                   inputProps={{ 'aria-label': 'מיון' }}
                   IconComponent={ExpandMoreIcon}
                   MenuProps={{
-                    PaperProps: { sx: { bgcolor: lessonCard.bg, border: `1px solid ${colors.gold}`, borderRadius: '8px', boxShadow: lessonCard.shadow, mt: 0.5 } },
+                    PaperProps: { sx: { bgcolor: 'var(--surface)', border: `1px solid var(--gold)`, borderRadius: '8px', boxShadow: 'var(--lesson-card-shadow)', mt: 0.5 } },
                     MenuListProps: { sx: { p: 0.5 } },
                   }}
                   sx={{
-                    minHeight: '42px', bgcolor: lessonCard.bg, borderRadius: '8px', color: GOLD_TEXT,
-                    fontSize: fontSize.sm, fontFamily: fonts.body,
-                    '& .MuiOutlinedInput-notchedOutline': { border: `1px solid ${colors.gold}` },
-                    '&:hover .MuiOutlinedInput-notchedOutline, &.Mui-focused .MuiOutlinedInput-notchedOutline': { border: `1px solid ${colors.gold}` },
+                    minHeight: 'var(--btn-h)', bgcolor: 'var(--surface)', borderRadius: 'var(--btn-radius)', color: GOLD_TEXT,
+                    fontSize: 'var(--t2)', fontFamily: 'var(--font-body)',
+                    '& .MuiOutlinedInput-notchedOutline': { border: `1px solid var(--gold)` },
+                    '&:hover .MuiOutlinedInput-notchedOutline, &.Mui-focused .MuiOutlinedInput-notchedOutline': { border: `1px solid var(--gold)` },
                     '& .MuiSelect-icon': { color: GOLD_TEXT },
                   }}
                 >
-                  <MenuItem
-                    value="newest"
-                    sx={{
-                      color: GOLD_TEXT, fontSize: fontSize.sm, fontFamily: fonts.body, borderRadius: '6px',
-                      '&.Mui-selected, &.Mui-selected:hover, &.Mui-selected.Mui-focusVisible, &.Mui-focusVisible': { bgcolor: `${colors.gold}33` },
-                      '&:hover': { bgcolor: `${colors.gold}1F` },
-                    }}
-                  >
-                    מיון: החדשים ביותר
-                  </MenuItem>
+                  {SORT_FIELDS.map((opt) => (
+                    <MenuItem
+                      key={opt.value}
+                      value={opt.value}
+                      sx={{
+                        color: GOLD_TEXT, fontSize: 'var(--t2)', fontFamily: 'var(--font-body)', borderRadius: '6px',
+                        '&.Mui-selected, &.Mui-selected:hover, &.Mui-selected.Mui-focusVisible, &.Mui-focusVisible': { bgcolor: `color-mix(in srgb, var(--gold) 20%, transparent)` },
+                        '&:hover': { bgcolor: `color-mix(in srgb, var(--gold) 12.157%, transparent)` },
+                      }}
+                    >
+                      {opt.label}
+                    </MenuItem>
+                  ))}
                 </Select>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -719,9 +737,9 @@ const AllLessons = () => {
               {loadingLessons ? (
                 [1, 2].map(i => <Skeleton key={i} variant="rectangular" height={100} sx={{ borderRadius: '1.5rem' }} />)
               ) : lessons.length > 0 ? (
-                lessons.map((lesson) => {
+                lessons.filter((l) => (l.attributes || l).title?.trim()).map((lesson) => {
                   const attr = lesson.attributes || lesson;
-                  const { title, youtube_id, lesson_date_hebrew, lesson_date_gregorian, rabbi, duration, AudioDir, AudioFileName } = attr;
+                  const { title, youtube_id, lesson_date_hebrew, lesson_date_gregorian, rabbi, duration, views, AudioDir, AudioFileName } = attr;
                   const rabbiName = rabbi?.data?.attributes?.name || rabbi?.name || "";
                   const hasYoutube = youtube_id && youtube_id.trim() !== "";
                   const rabbiId = rabbi?.data?.id || rabbi?.id;
@@ -731,13 +749,14 @@ const AllLessons = () => {
                     ? `https://img.youtube.com/vi/${youtube_id}/hqdefault.jpg`
                     : rabbiPhotoPath
                       ? (rabbiPhotoPath.startsWith('http') ? rabbiPhotoPath : `${import.meta.env.VITE_API_URL}${rabbiPhotoPath}`)
-                      : "/default-rabbi-placeholder.png";
+                      : undefined;
                   const topic = getCategoryDisplay(attr);
                   const isChecked = selectedIds.includes(String(lesson.documentId || lesson.id));
                   return (
                     <Paper
                       component="a"
                       href={`/AllLessons/${lesson.id}`}
+                      aria-label={`שיעור: ${title}${rabbiName ? `, ${rabbiName}` : ''}`}
                       onClick={(e: React.MouseEvent) => {
                         e.preventDefault();
                         navigate(`/AllLessons/${lesson.id}`);
@@ -750,15 +769,16 @@ const AllLessons = () => {
                         flexDirection: 'row',
                         flexWrap: { xs: 'wrap', md: 'nowrap' },
                         alignItems: 'center',
-                        gap: { xs: '12px', md: '20px' },
-                        borderRadius: `${lessonCard.radius}px`,
-                        bgcolor: lessonCard.bg,
-                        p: 2,
-                        border: isChecked ? `1.5px solid ${GOLD_TEXT}` : `1px solid ${lessonCard.border}`,
-                        boxShadow: lessonCard.shadow,
+                        gap: { xs: '10px', md: '14px' },
+                        borderRadius: `var(--lesson-card-radius)`,
+                        bgcolor: 'var(--surface)',
+                        px: 1.5, py: 1,
+                        border: isChecked ? `1.5px solid ${GOLD_TEXT}` : `1px solid var(--gold)`,
+                        boxShadow: 'var(--lesson-card-shadow)',
                         cursor: 'pointer',
                         textDecoration: 'none',
                         color: 'inherit',
+                        ...cardHoverSx,
                       }}
                     >
                       <Checkbox
@@ -773,68 +793,78 @@ const AllLessons = () => {
                         }}
                         onClick={(e) => e.stopPropagation()}
                         sx={{
-                          position: 'absolute', top: 8, left: 8, zIndex: 1,
+                          flexShrink: 0,
                           color: GOLD_TEXT, '&.Mui-checked': { color: GOLD_TEXT },
                           '&.Mui-disabled': { opacity: 0.3 },
-                          p: 0.3, bgcolor: 'rgba(255,255,255,0.95)', borderRadius: '4px',
+                          p: 0.3, borderRadius: '4px',
                         }}
                       />
 
-                      <Box sx={{
-                        position: 'relative',
-                        flex: { xs: '0 0 96px', md: '0 0 190px' },
-                        aspectRatio: '16/9',
-                        backgroundImage: `url(${thumbnailUrl})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat',
-                        borderRadius: '8px',
-                        bgcolor: '#f5f5f5',
-                      }}>
+                      <LessonThumb
+                        src={thumbnailUrl}
+                        crownWidth={44}
+                        sx={{
+                          flex: { xs: '0 0 96px', md: '0 0 130px' },
+                          aspectRatio: '16/9',
+                          borderRadius: '8px',
+                        }}
+                      >
                         {duration && (
                           <Box sx={{
                             position: 'absolute',
-                            bottom: lessonCard.durationBadge.bottom, right: lessonCard.durationBadge.right,
-                            bgcolor: lessonCard.durationBadge.bg, color: lessonCard.durationBadge.color,
-                            border: `1px solid ${lessonCard.durationBadge.border}`,
-                            fontSize: `${lessonCard.durationBadge.size}px`, fontWeight: 700, px: '8px', py: '2px',
-                            borderRadius: `${lessonCard.durationBadge.radius}px`, lineHeight: 1.5,
+                            bottom: 'var(--lesson-card-duration-badge-bottom)', right: 'var(--lesson-card-duration-badge-right)',
+                            bgcolor: 'var(--wine)', color: 'var(--gold-light)',
+                            border: `1px solid var(--lesson-card-duration-badge-border)`,
+                            fontSize: `var(--lesson-card-duration-badge-size)`, fontWeight: 700, px: '8px', py: '2px',
+                            borderRadius: `var(--lesson-card-duration-badge-radius)`, lineHeight: 1.5,
                             direction: 'ltr', fontVariantNumeric: 'tabular-nums',
                           }}>
                             {duration}
                           </Box>
                         )}
-                      </Box>
+                      </LessonThumb>
 
                       <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', textAlign: 'right', gap: '6px' }}>
                         <Typography sx={{
-                          fontFamily: fonts.heading, fontWeight: 700, fontSize: { xs: '15px', md: '20px' },
-                          color: lessonCard.titleColor, lineHeight: 1.3,
+                          fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: { xs: '15px', md: '18px' },
+                          color: 'var(--ink-wine)', lineHeight: 1.3,
                           overflow: 'hidden', overflowWrap: 'anywhere',
                           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
                         }}>
                           {title}
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                          <Typography sx={{ fontFamily: fonts.body, color: lessonCard.rabbiColor, fontSize: fontSize.sm, fontWeight: 700, flexShrink: 0 }}>
+                          <Typography sx={{ fontFamily: 'var(--font-body)', color: 'var(--gold-text)', fontSize: 'var(--t2)', fontWeight: 700, flexShrink: 0 }}>
                             {rabbiName && (rabbiName.includes('שליט"א') ? rabbiName : `${rabbiName} שליט"א`)}
                           </Typography>
                           {topic && (
                             <>
-                              <Box aria-hidden sx={{ width: '1px', height: '16px', bgcolor: lessonCard.topicChip.border, flexShrink: 0 }} />
+                              <Box aria-hidden sx={{ width: '1px', height: '16px', bgcolor: 'var(--gold)', flexShrink: 0 }} />
                               <Box sx={{
-                                bgcolor: lessonCard.topicChip.bg, border: `1px solid ${lessonCard.topicChip.border}`,
-                                color: lessonCard.topicChip.textColor, borderRadius: '999px',
-                                fontFamily: fonts.body, fontSize: '12px', fontWeight: 700, px: '13px', py: '4px', lineHeight: 1.5,
+                                bgcolor: 'var(--sand)', border: `1px solid var(--gold)`,
+                                color: 'var(--wine)', borderRadius: '999px',
+                                fontFamily: 'var(--font-body)', fontSize: '12px', fontWeight: 700, px: '13px', py: '4px', lineHeight: 1.5,
                               }}>
                                 {topic}
                               </Box>
                             </>
                           )}
-                          <Box aria-hidden sx={{ width: '1px', height: '16px', bgcolor: lessonCard.topicChip.border, flexShrink: 0 }} />
-                          <Typography sx={{ fontSize: '13px', color: lessonCard.dateColor }} title={lesson_date_gregorian || undefined}>
+                          <Box aria-hidden sx={{ width: '1px', height: '16px', bgcolor: 'var(--gold)', flexShrink: 0 }} />
+                          <Typography sx={{ fontSize: '13px', color: 'var(--muted)' }} title={lesson_date_gregorian || undefined}>
                             {lesson_date_hebrew || lesson_date_gregorian}
                           </Typography>
+                          {Number(views) > 0 && (
+                            <>
+                              <Box aria-hidden sx={{ width: '1px', height: '16px', bgcolor: 'var(--gold)', flexShrink: 0 }} />
+                              <Typography
+                                sx={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}
+                                title={`${Number(views).toLocaleString('he-IL')} צפיות`}
+                              >
+                                <VisibilityOutlinedIcon sx={{ fontSize: 15 }} aria-hidden />
+                                {Number(views).toLocaleString('he-IL')}
+                              </Typography>
+                            </>
+                          )}
                         </Box>
 
                       </Box>
@@ -859,7 +889,7 @@ const AllLessons = () => {
                   );
                 })
               ) : (
-                <Box sx={{ textAlign: 'center', py: 10, bgcolor: '#fff', borderRadius: '1.5rem', border: `1px dashed ${GOLD_TEXT}` }}>
+                <Box sx={{ textAlign: 'center', py: 10, bgcolor: 'var(--surface)', borderRadius: '1.5rem', border: `1px dashed ${GOLD_TEXT}` }}>
                   <SearchOffIcon sx={{ fontSize: 60, color: GOLD_TEXT, opacity: 0.5 }} />
                   <Typography variant="h6" sx={{ color: BLUE_TEXT, fontWeight: 'bold' }}>לא נמצאו שיעורים</Typography>
                 </Box>
@@ -868,12 +898,12 @@ const AllLessons = () => {
 
             {loadingMore && (
               <Stack spacing={0.5} sx={{ mt: 0.5 }}>
-                {[1, 2].map(i => <Skeleton key={i} variant="rectangular" height={110} sx={{ borderRadius: `${lessonCard.radius}px` }} />)}
+                {[1, 2].map(i => <Skeleton key={i} variant="rectangular" height={110} sx={{ borderRadius: `var(--lesson-card-radius)` }} />)}
               </Stack>
             )}
             <Box ref={loaderRef} sx={{ height: '20px', mt: 1 }} />
             {!hasMore && !loadingLessons && !loadingMore && lessons.length > 0 && (
-              <Typography sx={{ textAlign: 'center', color: lessonCard.dateColor, fontSize: fontSize.sm, py: 2 }}>
+              <Typography sx={{ textAlign: 'center', color: 'var(--muted)', fontSize: 'var(--t2)', py: 2 }}>
                 הגעת לסוף הרשימה
               </Typography>
             )}

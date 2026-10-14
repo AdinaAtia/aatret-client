@@ -1,17 +1,19 @@
-import { Box, Typography, Stack, Button, IconButton, Container, Dialog, DialogTitle, DialogContent, Divider, RadioGroup, FormControlLabel, Radio, TextField } from "@mui/material";
+import { Box, Typography, Stack, IconButton, Container, Dialog, DialogTitle, DialogContent, Divider, RadioGroup, FormControlLabel, Radio, TextField, Popover } from "@mui/material";
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useNavigate } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import  { useEffect, useRef, useState } from 'react';
 import axios from "axios";
-import { Play, Pause, Volume2, VolumeX, Link2, Mail, ArrowDownToLine, FileText, Heart, MessageSquare } from 'lucide-react';
-import PlayBadge from './shared/PlayBadge';
-import { playBadge, audioPlayer, bookPurchaseCard, goldButtonStyle, colors, fonts, goldTextFill, pageHeader, radius, contactForm } from '../src/theme/tokens';
+import { ChevronRight, ChevronLeft, Play, Pause, Volume2, VolumeX, Link2, Mail, ArrowDownToLine, FileText, Heart, MessageSquare } from 'lucide-react';
+import LessonThumb, { youtubeThumbSources } from './shared/LessonThumb';
 import { site } from '../src/content/site';
+import AppButton from './shared/AppButton';
 import Breadcrumb from './shared/Breadcrumb';
 import LessonCard from './shared/LessonCard';
 import SectionArch from './shared/SectionArch';
@@ -132,10 +134,10 @@ const LessonPlayer = ({ lesson, onBack, onLessonSelect }: LessonPlayerProps) => 
 
   const {
     title, youtube_id, lesson_date_gregorian, lesson_date_hebrew,
-    rabbi, duration, AudioDir, AudioFileName, PdfFileName
+    rabbi, duration, views, AudioDir, AudioFileName, PdfFileName
   } = lesson;
 
-  const rabbiName = rabbi?.name || "הרב מרדכי עטייה";
+  const rabbiName = rabbi?.name || "";
   const lessonNumber = title.match(/\d{3}/)?.[0] || "";
 
   // הגדרת בסיס הכתובת המעודכן
@@ -170,6 +172,10 @@ const LessonPlayer = ({ lesson, onBack, onLessonSelect }: LessonPlayerProps) => 
   }, [title]);
 const [categoryPath, setCategoryPath] = useState<string>("");
   const [relatedLessons, setRelatedLessons] = useState<any[]>([]);
+  // שיעור קודם/הבא באותה סדרה, לפי תאריך השיעור
+  const [downloadHelpAnchor, setDownloadHelpAnchor] = useState<HTMLElement | null>(null);
+  const [prevLesson, setPrevLesson] = useState<any | null>(null);
+  const [nextLesson, setNextLesson] = useState<any | null>(null);
   const [dedicateOpen, setDedicateOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackData, setFeedbackData] = useState({ name: '', email: '', message: '' });
@@ -201,42 +207,42 @@ const [categoryPath, setCategoryPath] = useState<string>("");
 
   const goldField = {
     '& .MuiOutlinedInput-root': {
-      bgcolor: '#fff', borderRadius: radius.control, fontFamily: fonts.body,
-      '& fieldset': { borderColor: colors.gold },
-      '&:hover fieldset': { borderColor: colors.goldDeep },
-      '&.Mui-focused fieldset': { borderColor: colors.goldDeep, borderWidth: '1px' },
-      '& input': { textAlign: 'right', fontFamily: fonts.body, color: colors.body },
-      '& textarea': { textAlign: 'right', fontFamily: fonts.body, color: colors.body },
+      bgcolor: '#fff', borderRadius: 'var(--radius-control)', fontFamily: 'var(--font-body)',
+      '& fieldset': { borderColor: 'var(--gold)' },
+      '&:hover fieldset': { borderColor: 'var(--gold-deep)' },
+      '&.Mui-focused fieldset': { borderColor: 'var(--gold-deep)', borderWidth: '1px' },
+      '& input': { textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--body)' },
+      '& textarea': { textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--body)' },
     },
     '& .MuiInputLabel-root': {
       right: 22, left: 'auto', transformOrigin: 'top right',
-      fontFamily: fonts.body, color: colors.muted,
-      '&.Mui-focused': { color: colors.goldText },
+      fontFamily: 'var(--font-body)', color: 'var(--muted)',
+      '&.Mui-focused': { color: 'var(--gold-text)' },
     },
     '& .MuiInputLabel-shrink': { transform: 'translate(0, -9px) scale(0.75)', right: 14, left: 'auto' },
     '& legend': { textAlign: 'right' },
   };
   const dialogPaperSx = {
-    bgcolor: colors.cream, border: `1px solid ${colors.gold}`, borderRadius: '12px',
+    bgcolor: 'var(--surface)', border: `1px solid var(--gold)`, borderRadius: '12px',
     boxShadow: '0 12px 40px rgba(44,14,16,.18)', backgroundImage: 'none',
   };
   const dialogTitleSx = {
     position: 'relative', textAlign: 'center', py: 2.5, px: 6,
-    fontFamily: fonts.heading, fontSize: '26px', fontWeight: 700, color: colors.inkWine,
-    bgcolor: colors.parchmentHeader, borderBottom: `1px solid ${colors.gold}`,
+    fontFamily: 'var(--font-heading)', fontSize: '26px', fontWeight: 700, color: 'var(--ink-wine)',
+    bgcolor: 'var(--parchment-2)', borderBottom: `1px solid var(--gold)`,
   } as const;
   const dialogCloseSx = {
     position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-    width: 36, height: 36, border: `1px solid ${colors.gold}`, color: colors.goldText,
-    '&:hover': { bgcolor: `${colors.gold}1F` },
+    width: 36, height: 36, border: `1px solid var(--gold)`, color: 'var(--gold-text)',
+    '&:hover': { bgcolor: `color-mix(in srgb, var(--gold) 12.157%, transparent)` },
   } as const;
-  const dialogContentSx = { pt: '24px !important', fontFamily: fonts.body, color: colors.body };
+  const dialogContentSx = { pt: '24px !important', fontFamily: 'var(--font-body)', color: 'var(--body)' };
   const dialogSectionTitleSx = {
-    fontFamily: fonts.heading, fontWeight: 700, fontSize: '20px', color: colors.inkWine,
+    fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '20px', color: 'var(--ink-wine)',
   } as const;
-  const dialogDividerSx = { borderColor: colors.ruleSoft };
-  const radioSx = { color: colors.gold, '&.Mui-checked': { color: colors.goldDeep } };
-  const radioLabelSx = { '& .MuiFormControlLabel-label': { fontFamily: fonts.body, fontSize: '15px', color: colors.body } };
+  const dialogDividerSx = { borderColor: 'var(--rule-soft)' };
+  const radioSx = { color: 'var(--gold)', '&.Mui-checked': { color: 'var(--gold-deep)' } };
+  const radioLabelSx = { '& .MuiFormControlLabel-label': { fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--body)' } };
 useEffect(() => {
   const fetchCategoryHierarchy = async () => {
     const currentDocId = lesson?.documentId || lesson?.id;
@@ -273,6 +279,22 @@ useEffect(() => {
           );
           setRelatedLessons(relRes.data.data || []);
         } catch (e) { console.error(e); }
+
+        // שיעור סמוך בסדרה (קודם = ישן יותר, הבא = חדש יותר)
+        setPrevLesson(null);
+        setNextLesson(null);
+        const currentDate = lesson?.lesson_date_gregorian;
+        if (currentDate) {
+          const neighborBase = `${import.meta.env.VITE_API_URL}/api/lessons?filters[${filterKey}][id][$eq]=${filterId}${exactOnly}&filters[id][$ne]=${lesson.id}&populate=rabbi&pagination[pageSize]=1`;
+          try {
+            const [prevRes, nextRes] = await Promise.all([
+              axios.get(`${neighborBase}&filters[lesson_date_gregorian][$lt]=${encodeURIComponent(currentDate)}&sort[0]=lesson_date_gregorian:desc`),
+              axios.get(`${neighborBase}&filters[lesson_date_gregorian][$gt]=${encodeURIComponent(currentDate)}&sort[0]=lesson_date_gregorian:asc`),
+            ]);
+            setPrevLesson(prevRes.data.data?.[0] || null);
+            setNextLesson(nextRes.data.data?.[0] || null);
+          } catch (e) { console.error('שגיאה בטעינת שיעור קודם/הבא:', e); }
+        }
       }
       
       let pathParts: string[] = [];
@@ -302,7 +324,6 @@ useEffect(() => {
 
       // סינון כפילויות ליתר ביטחון וחיבור
       setCategoryPath(pathParts.filter(Boolean).join(' / '));
-console.log("ategoryPath",pathParts);
 
     } catch (error) {
       console.error("Error fetching hierarchy:", error);
@@ -333,58 +354,40 @@ console.log("ategoryPath",pathParts);
     } catch (e) { console.error(e); }
   };
 
-  /** מוסיף אירוע חוזר שבועי ליומן — נבנה מקובץ התוכן (site.weeklyLesson), לא מהמצאה */
+  /** מוסיף אירוע חוזר יומי ליומן — נבנה מקובץ התוכן (site.weeklyLesson), לא מהמצאה */
   const handleAddWeeklyToCalendar = () => {
-    const dayMap: Record<string, number> = { 'ראשון': 0, 'שני': 1, 'שלישי': 2, 'רביעי': 3, 'חמישי': 4, 'שישי': 5, 'שבת': 6 };
-    const dayName = site.weeklyLesson.day.replace(/^יום\s/, '');
-    const targetDay = dayMap[dayName] ?? 4;
     const [hh, mm] = site.weeklyLesson.time.split(':').map(Number);
     const now = new Date();
-    const diff = (targetDay - now.getDay() + 7) % 7;
     const next = new Date(now);
-    next.setDate(now.getDate() + diff);
     next.setHours(hh || 0, mm || 0, 0, 0);
+    if (next.getTime() < now.getTime()) next.setDate(next.getDate() + 1);
     const pad = (n: number) => String(n).padStart(2, '0');
     const fmt = (d: Date) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
     const end = new Date(next.getTime() + 60 * 60 * 1000);
     const ics = [
       'BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT',
-      `DTSTART:${fmt(next)}`, `DTEND:${fmt(end)}`, 'RRULE:FREQ=WEEKLY',
-      'SUMMARY:שיעור קבלה שבועי', `LOCATION:${site.weeklyLesson.place} · ${site.addresses.yeshiva}`,
+      `DTSTART:${fmt(next)}`, `DTEND:${fmt(end)}`, 'RRULE:FREQ=DAILY',
+      'SUMMARY:שיעור קבלה יומי', `LOCATION:${site.weeklyLesson.place} · ${site.addresses.yeshiva}`,
       'END:VEVENT', 'END:VCALENDAR',
     ].join('\r\n');
     const blob = new Blob([ics], { type: 'text/calendar' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'שיעור-קבלה-שבועי.ics';
+    a.download = 'שיעור-קבלה-יומי.ics';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
   };
 
-  const primaryBtnSx = {
-    minHeight: '46px', borderRadius: '6px', fontWeight: 700, fontSize: '14px',
-    px: '20px', textTransform: 'none', ...goldButtonStyle,
-    '& .MuiButton-startIcon': { marginInlineStart: 0, marginInlineEnd: '10px' },
-    '&.Mui-disabled': { backgroundImage: 'none', bgcolor: colors.ruleSoft, color: '#9a8f78' },
-  } as const;
-  const secondaryBtnSx = {
-    minHeight: '46px', borderRadius: '6px', fontWeight: 700, fontSize: '14px',
-    px: '20px', textTransform: 'none', bgcolor: 'transparent',
-    '& .MuiButton-startIcon': { marginInlineStart: 0, marginInlineEnd: '10px' },
-    border: `1px solid ${colors.gold}`, color: colors.goldText,
-    '&:hover': { bgcolor: `${colors.gold}1F` },
-    '&.Mui-disabled': { border: `1px solid ${colors.ruleSoft}`, color: '#9a8f78' },
-  } as const;
-  const metaItemSx = { display: 'flex', alignItems: 'center', gap: '7px', fontFamily: fonts.body, fontSize: '15px', color: colors.body } as const;
+  const metaItemSx = { display: 'flex', alignItems: 'center', gap: '7px', fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--body)' } as const;
   const shareIconSx = {
-    width: 46, height: 46, border: `1px solid ${colors.gold}`, color: colors.goldText,
-    '&:hover': { bgcolor: `${colors.gold}1F` },
+    width: 'var(--btn-icon)', height: 'var(--btn-icon)', border: `1px solid var(--gold)`, color: 'var(--gold-text)',
+    '&:hover': { bgcolor: `color-mix(in srgb, var(--gold) 12.157%, transparent)` },
   } as const;
 
   return (
-    <Box sx={{ bgcolor: colors.creamAlt, direction: 'rtl' }}>
+    <Box sx={{ bgcolor: 'var(--parchment)', direction: 'rtl' }}>
       <Breadcrumb items={breadcrumbItems} sticky />
 
       <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
@@ -399,27 +402,25 @@ console.log("ategoryPath",pathParts);
             {seriesName && (
               <Typography sx={{
                 display: 'inline-block', mb: '14px', px: '14px', py: '4px', borderRadius: '999px',
-                bgcolor: colors.sand, border: `1px solid ${colors.gold}`, fontFamily: fonts.body,
-                fontSize: `${pageHeader.eyebrow.size}px`, letterSpacing: pageHeader.eyebrow.letterSpacing,
-                color: colors.wine, fontWeight: pageHeader.eyebrow.weight,
+                bgcolor: 'var(--sand)', border: `1px solid var(--gold)`, fontFamily: 'var(--font-body)',
+                fontSize: `var(--page-header-eyebrow-size)`, letterSpacing: 'var(--page-header-eyebrow-letter-spacing)',
+                color: 'var(--wine)', fontWeight: 'var(--page-header-eyebrow-weight)',
               }}>
                 {seriesName}
               </Typography>
             )}
 
-            <Typography component="h1" sx={{ fontFamily: fonts.heading, fontSize: { xs: '28px', md: '40px' }, fontWeight: 700, color: colors.inkWine, lineHeight: 1.25, mb: '10px' }}>
+            <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '28px', md: '40px' }, fontWeight: 700, color: 'var(--ink-wine)', lineHeight: 1.25, mb: '10px' }}>
               {title}
             </Typography>
 
-            <Typography sx={{ fontFamily: fonts.body, fontSize: '17px', fontWeight: 700, color: colors.goldText, mb: '24px' }}>
-              {rabbiName}
-              {yearHebrew && ` · ${yearHebrew}`}
-              {lessonNumber && ` · שיעור מס׳ ${lessonNumber}`}
+            <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '17px', fontWeight: 700, color: 'var(--gold-text)', mb: '24px' }}>
+              {[rabbiName, yearHebrew, lessonNumber && `שיעור מס׳ ${lessonNumber}`].filter(Boolean).join(' · ')}
             </Typography>
 
             {/* וידאו יוטיוב — facade: ה-iframe (וכל ספריית הנגן) נטען רק בלחיצה. B1.ב */}
             {youtube_id && (
-              <Box sx={{ position: 'relative', pt: '56.25%', borderRadius: '12px', overflow: 'hidden', mb: 3, border: `1px solid ${colors.gold}`, bgcolor: '#000' }}>
+              <Box sx={{ position: 'relative', pt: '56.25%', borderRadius: '12px', overflow: 'hidden', mb: 3, border: `1px solid var(--gold)`, bgcolor: '#000' }}>
                 {videoPlaying ? (
                   <iframe
                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
@@ -434,15 +435,14 @@ console.log("ategoryPath",pathParts);
                     component="button"
                     onClick={() => setVideoPlaying(true)}
                     aria-label="צפייה בשיעור"
-                    sx={{
-                      position: 'absolute', inset: 0, width: '100%', height: '100%',
-                      border: 0, p: 0, cursor: 'pointer',
-                      backgroundImage: `url(https://i.ytimg.com/vi/${youtube_id}/hqdefault.jpg)`,
-                      backgroundSize: 'cover', backgroundPosition: 'center',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
+                    sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0, p: 0, cursor: 'pointer', bgcolor: 'transparent' }}
                   >
-                    <PlayBadge size={84} />
+                    <LessonThumb
+                      src={youtubeThumbSources(youtube_id)}
+                      playSize={84}
+                      crownWidth={110}
+                      sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                    />
                   </Box>
                 )}
               </Box>
@@ -451,8 +451,8 @@ console.log("ategoryPath",pathParts);
             {/* נגן אודיו מותאם — B2. אלמנט ה-audio האמיתי מוסתר, הממשק כולו בנוי מסביבו */}
             {audioUrl && (
               <Box sx={{
-                mb: 3, bgcolor: audioPlayer.bg, border: `1px solid ${audioPlayer.border}`,
-                borderRadius: `${audioPlayer.radius}px`, p: '16px 20px',
+                mb: 3, bgcolor: 'var(--wine)', border: `1px solid var(--gold)`,
+                borderRadius: `var(--audio-player-radius)`, p: '16px 20px',
                 display: 'flex', alignItems: 'center', gap: '18px', textAlign: 'right',
               }}>
                 <audio
@@ -474,10 +474,10 @@ console.log("ategoryPath",pathParts);
                   onClick={toggleAudioPlay}
                   aria-label={isPlaying ? 'השהיית השיעור' : 'האזנה לשיעור'}
                   sx={{
-                    width: audioPlayer.playButton.size, height: audioPlayer.playButton.size,
-                    minWidth: audioPlayer.playButton.size, flexShrink: 0, borderRadius: '50%',
-                    backgroundImage: playBadge.background, color: playBadge.icon,
-                    '&:hover': { backgroundImage: playBadge.background, opacity: 0.9 },
+                    width: 'var(--audio-player-play-button-size)', height: 'var(--audio-player-play-button-size)',
+                    minWidth: 'var(--audio-player-play-button-size)', flexShrink: 0, borderRadius: '50%',
+                    backgroundImage: 'var(--gradient-gold-button)', color: 'var(--ink-dark)',
+                    '&:hover': { backgroundImage: 'var(--gradient-gold-button)', opacity: 0.9 },
                   }}
                 >
                   {isPlaying
@@ -487,11 +487,11 @@ console.log("ategoryPath",pathParts);
 
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: '4px' }}>
-                    <Typography sx={{ fontSize: `${audioPlayer.label.size}px`, fontWeight: audioPlayer.label.weight, color: audioPlayer.label.color }}>
+                    <Typography sx={{ fontSize: `var(--audio-player-label-size)`, fontWeight: 'var(--audio-player-label-weight)', color: 'var(--gold-light)' }}>
                       האזנה לשיעור
                     </Typography>
                     <Typography sx={{
-                      fontSize: `${audioPlayer.time.size}px`, color: audioPlayer.time.color,
+                      fontSize: `var(--audio-player-time-size)`, color: 'var(--audio-player-time-color)',
                       fontVariantNumeric: 'tabular-nums', direction: 'ltr', whiteSpace: 'nowrap',
                     }}>
                       {formatTime(currentTime)} / {formatTime(audioDuration)}
@@ -505,19 +505,19 @@ console.log("ategoryPath",pathParts);
                     onPointerUp={handleTrackPointerUp}
                     onPointerCancel={() => setDragRatio(null)}
                     sx={{
-                      position: 'relative', height: `${audioPlayer.track.height}px`,
-                      borderRadius: '999px', bgcolor: audioPlayer.track.bg, cursor: 'pointer', mb: '6px',
+                      position: 'relative', height: `var(--audio-player-track-height)`,
+                      borderRadius: '999px', bgcolor: 'var(--audio-player-track-bg)', cursor: 'pointer', mb: '6px',
                       touchAction: 'none', userSelect: 'none',
                     }}
                   >
                     <Box sx={{
                       position: 'absolute', top: 0, bottom: 0, right: 0,
-                      width: `${progressPct}%`, borderRadius: '999px', bgcolor: colors.gold,
+                      width: `${progressPct}%`, borderRadius: '999px', bgcolor: 'var(--gold)',
                     }} />
                     <Box sx={{
                       position: 'absolute', top: '-4px', right: `calc(${progressPct}% - 7px)`,
-                      width: `${audioPlayer.handle.size}px`, height: `${audioPlayer.handle.size}px`,
-                      borderRadius: '50%', bgcolor: audioPlayer.handle.color,
+                      width: `var(--audio-player-handle-size)`, height: `var(--audio-player-handle-size)`,
+                      borderRadius: '50%', bgcolor: 'var(--audio-player-handle-color)',
                     }} />
                   </Box>
                 </Box>
@@ -526,8 +526,8 @@ console.log("ategoryPath",pathParts);
                   onClick={cyclePlaybackRate}
                   aria-label="מהירות ניגון"
                   sx={{
-                    width: audioPlayer.controlButton.size, height: audioPlayer.controlButton.size,
-                    flexShrink: 0, borderRadius: "10px", border: `1px solid ${audioPlayer.border}`, color: audioPlayer.label.color,
+                    width: 'var(--audio-player-control-button-size)', height: 'var(--audio-player-control-button-size)',
+                    flexShrink: 0, borderRadius: "10px", border: `1px solid var(--gold)`, color: 'var(--gold-light)',
                     fontSize: '13px', fontWeight: 700, direction: 'ltr',
                   }}
                 >
@@ -538,8 +538,8 @@ console.log("ategoryPath",pathParts);
                   onClick={toggleMute}
                   aria-label={isMuted ? 'ביטול השתקה' : 'השתקה'}
                   sx={{
-                    width: audioPlayer.controlButton.size, height: audioPlayer.controlButton.size,
-                    flexShrink: 0, borderRadius: "10px", border: `1px solid ${audioPlayer.border}`, color: audioPlayer.label.color,
+                    width: 'var(--audio-player-control-button-size)', height: 'var(--audio-player-control-button-size)',
+                    flexShrink: 0, borderRadius: "10px", border: `1px solid var(--gold)`, color: 'var(--gold-light)',
                   }}
                 >
                   {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
@@ -547,16 +547,57 @@ console.log("ategoryPath",pathParts);
               </Box>
             )}
 
+            {/* מעבר לשיעור הקודם / הבא באותה סדרה (סעיף 23 במפרט) */}
+            {(prevLesson || nextLesson) && (
+              <Box component="nav" aria-label="מעבר בין שיעורי הסדרה" sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 3 }}>
+                {([
+                  { item: prevLesson, label: 'שיעור קודם', icon: <ChevronRight size={18} strokeWidth={1.75} />, isNext: false },
+                  { item: nextLesson, label: 'שיעור הבא', icon: <ChevronLeft size={18} strokeWidth={1.75} />, isNext: true },
+                ]).map(({ item, label, icon, isNext }) => {
+                  const a = item ? (item.attributes || item) : null;
+                  const itemTitle: string = a?.title || '';
+                  return (
+                    <AppButton
+                      key={label}
+                      variant="outline"
+                      disabled={!item}
+                      aria-label={item ? `${label}: ${itemTitle}` : `${label} — אין`}
+                      title={itemTitle || undefined}
+                      startIcon={isNext ? undefined : icon}
+                      endIcon={isNext ? icon : undefined}
+                      onClick={() => {
+                        if (!item) return;
+                        const rn = a.rabbi?.name || a.rabbi?.data?.attributes?.name || '';
+                        const formatted = { ...a, id: a.id ?? item.id, rabbi: { name: rn } };
+                        onLessonSelect ? onLessonSelect(formatted) : onBack();
+                      }}
+                      sx={{ justifyContent: isNext ? 'flex-end' : 'flex-start', minWidth: 0, height: 'auto', py: '8px', '& .MuiButton-startIcon, & .MuiButton-endIcon': { flexShrink: 0 } }}
+                    >
+                      <Box component="span" sx={{ display: 'flex', flexDirection: 'column', alignItems: isNext ? 'flex-end' : 'flex-start', minWidth: 0, lineHeight: 1.25 }}>
+                        <span>{label}</span>
+                        {itemTitle && (
+                          <Box component="span" sx={{ fontSize: '12px', fontWeight: 400, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {itemTitle}
+                          </Box>
+                        )}
+                      </Box>
+                    </AppButton>
+                  );
+                })}
+              </Box>
+            )}
+
             {/* רצועת מטא אחת — במקום כמה שורות נפרדות */}
             <Box sx={{
-              bgcolor: colors.cream, border: `1px solid ${colors.gold}`, borderRadius: '12px',
+              bgcolor: 'var(--surface)', border: `1px solid var(--gold)`, borderRadius: '12px',
               p: '18px 22px', display: 'flex', flexWrap: 'wrap', gap: '16px 34px', mb: '24px',
             }}>
-              <Box sx={metaItemSx}><PersonOutlineOutlinedIcon sx={{ fontSize: 17, color: colors.goldText }} />{rabbiName}</Box>
-              {lesson_date_hebrew && <Box sx={metaItemSx}><CalendarTodayOutlinedIcon sx={{ fontSize: 17, color: colors.goldText }} />{lesson_date_hebrew}</Box>}
-              {lesson_date_gregorian && <Box sx={metaItemSx}><CalendarTodayOutlinedIcon sx={{ fontSize: 17, color: colors.goldText }} />{lesson_date_gregorian}</Box>}
-              <Box sx={metaItemSx}><AccessTimeOutlinedIcon sx={{ fontSize: 17, color: colors.goldText }} />{duration || '00:00'}</Box>
-              {lessonNumber && <Box sx={metaItemSx}><ConfirmationNumberOutlinedIcon sx={{ fontSize: 17, color: colors.goldText }} />שיעור מס׳ {lessonNumber}</Box>}
+              {rabbiName && <Box sx={metaItemSx}><PersonOutlineOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />{rabbiName}</Box>}
+              {lesson_date_hebrew && <Box sx={metaItemSx}><CalendarTodayOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />{lesson_date_hebrew}</Box>}
+              {lesson_date_gregorian && <Box sx={metaItemSx}><CalendarTodayOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />{lesson_date_gregorian}</Box>}
+              <Box sx={metaItemSx}><AccessTimeOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />{duration || '00:00'}</Box>
+              {Number(views) > 0 && <Box sx={metaItemSx}><VisibilityOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />{Number(views).toLocaleString('he-IL')} צפיות</Box>}
+              {lessonNumber && <Box sx={metaItemSx}><ConfirmationNumberOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />שיעור מס׳ {lessonNumber}</Box>}
             </Box>
 
             {/* כפתורי פעולה — אחד ראשי, השאר משניים */}
@@ -565,8 +606,19 @@ console.log("ategoryPath",pathParts);
               gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
               '& .MuiButton-root': { width: '100%', height: '46px', whiteSpace: 'nowrap' },
             }}>
-              <Button
-                variant="contained" disableElevation sx={primaryBtnSx}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {AudioFileName && (
+                <IconButton
+                  aria-label="עזרה בהורדת השיעור"
+                  aria-haspopup="dialog"
+                  onClick={(e) => setDownloadHelpAnchor(e.currentTarget)}
+                  sx={{ width: 36, height: 36, flexShrink: 0, border: `1px solid var(--gold)`, color: 'var(--gold-text)', '&:hover': { bgcolor: `color-mix(in srgb, var(--gold) 12.157%, transparent)` } }}
+                >
+                  <HelpOutlineIcon sx={{ fontSize: 20 }} />
+                </IconButton>
+              )}
+              <AppButton
+
                 disabled={!AudioFileName}
                 onClick={() => {
                   const cleanDir = (AudioDir || '').replace(/^\/+|\/+$/g, '');
@@ -581,10 +633,11 @@ console.log("ategoryPath",pathParts);
                 startIcon={<ArrowDownToLine size={15} strokeWidth={1.75} />}
               >
                 הורדת השיעור
-              </Button>
+              </AppButton>
+              </Box>
 
-              <Button
-                variant="outlined" sx={secondaryBtnSx}
+              <AppButton
+                variant="outline"
                 disabled={!PdfFileName}
                 onClick={() => {
                   const cleanDir = (AudioDir || '').replace(/^\/+|\/+$/g, '');
@@ -599,35 +652,35 @@ console.log("ategoryPath",pathParts);
                 startIcon={<FileText size={15} strokeWidth={1.75} />}
               >
                 הורדת דף מקורות
-              </Button>
+              </AppButton>
 
-              <Button variant="outlined" sx={secondaryBtnSx} startIcon={<Heart size={15} strokeWidth={1.75} />} onClick={() => setDedicateOpen(true)}>
+              <AppButton variant="outline" startIcon={<Heart size={15} strokeWidth={1.75} />} onClick={() => setDedicateOpen(true)}>
                 הקדשת השיעור
-              </Button>
-              <Button variant="outlined" sx={secondaryBtnSx} startIcon={<MessageSquare size={15} strokeWidth={1.75} />} onClick={() => { setFeedbackOpen(true); setFeedbackStatus('idle'); }}>
+              </AppButton>
+              <AppButton variant="outline" startIcon={<MessageSquare size={15} strokeWidth={1.75} />} onClick={() => { setFeedbackOpen(true); setFeedbackStatus('idle'); }}>
                 הערה על השיעור
-              </Button>
+              </AppButton>
             </Box>
           </Box>
 
           {/* ===== סרגל צד ===== */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {seriesName && (
-              <Box sx={{ bgcolor: colors.cream, border: `1px solid ${colors.gold}`, borderRadius: '12px', p: '20px' }}>
-                <Typography sx={{ fontFamily: fonts.heading, fontSize: '18px', fontWeight: 700, color: colors.inkWine, mb: '8px' }}>
+              <Box sx={{ bgcolor: 'var(--surface)', border: `1px solid var(--gold)`, borderRadius: '12px', p: '20px' }}>
+                <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '18px', fontWeight: 700, color: 'var(--ink-wine)', mb: '8px' }}>
                   על הסדרה
                 </Typography>
-                <Typography sx={{ fontFamily: fonts.body, fontSize: '14px', color: colors.muted, mb: '14px' }}>
-                  שיעור זה הוא חלק מסדרת "{seriesName}" של {rabbiName}.
+                <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--muted)', mb: '14px' }}>
+                  שיעור זה הוא חלק מסדרת "{seriesName}"{rabbiName && ` של ${rabbiName}`}.
                 </Typography>
-                <Button fullWidth variant="outlined" sx={secondaryBtnSx} onClick={() => navigate('/AllLessons', { state: seriesFilter })}>
+                <AppButton fullWidth variant="outline" onClick={() => navigate('/AllLessons', { state: seriesFilter })}>
                   לכל הסדרה
-                </Button>
+                </AppButton>
               </Box>
             )}
 
-            <Box sx={{ bgcolor: colors.cream, border: `1px solid ${colors.gold}`, borderRadius: '12px', p: '20px' }}>
-              <Typography sx={{ fontFamily: fonts.heading, fontSize: '18px', fontWeight: 700, color: colors.inkWine, mb: '12px' }}>
+            <Box sx={{ bgcolor: 'var(--surface)', border: `1px solid var(--gold)`, borderRadius: '12px', p: '20px' }}>
+              <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '18px', fontWeight: 700, color: 'var(--ink-wine)', mb: '12px' }}>
                 שיתוף
               </Typography>
               <Box sx={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -648,28 +701,28 @@ console.log("ategoryPath",pathParts);
                 </IconButton>
               </Box>
               {copied && (
-                <Typography sx={{ fontSize: '12px', color: colors.goldText, textAlign: 'center', mt: '8px' }}>
+                <Typography sx={{ fontSize: '12px', color: 'var(--gold-text)', textAlign: 'center', mt: '8px' }}>
                   הקישור הועתק
                 </Typography>
               )}
             </Box>
 
-            <Box sx={{ bgcolor: colors.wine, border: `1px solid ${colors.gold}`, borderRadius: '12px', p: '20px', color: '#fff' }}>
-              <Typography sx={{ ...goldTextFill, fontFamily: fonts.heading, fontSize: '18px', fontWeight: 700, mb: '10px' }}>
-                שיעור קבלה שבועי
+            <Box sx={{ bgcolor: 'var(--wine)', border: `1px solid var(--gold)`, borderRadius: '12px', p: '20px', color: 'var(--surface)' }}>
+              <Typography sx={{ background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent', fontFamily: 'var(--font-heading)', fontSize: '18px', fontWeight: 700, mb: '10px' }}>
+                שיעור קבלה יומי
               </Typography>
-              <Typography sx={{ fontFamily: fonts.body, fontSize: '15px', color: bookPurchaseCard.subTextColor, mb: '4px' }}>
+              <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--book-purchase-card-sub-text-color)', mb: '4px' }}>
                 {site.weeklyLesson.day} · {site.weeklyLesson.time}
               </Typography>
-              <Typography sx={{ fontFamily: fonts.body, fontSize: '14px', color: bookPurchaseCard.subTextColor, mb: '14px' }}>
+              <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--book-purchase-card-sub-text-color)', mb: '14px' }}>
                 {site.weeklyLesson.place} · {site.addresses.yeshiva}
               </Typography>
-              <Button
-                fullWidth variant="contained" disableElevation onClick={handleAddWeeklyToCalendar}
-                sx={{ ...primaryBtnSx, minHeight: '44px', px: 0 }}
+              <AppButton
+                fullWidth onClick={handleAddWeeklyToCalendar}
+               
               >
                 הוספה ליומן
-              </Button>
+              </AppButton>
             </Box>
           </Box>
         </Box>
@@ -677,16 +730,16 @@ console.log("ategoryPath",pathParts);
 
       {/* שיעורים נוספים בסדרה — רשת כרטיסים, לא קרוסלה. B5 */}
       {relatedLessons.length > 0 && (
-        <Box sx={{ bgcolor: colors.sectionBg, borderTop: `1px solid ${colors.gold}`, py: { xs: 5, md: 7 } }}>
+        <Box sx={{ bgcolor: 'var(--section-bg)', borderTop: `1px solid var(--gold)`, py: { xs: 5, md: 7 } }}>
         <Container maxWidth="lg">
           <SectionArch mb="17px" />
-          <Typography component="h2" sx={{ fontFamily: fonts.heading, fontSize: { xs: '26px', md: '38px' }, lineHeight: 1.2, fontWeight: 700, color: colors.inkWine, mb: '38px', textAlign: 'center' }}>
+          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '26px', md: '38px' }, lineHeight: 1.2, fontWeight: 700, color: 'var(--ink-wine)', mb: '38px', textAlign: 'center' }}>
             שיעורים נוספים בסדרה
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: '20px' }}>
-            {relatedLessons.map((rel) => {
+            {relatedLessons.filter((rel) => (rel.attributes || rel).title?.trim()).map((rel) => {
               const a = rel.attributes || rel;
-              const relRabbiName = a.rabbi?.name || a.rabbi?.data?.attributes?.name || 'הרב מרדכי עטייה';
+              const relRabbiName = a.rabbi?.name || a.rabbi?.data?.attributes?.name || '';
               const selectThisLesson = () => {
                 const formatted = { ...a, rabbi: { name: relRabbiName } };
                 onLessonSelect ? onLessonSelect(formatted) : onBack();
@@ -708,6 +761,23 @@ console.log("ategoryPath",pathParts);
         </Box>
       )}
 
+      <Popover
+        open={Boolean(downloadHelpAnchor)}
+        anchorEl={downloadHelpAnchor}
+        onClose={() => setDownloadHelpAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+        slotProps={{ paper: { dir: 'rtl', sx: { maxWidth: 320, p: '16px 18px', border: `1px solid var(--gold)`, borderRadius: '12px', bgcolor: 'var(--surface)' } } }}
+      >
+        <Typography sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '17px', color: 'var(--ink-wine)', mb: '6px' }}>
+          איך מורידים את השיעור?
+        </Typography>
+        <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--body)', lineHeight: 1.6 }}>
+          לחצו על "הורדת השיעור". הקובץ יישמר בתיקיית ההורדות במכשיר.
+          בטלפון: אם הקובץ נפתח במקום להישמר, לחצו לחיצה ארוכה על הכפתור ובחרו "שמירת קישור".
+        </Typography>
+      </Popover>
+
       <Dialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} dir="rtl" fullWidth maxWidth="sm" PaperProps={{ sx: dialogPaperSx }}>
         <DialogTitle sx={dialogTitleSx}>
           הערה על השיעור
@@ -717,16 +787,16 @@ console.log("ategoryPath",pathParts);
         </DialogTitle>
         <DialogContent sx={dialogContentSx}>
           <Stack spacing={2}>
-            <Typography sx={{ fontFamily: fonts.body, color: colors.muted, fontSize: '15px' }}>שיעור: <strong style={{ color: colors.inkWine }}>{title}</strong></Typography>
+            <Typography sx={{ fontFamily: 'var(--font-body)', color: 'var(--muted)', fontSize: '15px' }}>שיעור: <strong style={{ color: 'var(--ink-wine)' }}>{title}</strong></Typography>
             <Divider sx={dialogDividerSx} />
             <TextField size="small" label="שם" value={feedbackData.name} onChange={e => setFeedbackData(p => ({ ...p, name: e.target.value }))} sx={goldField} />
             <TextField size="small" label='אימייל' value={feedbackData.email} onChange={e => setFeedbackData(p => ({ ...p, email: e.target.value }))} sx={goldField} />
             <TextField multiline rows={4} label="תגובה" value={feedbackData.message} onChange={e => setFeedbackData(p => ({ ...p, message: e.target.value }))} sx={goldField} />
-            {feedbackStatus === 'success' && <Typography sx={{ color: colors.goldText, textAlign: 'center', fontWeight: 700 }}>התגובה נשלחה! החלון יסגר בעוד מספר שניות...</Typography>}
-            {feedbackStatus === 'error' && <Typography sx={{ color: contactForm.required, textAlign: 'center' }}>שגיאה בשליחה, נסה שוב.</Typography>}
-            <Button fullWidth variant="contained" disableElevation disabled={feedbackStatus === 'loading'} onClick={handleFeedbackSubmit} sx={primaryBtnSx}>
+            {feedbackStatus === 'success' && <Typography sx={{ color: 'var(--gold-text)', textAlign: 'center', fontWeight: 700 }}>התגובה נשלחה! החלון יסגר בעוד מספר שניות...</Typography>}
+            {feedbackStatus === 'error' && <Typography sx={{ color: 'var(--contact-form-required)', textAlign: 'center' }}>שגיאה בשליחה, נסה שוב.</Typography>}
+            <AppButton fullWidth disabled={feedbackStatus === 'loading'} onClick={handleFeedbackSubmit}>
               {feedbackStatus === 'loading' ? 'שולח...' : 'שליחת תגובה'}
-            </Button>
+            </AppButton>
           </Stack>
         </DialogContent>
       </Dialog>
@@ -740,22 +810,22 @@ console.log("ategoryPath",pathParts);
         </DialogTitle>
         <DialogContent sx={dialogContentSx}>
           <Stack spacing={1.5}>
-            <Box sx={{ bgcolor: colors.sand, border: `1px solid ${colors.gold}`, borderRadius: '8px', p: '14px 18px' }}>
+            <Box sx={{ bgcolor: 'var(--sand)', border: `1px solid var(--gold)`, borderRadius: '8px', p: '14px 18px' }}>
               <Stack direction="row" gap={1}>
-                <Typography fontWeight={700} fontFamily={fonts.body}>מספר שיעור:</Typography>
-                <Typography fontFamily={fonts.body}>{lesson.id}</Typography>
+                <Typography fontWeight={700} fontFamily={'var(--font-body)'}>מספר שיעור:</Typography>
+                <Typography fontFamily={'var(--font-body)'}>{lesson.id}</Typography>
               </Stack>
               <Stack direction="row" gap={1}>
-                <Typography fontWeight={700} fontFamily={fonts.body}>שם:</Typography>
-                <Typography fontFamily={fonts.body}>{title}{categoryPath ? ` - ${categoryPath}` : ''}</Typography>
+                <Typography fontWeight={700} fontFamily={'var(--font-body)'}>שם:</Typography>
+                <Typography fontFamily={'var(--font-body)'}>{title}{categoryPath ? ` - ${categoryPath}` : ''}</Typography>
               </Stack>
               <Stack direction="row" gap={1}>
-                <Typography fontWeight={700} fontFamily={fonts.body}>נושא:</Typography>
-                <Typography fontFamily={fonts.body}>{categoryPath || '-'}</Typography>
+                <Typography fontWeight={700} fontFamily={'var(--font-body)'}>נושא:</Typography>
+                <Typography fontFamily={'var(--font-body)'}>{categoryPath || '-'}</Typography>
               </Stack>
               <Stack direction="row" gap={1}>
-                <Typography fontWeight={700} fontFamily={fonts.body}>שם הרב:</Typography>
-                <Typography fontFamily={fonts.body}>{rabbiName}</Typography>
+                <Typography fontWeight={700} fontFamily={'var(--font-body)'}>שם הרב:</Typography>
+                <Typography fontFamily={'var(--font-body)'}>{rabbiName || '-'}</Typography>
               </Stack>
             </Box>
 
@@ -767,7 +837,7 @@ console.log("ategoryPath",pathParts);
                     <FormControlLabel key={opt} value={opt} control={<Radio size="small" sx={radioSx} />} label={opt} sx={radioLabelSx} />
                   ))}
                 </RadioGroup>
-                <Typography sx={{ mt: 1, fontFamily: fonts.body, fontSize: '14px', color: colors.muted }}>ההקדשה תוצג מתאריך:</Typography>
+                <Typography sx={{ mt: 1, fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--muted)' }}>ההקדשה תוצג מתאריך:</Typography>
                 <TextField
                   type="date"
                   size="small"
@@ -790,7 +860,7 @@ console.log("ategoryPath",pathParts);
             <Divider sx={dialogDividerSx} />
 
             <Typography sx={{ ...dialogSectionTitleSx, fontSize: '18px', textAlign: 'right' }}>הקדש שיעור ל:</Typography>
-            <Typography sx={{ fontFamily: fonts.body, fontSize: '13px', color: colors.muted, textAlign: 'right' }}>לדוגמא: דוד בן אסתר</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)', textAlign: 'right' }}>לדוגמא: דוד בן אסתר</Typography>
             <Stack direction="row" alignItems="center" gap={2} sx={{ flexWrap: 'wrap' }}>
               <TextField size="small" placeholder="שם" value={dedicateName} onChange={e => setDedicateName(e.target.value)} sx={{ flex: 1, ...goldField }} />
               <RadioGroup row value={dedicateGender} onChange={e => setDedicateGender(e.target.value)}>
@@ -802,11 +872,11 @@ console.log("ategoryPath",pathParts);
 
             <Divider sx={dialogDividerSx} />
 
-            <Typography sx={{ fontFamily: fonts.body, fontSize: '13px', color: colors.muted }}>* הערה: אם ברצונך להקדיש מספר שיעורים כתוב לנו את בקשתך כאן.</Typography>
-            <Typography sx={{ fontFamily: fonts.body, fontSize: '13px', color: colors.muted }}>השדות המסומנים עם * הכרחיים למילוי</Typography>
-            <Button fullWidth variant="contained" disableElevation onClick={() => navigate('/DonateLetter')} sx={{ ...primaryBtnSx, mt: 1 }}>
+            <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)' }}>* הערה: אם ברצונך להקדיש מספר שיעורים כתוב לנו את בקשתך כאן.</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)' }}>השדות המסומנים עם * הכרחיים למילוי</Typography>
+            <AppButton fullWidth onClick={() => navigate('/DonateLetter')} sx={{ mt: 1 }}>
               לתרומה
-            </Button>
+            </AppButton>
           </Stack>
         </DialogContent>
       </Dialog>

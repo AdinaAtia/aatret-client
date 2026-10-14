@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { Play } from 'lucide-react';
-import { playBadge } from '../../src/theme/tokens';
+import { cssNumber } from '../../src/styles/cssVar';
 
 interface PlayBadgeProps {
   size?: number;
@@ -12,11 +12,11 @@ const PlayBadge: React.FC<PlayBadgeProps> = ({ size = 44 }) => (
   <Box sx={{
     position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
     width: size, height: size, borderRadius: '50%',
-    backgroundImage: playBadge.background, color: playBadge.icon,
+    backgroundImage: 'var(--gradient-gold-button)', color: 'var(--ink-dark)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     pointerEvents: 'none',
   }}>
-    <Play fill="currentColor" size={Math.round(size * playBadge.iconRatio)} strokeWidth={1} />
+    <Play fill="currentColor" size={Math.round(size * cssNumber('--play-badge-icon-ratio'))} strokeWidth={1} />
   </Box>
 );
 

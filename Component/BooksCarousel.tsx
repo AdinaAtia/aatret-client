@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, IconButton, CircularProgress, Button } from '@mui/material';
+import { Box, Typography, IconButton, CircularProgress } from '@mui/material';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
-import { colors, fonts, fontSize, goldButtonStyle, radius, bookCard } from '../src/theme/tokens';
 import { site } from '../src/content/site';
+import AppButton from './shared/AppButton';
 import SectionFlourish from './shared/SectionFlourish';
 import SectionArch from './shared/SectionArch';
+import { cardHoverSx } from './shared/cardHover';
 import CarouselProgress, { carouselArrowSx } from "./shared/CarouselProgress";
 import { useCarousel } from './shared/useCarousel';
 
@@ -45,8 +46,8 @@ const BooksCarousel = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 10, bgcolor: colors.sectionBg }}>
-        <CircularProgress sx={{ color: colors.gold }} />
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 10, bgcolor: 'var(--section-bg)' }}>
+        <CircularProgress sx={{ color: 'var(--gold)' }} />
       </Box>
     );
   }
@@ -55,9 +56,9 @@ const BooksCarousel = () => {
     <Box sx={{
       width: '100%',
       boxSizing: 'border-box',
-      bgcolor: colors.sectionBg,
-      borderTop: `1px solid ${colors.gold}`,
-      borderBottom: `1px solid ${colors.gold}`,
+      bgcolor: 'var(--section-bg)',
+      borderTop: `1px solid var(--gold)`,
+      borderBottom: `1px solid var(--gold)`,
       py: { xs: 6, md: '80px' },
       direction: 'rtl',
       overflow: 'hidden',
@@ -68,11 +69,11 @@ const BooksCarousel = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: '32px', md: '48px' } }}>
           <SectionArch mb="16px" />
           <Typography sx={{
-            fontFamily: fonts.headingOrnate,
-            fontSize: { xs: fontSize.xl, md: fontSize.xxl },
+            fontFamily: 'var(--font-heading-ornate)',
+            fontSize: { xs: 'var(--t5)', md: 'var(--t6)' },
             fontWeight: 400,
             lineHeight: 1.2,
-            color: colors.wine,
+            color: 'var(--wine)',
           }}>
             ספרי הישיבה
           </Typography>
@@ -111,7 +112,7 @@ const BooksCarousel = () => {
               if (book.image && Array.isArray(book.image) && book.image.length > 0) {
                 imageUrl = `${STRAPI_BASE_URL}${book.image[0].url}`;
               }
-              const openBook = () => navigate('/BookDetailsPage', { state: { book } });
+              const openBook = () => navigate(`/BookDetailsPage/${book.id}`, { state: { book } });
 
               return (
                 <Box
@@ -127,15 +128,14 @@ const BooksCarousel = () => {
                     },
                     minHeight: { md: '444px' },
                     display: 'flex',
-                    bgcolor: bookCard.bg,
-                    border: `1px solid ${bookCard.border}`,
-                    borderRadius: `${bookCard.radius}px`,
+                    bgcolor: 'var(--surface)',
+                    border: `1px solid var(--gold)`,
+                    borderRadius: `var(--book-card-radius)`,
                     p: '8px',
                     cursor: 'pointer',
                     scrollSnapAlign: 'start',
-                    transition: '0.25s',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                    '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 10px 28px rgba(74,15,20,.14)' },
+                    ...cardHoverSx,
                   }}
                 >
                   {/* המסגרת הפנימית עוטפת את כל תוכן הכרטיס */}
@@ -143,12 +143,12 @@ const BooksCarousel = () => {
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
-                    border: `1px solid ${bookCard.innerBorder}`,
-                    borderRadius: `${bookCard.innerRadius}px`,
+                    border: `1px solid var(--book-card-inner-border)`,
+                    borderRadius: `var(--book-card-inner-radius)`,
                     p: '8px 18px 18px',
                   }}>
                     <Box sx={{
-                      height: `${bookCard.imageHeight}px`,
+                      height: `var(--book-card-image-height)`,
                       flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       overflow: 'hidden',
@@ -169,33 +169,24 @@ const BooksCarousel = () => {
 
                     <Box sx={{ flex: 1, textAlign: 'center' }}>
                       <Typography sx={{
-                        fontFamily: fonts.heading, fontWeight: 700, fontSize: fontSize.lg,
-                        color: bookCard.titleColor, lineHeight: 1.3, mt: '2px', mb: '8px',
+                        fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'var(--t4)',
+                        color: 'var(--ink-wine)', lineHeight: 1.3, mt: '2px', mb: '8px',
                       }}>
                         {book.book_name}
                       </Typography>
                       {book.rabbi && (
-                        <Typography sx={{ color: colors.muted, fontFamily: fonts.body, fontSize: '13px', lineHeight: 1.5 }}>
+                        <Typography sx={{ color: 'var(--muted)', fontFamily: 'var(--font-body)', fontSize: '13px', lineHeight: 1.5 }}>
                           {book.rabbi}
                         </Typography>
                       )}
                     </Box>
 
-                    <Button
+                    <AppButton
                       onClick={(e) => { e.stopPropagation(); openBook(); }}
-                      sx={{
-                        mt: '14px',
-                        width: '100%',
-                        height: '46px',
-                        ...goldButtonStyle,
-                        fontFamily: fonts.body,
-                        fontWeight: 700,
-                        fontSize: '15px',
-                        borderRadius: radius.control,
-                      }}
+                      sx={{ mt: '14px', width: '100%' }}
                     >
                       לפרטים
-                    </Button>
+                    </AppButton>
                   </Box>
                 </Box>
               );
@@ -230,17 +221,17 @@ const BooksCarousel = () => {
             textAlign: 'center',
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: '24px' }, flexDirection: { xs: 'column', md: 'row' } }}>
-              <Typography sx={{ fontFamily: fonts.heading, fontWeight: 700, fontSize: '23px', color: '#fff' }}>
+              <Typography sx={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '23px', color: '#fff' }}>
                 לרכישת הספרים
               </Typography>
               <Typography
                 component="a"
                 href={`tel:${site.phones.books.replace(/-/g, '')}`}
                 sx={{
-                  fontFamily: fonts.body,
+                  fontFamily: 'var(--font-body)',
                   fontSize: '24px',
                   fontWeight: 700,
-                  color: colors.goldLight,
+                  color: 'var(--gold-light)',
                   textDecoration: 'none',
                   direction: 'ltr',
                 }}
@@ -250,8 +241,8 @@ const BooksCarousel = () => {
             </Box>
             {site.addresses.office && (
               <>
-                <Box sx={{ display: { xs: 'none', md: 'block' }, width: '1px', height: '43px', bgcolor: colors.gold }} />
-                <Typography sx={{ fontFamily: fonts.body, fontSize: '15px', color: `${colors.cream}99` }}>
+                <Box sx={{ display: { xs: 'none', md: 'block' }, width: '1px', height: '43px', bgcolor: 'var(--gold)' }} />
+                <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: `color-mix(in srgb, var(--surface) 60%, transparent)` }}>
                   {site.addresses.office.replace(/\s*\d{7}$/, '')}
                 </Typography>
               </>

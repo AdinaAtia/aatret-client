@@ -288,6 +288,9 @@ const DraftLessons = lazy(() => import('../Component/DraftLessons'));
 const ManageRabbis = lazy(() => import('../Component/ManageRabbis'));
 const ManageBooks = lazy(() => import('../Component/ManageBooks'));
 const VideoGallery = lazy(() => import('../Component/VideoGallery'));
+const NotFound = lazy(() => import('../Component/NotFound'));
+const Accessibility = lazy(() => import('../Component/Accessibility'));
+const Terms = lazy(() => import('../Component/Terms'));
 
 const theme = createTheme({
   direction: 'rtl',
@@ -352,6 +355,8 @@ function App() {
                   <Route path="/AllLessons/:lessonId" element={<AllLessons />} />
                   <Route path="/About" element={<About />} />
                   <Route path="/VideoGallery" element={<VideoGallery />} />
+                  <Route path="/accessibility" element={<Accessibility />} />
+                  <Route path="/terms" element={<Terms />} />
                   <Route
                     path="/manager/login"
                     element={token ? <Navigate to="/manager/manage" replace /> : <AdminLogin setToken={setToken} />}
@@ -376,7 +381,7 @@ function App() {
                       <Navigate to="/manager/login" replace />
                     )}
                   />
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
             </Box>

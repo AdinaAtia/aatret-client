@@ -1,11 +1,12 @@
 import { Box, Dialog, IconButton, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PlayBadge from './shared/PlayBadge';
 import LessonThumb, { youtubeThumbSources } from './shared/LessonThumb';
 import founderContent from './founderContent.json';
 import kdoshimContent from './לקדושים אשר בארץ.json';
 import HeroVideo from './HeroVideo';
+import { useVideoPlayback, VideoToggleButton } from './VideoToggle';
 import { Crown } from './Header';
 import AppButton from './shared/AppButton';
 import SectionFlourish from './shared/SectionFlourish';
@@ -32,7 +33,7 @@ const founderFirst = founderFull.slice(0, splitAt).trim();
 const founderSecond = founderFull.slice(splitAt).trim();
 
 const FOUNDER_ARCH_W = { xs: 230, md: 240, lg: 320 };
-const FOUNDER_ARCH_H = { xs: 304, md: 470, lg: 460 };
+const FOUNDER_ARCH_H ={ xs: 304, md: 470, lg: 460 };
 
 const LOCAL_THUMB_MORGENSTERN = `${MEDIA_BASE_URL}/צילום מסך 2026-06-22 110957.png`;
 
@@ -42,7 +43,7 @@ const allVideos = [
   { youtubeId: '1-aGtlCP4Kk', name: 'הראשון לציון הרב דוד יוסף שליט"א', date: 'הילולת הרש"ש י\' שבט תשפ"ה ההילולה נערכה לרגל הוצאה לאור של סידור הרש"ש ע"י הנדיב ה"ה יעקב ג"ק אורפלי' },
   { youtubeId: '-Wd4It5Ap_k', name: 'הרב בן ציון מוצפי שליט״א', date: '' },
   { youtubeId: 'Y-nZHTds7Tw', name: 'הרב יצחק מאיר מורגנשטרן שליט"א', thumbnail: LOCAL_THUMB_MORGENSTERN, date: 'תשס"א מסיבה על הוצאת ספר עטרת מרדכי על הקדיש' },
-  { youtubeId: 'QV2Bgb3L7Ug', name: 'הרב אליהו מנצור שליט״א', date: '' },
+  { youtubeId: 'QV2Bgb3L7Ug', name: 'הרב אליהו מנצור שליט״א רב קהילת אדמונד ג\'. ספרא (EDMOND J. SAFRA)', date: '' },
   { youtubeId: '2zOk_8o2J-I', name: 'רבה של ירושלים הרב שלום משאש זצ"ל', date: '2026' },
   { youtubeId: 'jmjeweAHdxs', name: 'הרב בניהו שמואלי שליט"א', date: 'תשס"א מסיבה על הוצאת ספר עטרת מרדכי על הקדיש' },
   { youtubeId: 'BsKWj2CjOYA', name: 'הרב בניהו שמואלי שליט"א', date: '2026' },
@@ -61,9 +62,9 @@ const mahaVideos = allVideos.slice(0, 5);
 const mahaNaaseImages = [mahaImg1, mahaImg2, mahaImg3, mahaImg4, mahaImg5];
 
 const archImages: { src: string; label: string; sub?: string }[] = [
-  { src: `${MEDIA_BASE_URL}/חשוב מורגנשטין.png`, label: 'הוצאת הספר עטרת מרדכי על פורים בביתו של כבוד קדושת האדמור מתולדות אהרן' },
-  { src: `${MEDIA_BASE_URL}/צילום מסך 2026-04-14 125657 (1).png`, label: 'הילולת הרש"ש י\' שבט תשפ"ה', sub: 'ההילולה נערכה לרגל הוצאה לאור של סידור הרש"ש ע"י הנדיב ה"ה יעקב ג"ק אורפלי' },
-  { src: `${MEDIA_BASE_URL}/צילום מסך 2026-04-26 102933 (1).png`, label: 'הרב אליהו מנצור שליט"א' },
+  { src: `${MEDIA_BASE_URL}/חשוב מורגנשטין.webp`, label: 'הוצאת הספר עטרת מרדכי על פורים בביתו של כבוד קדושת האדמור מתולדות אהרן' },
+  { src: `${MEDIA_BASE_URL}/צילום מסך 2026-04-14 125657 (1).webp`, label: 'הילולת הרש"ש י\' שבט תשפ"ה', sub: 'ההילולה נערכה לרגל הוצאה לאור של סידור הרש"ש ע"י הנדיב ה"ה יעקב ג"ק אורפלי' },
+  { src: `${MEDIA_BASE_URL}/צילום מסך 2026-04-26 102933 (1).png`, label: 'הרב אליהו מנצור שליט"א רב קהילת אדמונד ג\'. ספרא (EDMOND J. SAFRA)' },
   { src: `${MEDIA_BASE_URL}/צילום מסך 2026-04-26 131432 (1).png`, label: 'הרב שמעון אלוף רב קהילת אהבה ואחוה ברוקלין' },
 ];
 
@@ -125,7 +126,7 @@ const VideoCard = ({ video, onPlay, showDate = true, small = false, maha = false
         }}
       >
         <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', borderRadius: `var(--video-card-radius)`, bgcolor: '#000' }}>
-          <YtThumb video={video} playSize={small ? 32 : cssNumber('--video-card-play-size')} />
+          <YtThumb video={video} alt={video.name} playSize={small ? 32 : cssNumber('--video-card-play-size')} />
         </Box>
         <Box
           className="vc-caption"
@@ -159,7 +160,7 @@ const VideoCard = ({ video, onPlay, showDate = true, small = false, maha = false
       '&:focus-visible': { outline: `2px solid ${GOLD}`, outlineOffset: 2 },
     }}
   >
-    <YtThumb video={video} playSize={maha ? MAHA_CARD.playSize : small ? 32 : 44} />
+    <YtThumb video={video} alt={video.name} playSize={maha ? MAHA_CARD.playSize : small ? 32 : 44} />
     <Box sx={maha
       ? { position: 'absolute', bottom: 0, left: 0, right: 0, px: '12px', pt: '8px', pb: '9px', direction: 'rtl', textAlign: 'center', background: 'linear-gradient(to top, rgba(12,6,7,0.92), rgba(12,6,7,0.55))' }
       : { position: 'absolute', bottom: 0, left: 0, right: 0, px: 1, py: 0.6, direction: 'rtl', textAlign: 'center', background: 'linear-gradient(180deg, transparent, rgba(18,9,11,0.92) 55%)' }}>
@@ -179,7 +180,8 @@ const goldNameSx = {
   fontWeight: 400,
   lineHeight: 0.95,
   textAlign: 'center' as const,
-  background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent',
+  // צבע אחיד ולא גרדיאנט: השמות על רקע קלף, והגרדיאנט נותן 1.3–1.7:1 בחלקו העליון. זהב מטאלי רק על רקע כהה.
+  color: 'var(--gold-text)',
 };
 
 /* מסגרת הקשת — זהה לזו של "ראש הישיבה" בדף הבית: מסגרת זהב 1px, ריפוד פנימי, מילוי זהב, וחצי עיגול למעלה */
@@ -211,6 +213,31 @@ const ArchPortrait = ({ src, alt, width, height, grayscale = false, priority = f
 const About = () => {
   const navigate = useNavigate();
   const [openVideoUrl, setOpenVideoUrl] = useState<string | null>(null);
+  // הכרטיס בגודל קבוע; "קרא עוד" מחליף את הטקסט המוצג בקטע הבא (עמוד אחר עמוד), ובסוף חוזר להתחלה
+  const [founderPos, setFounderPos] = useState(0);
+  const [founderAtEnd, setFounderAtEnd] = useState(false);
+  const founderTextRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const apply = () => {
+      const el = founderTextRef.current;
+      if (!el) return;
+      el.scrollTop = founderPos;
+      setFounderAtEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 2);
+    };
+    apply();
+    window.addEventListener('resize', apply);
+    return () => window.removeEventListener('resize', apply);
+  }, [founderPos]);
+  const nextFounderPage = () => {
+    const el = founderTextRef.current;
+    if (!el) return;
+    if (founderAtEnd) { setFounderPos(0); return; }
+    const first = el.firstElementChild as HTMLElement | null;
+    const lineH = first ? parseFloat(getComputedStyle(first).lineHeight) || 24 : 24;
+    const step = Math.max(lineH, Math.floor(el.clientHeight / lineH) * lineH);
+    setFounderPos(el.scrollTop + step);
+  };
+  const archVideo = useVideoPlayback();
   const play = (id: string) => setOpenVideoUrl(`https://www.youtube.com/embed/${id}?autoplay=1`);
 
   return (
@@ -222,12 +249,12 @@ const About = () => {
         <Box sx={{ position: 'absolute', inset: { xs: '12px', md: '26px' }, zIndex: 2, pointerEvents: 'none', borderRadius: 'var(--radius-arch)', border: `1px solid color-mix(in srgb, var(--gold-deep) 65.098%, transparent)` }} />
         <Box sx={{ position: 'absolute', inset: { xs: '19px', md: '36px' }, zIndex: 2, pointerEvents: 'none', borderRadius: 'var(--radius-arch)', border: `1px solid color-mix(in srgb, var(--gold-deep) 36.078%, transparent)` }} />
 
-        <Box sx={{ position: 'absolute', inset: 0, zIndex: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', px: 2 }}>
-          <Box sx={{ mb: { xs: 1.5, md: 2 }, '& svg': { width: { xs: '60px', md: '92px' }, height: 'auto' } }}>
-            <Crown width={92} height={78} />
+        <Box sx={{ position: 'absolute', inset: 0, zIndex: 3, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', pt: { xs: '14vh', md: '16vh' }, alignItems: 'center', textAlign: 'center', px: 2 }}>
+          <Box sx={{ mb: { xs: 1.5, md: 2 }, '& svg': { width: { xs: '72px', md: '110px' }, height: 'auto' } }}>
+            <Crown width={110} height={93} />
           </Box>
           <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '30px', md: '60px' }, fontWeight: 400, color: 'var(--wine)', lineHeight: 1.15, m: 0 }}>
-            ישיבת החיים והשלום
+            ישיבת עטרת מרדכי
           </Typography>
           <SectionFlourish mt="18px" mb="0px" />
         </Box>
@@ -265,32 +292,41 @@ const About = () => {
         <Box sx={{ maxWidth: 1180, mx: 'auto', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'center', md: 'flex-start' }, justifyContent: 'center', gap: { xs: 4, md: 6 } }}>
 
           {/* כרטיס הקלף בצורת קשת */}
-          <Box sx={{ width: { xs: '100%', sm: 300, md: 240, lg: 320 }, maxWidth: { xs: 300, md: 320 }, flexShrink: 0, order: { xs: 2, md: 0 } }}>
+          <Box sx={{ width: FOUNDER_ARCH_W, flexShrink: 0, order: { xs: 2, md: 0 } }}>
             <Box sx={{
-              bgcolor: 'var(--surface)', border: `1px solid ${GOLD}`, borderRadius: { xs: archOuter(), md: archOuter(), lg: archOuter() }, boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
-              height: { xs: 'auto', md: FOUNDER_ARCH_H.md, lg: FOUNDER_ARCH_H.lg },
+              bgcolor: 'var(--surface)', border: `1px solid ${GOLD}`, // רדיוס אנכי קבוע (34% מגובה הקשת הסגורה) — באחוזים הקשת הייתה מתארכת לחוד כשהכרטיס נפתח והטקסט יוצא מהמסגרת
+              borderRadius: {
+                xs: `50% 50% 0 0 / ${Math.round(FOUNDER_ARCH_H.xs * 0.34)}px ${Math.round(FOUNDER_ARCH_H.xs * 0.34)}px 0 0`,
+                md: `50% 50% 0 0 / ${Math.round(FOUNDER_ARCH_H.md * 0.34)}px ${Math.round(FOUNDER_ARCH_H.md * 0.34)}px 0 0`,
+                lg: `50% 50% 0 0 / ${Math.round(FOUNDER_ARCH_H.lg * 0.34)}px ${Math.round(FOUNDER_ARCH_H.lg * 0.34)}px 0 0`,
+              },
+              boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
+              // תמיד בגודל קשת התמונה בדיוק
+              height: { xs: `${FOUNDER_ARCH_H.xs}px`, md: `${FOUNDER_ARCH_H.md}px`, lg: `${FOUNDER_ARCH_H.lg}px` },
               px: { xs: '26px', md: '20px', lg: '30px' }, pt: { xs: '70px', md: '60px', lg: '64px' }, pb: 3, direction: 'rtl', boxSizing: 'border-box',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
             }}>
-              {/* direction: ltr מעביר את הגלגלת לצד ימין; התוכן הפנימי נשאר rtl */}
-              <Box sx={{
-                width: '100%', flex: { md: 1 }, minHeight: 0, maxHeight: { xs: 340, md: 'none' }, overflowY: 'auto', direction: 'ltr', pl: '10px',
-                scrollbarWidth: 'thin', scrollbarColor: `${GOLD} transparent`,
-                '&::-webkit-scrollbar': { width: '3px' },
-                '&::-webkit-scrollbar-button': { display: 'none' },
-                '&::-webkit-scrollbar-track': { background: `${`color-mix(in srgb, ${GOLD} 10.196%, transparent)`}`, borderRadius: '2px' },
-                '&::-webkit-scrollbar-thumb': { background: GOLD, borderRadius: '2px' },
-                '&::-webkit-scrollbar-thumb:hover': { background: 'var(--gold-deep)' },
+              {/* הטקסט כולו קיים; אזור הקריאה מוגבל בגובה והכרטיס מתארך טיפה בכל לחיצה */}
+              <Box ref={founderTextRef} sx={{
+                width: '100%', direction: 'rtl', flex: 1, minHeight: 0, overflow: 'hidden',
+                ...(founderAtEnd ? {} : {
+                  maskImage: 'linear-gradient(180deg, #000 82%, transparent 100%)',
+                  WebkitMaskImage: 'linear-gradient(180deg, #000 82%, transparent 100%)',
+                }),
               }}>
-                <Box sx={{ direction: 'rtl' }}>
-                  <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '14px', md: '12px', lg: '16px' }, lineHeight: { xs: 1.75, md: 1.6, lg: 1.95 }, color: 'var(--body)', textAlign: 'right', whiteSpace: 'pre-line' }}>
-                    {founderFirst}
-                  </Typography>
-                  <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '14px', md: '12px', lg: '16px' }, lineHeight: { xs: 1.75, md: 1.6, lg: 1.95 }, color: 'var(--body)', textAlign: 'right', whiteSpace: 'pre-line', mt: 1 }}>
-                    {founderSecond}
-                  </Typography>
-                </Box>
+                <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '14px', md: '12px', lg: '16px' }, lineHeight: { xs: 1.75, md: 1.6, lg: 1.95 }, color: 'var(--body)', textAlign: 'right', whiteSpace: 'pre-line' }}>
+                  {founderFirst}
+                </Typography>
+                <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '14px', md: '12px', lg: '16px' }, lineHeight: { xs: 1.75, md: 1.6, lg: 1.95 }, color: 'var(--body)', textAlign: 'right', whiteSpace: 'pre-line', mt: 1 }}>
+                  {founderSecond}
+                </Typography>
               </Box>
+              <AppButton
+                variant="outline"
+                onClick={nextFounderPage}
+              >
+                {founderAtEnd ? 'חזרה להתחלה' : 'קרא עוד'}
+              </AppButton>
             </Box>
           </Box>
 
@@ -317,7 +353,7 @@ const About = () => {
 
           {/* דיוקן בקשת */}
           <Box sx={{ order: { xs: 1, md: 2 } }}>
-            <ArchPortrait src={`${MEDIA_BASE_URL}/מייסד (2).png`} alt="הגאון המקובל רבי מרדכי עטיה זצ״ל" width={FOUNDER_ARCH_W} height={FOUNDER_ARCH_H} grayscale priority />
+            <ArchPortrait src={`${MEDIA_BASE_URL}/מייסד (2).webp`} alt="הגאון המקובל רבי מרדכי עטיה זצ״ל" width={FOUNDER_ARCH_W} height={FOUNDER_ARCH_H} grayscale priority />
           </Box>
         </Box>
       </Box>
@@ -356,7 +392,7 @@ const About = () => {
         {/* מידות מהמוקאפ (1440px): דיוקן 387×512 מימין, רווח 43, עמודת טקסט 600 מיושרת לימין, הכול מיושר לראש הדיוקן */}
         <Box sx={{ maxWidth: 1306, mx: 'auto', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: { md: 'flex-start' }, alignItems: { xs: 'center', md: 'flex-start' }, gap: { xs: 3, md: '43px' } }}>
           <Box sx={{ flexShrink: 0 }}>
-            <ArchPortrait src={`${MEDIA_BASE_URL}/דד (1) (1).png`} alt="ראש הישיבה הרב מרדכי עטיה שליט״א" width={HOME_ARCH_W} height={HOME_ARCH_H} />
+            <ArchPortrait src={`${MEDIA_BASE_URL}/דד (1) (1).webp`} alt="ראש הישיבה הרב מרדכי עטיה שליט״א" width={HOME_ARCH_W} height={HOME_ARCH_H} />
           </Box>
           <Box sx={{ width: '100%', maxWidth: 600, pt: { md: '12px' }, display: 'flex', flexDirection: 'column', alignItems: { xs: 'center', md: 'flex-start' }, textAlign: { xs: 'center', md: 'right' } }}>
             <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '24px', md: '24px', lg: '30px' }, fontWeight: 400, color: 'var(--ink)', lineHeight: 1.1 }}>ראש הישיבה הרב</Typography>
@@ -370,21 +406,40 @@ const About = () => {
         </Box>
       </Box>
 
+      {/* ───────────── 3ב. הישיבה כיום ───────────── */}
+      <Box component="section" sx={{ bgcolor: 'var(--parchment-2)', direction: 'rtl', py: { xs: 5, md: 8 }, px: { xs: 2, md: 6 }, borderTop: `1px solid ${GOLD}` }}>
+      <Box sx={{ maxWidth: 1240, mx: 'auto', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', justifyContent: 'center', gap: { xs: 3, md: 6 }, direction: 'rtl' }}>
+        <Box component="img" src={`${MEDIA_BASE_URL}/ישיבה (2).png`} alt="" loading="lazy" sx={{ display: "block", flexShrink: 0, height: { xs: 110, md: 237 }, width: { md: 420 }, maxWidth: "100%", objectFit: "contain" }} />
+        <Box sx={{ maxWidth: 680, textAlign: 'right' }}>
+          <Typography component="h3" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '22px', md: '30px' }, fontWeight: 400, color: 'var(--ink-wine)', m: 0, mb: 1.5 }}>הישיבה כיום</Typography>
+          <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '15px', md: '17px' }, lineHeight: 1.9, color: 'var(--body)', mb: 1.5 }}>
+            בישיבתנו הקדושה לומדים כ-50 אברכים, מתוך מגמה שיורו הוראה. הם יושבים על המדוכה ונבחנים במבחני הוראה ודיינות.
+          </Typography>
+          <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '15px', md: '17px' }, lineHeight: 1.9, color: 'var(--body)', mb: 1.5 }}>
+            בנוסף, חדש בישיבה: לומדים בה 70 בחורים, בוגרי הישיבות המצוינות ביותר, ומכוונים אותם בלימודי הוראה בעיון, כדי להעמידם שיורו הלכה בישראל [לאחר שסיימו כמה שנים בישיבה הגדולה].
+          </Typography>
+          <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: { xs: '15px', md: '17px' }, lineHeight: 1.9, color: 'var(--body)' }}>
+            וכל זה בנוסף לשיעורי הקבלה מפי מו"ר ראש הישיבה הגאון רבי מרדכי עטייה שליט"א, הנמסרים מדי ערב בישיבה להכוונה ולהעמדת מכוונים בסידור הרש"ש, ולהבנת דברי רבינו האר"י ז"ל ודברי הרש"ש ומפרשי הקבלה זיע"א. הכול נמסר בבהירות רבה ובבירור כל דבר לאמיתו.
+          </Typography>
+        </Box>
+      </Box>
+      </Box>
+
       {/* ───────────── 4. דברי גדולי ישראל ───────────── */}
       <Box component="section" sx={{ bgcolor: DARK, direction: 'rtl', py: { xs: 5, md: 8 }, px: { xs: 2, md: 6 } }}>
         <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 } }}>
           <SectionArch mb="6px" />
-          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '30px', md: '40px' }, fontWeight: 400, m: 0, background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}>דברי גדולי ישראל</Typography>
+          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading-ornate)', fontSize: { xs: '30px', md: '40px' }, fontWeight: 400, m: 0, background: 'var(--gradient-gold-text-vertical)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}>דברי גדולי ישראל</Typography>
           <SectionFlourish />
         </Box>
 
         <Box sx={{ maxWidth: 1240, mx: 'auto', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'center', md: 'stretch' }, gap: { xs: 4, md: 5 } }}>
           {/* סרטון בקשת: קו זהב דק מבחוץ, רווח כהה, והתמונה בפנים (לפי המוקאפ) */}
           <Box sx={{ width: { xs: 240, md: 360 }, height: { xs: 330, md: 500 }, flexShrink: 0, borderRadius: ARCH, border: `1px solid var(--gold-deep)`, p: { xs: '6px', md: '8px' }, boxSizing: 'border-box', bgcolor: DARK, alignSelf: 'center', position: 'relative' }}>
-            <Box sx={{ position: 'relative', width: '100%', height: '100%', borderRadius: ARCH, overflow: 'hidden', bgcolor: '#000' }}>
-              <Box component="video" src={`${MEDIA_BASE_URL}/שיעור הרב עטייה מקוצר (1).mp4`} autoPlay loop muted playsInline preload="metadata"
+            <Box sx={{ position: 'relative', width: '100%', height: '100%', borderRadius: ARCH, overflow: 'hidden', bgcolor: DARK }}>
+              <Box component="video" src={`${MEDIA_BASE_URL}/שיעור הרב עטייה מקוצר (1).mp4`} poster="/about-arch-poster.webp" {...archVideo.videoProps} loop muted playsInline preload={archVideo.reduced ? 'none' : 'metadata'}
                 sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              <PlayMark size={52} />
+              <VideoToggleButton playing={archVideo.playing} onToggle={archVideo.toggle} sx={{ position: 'absolute', bottom: 14, left: 14 }} />
             </Box>
           </Box>
 
@@ -433,7 +488,7 @@ const About = () => {
       <Box component="section" sx={{ bgcolor: 'var(--parchment)', direction: 'rtl', py: { xs: 5, md: 8 }, px: { xs: 2, md: 6 }, borderBottom: `1px solid ${GOLD}` }}>
         <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
           <SectionArch mb="6px" />
-          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '24px', md: '40px' }, fontWeight: 400, color: 'var(--ink-wine)', m: 0 }}>אירועים והוצאות ספרים</Typography>
+          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading-ornate)', fontSize: { xs: '24px', md: '40px' }, fontWeight: 400, color: 'var(--ink-wine)', m: 0 }}>אירועים והוצאות ספרים</Typography>
           <SectionFlourish />
         </Box>
         <Box sx={{ maxWidth: 1240, mx: 'auto', display: 'grid', gap: { xs: 2, md: '22px' }, alignItems: 'stretch', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' } }}>
@@ -451,8 +506,7 @@ const About = () => {
             </Box>
           ))}
         </Box>
-        <Box component="img" src={`${MEDIA_BASE_URL}/ישיבה (2).png`} alt="" loading="lazy" sx={{ display: "block", mx: "auto", mt: { xs: 4, md: 6 }, mb: { xs: 2, md: 3 }, height: { xs: 110, md: 237 }, width: { md: 420 }, maxWidth: "100%", objectFit: "contain" }} />
-        <Box sx={{ maxWidth: 1240, mx: 'auto', mt: { xs: 2, md: '22px' }, display: 'grid', gap: { xs: 1.5, md: '16px' }, gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' } }}>
+        <Box sx={{ maxWidth: 1240, mx: 'auto', mt: { xs: 4, md: 6 }, display: 'grid', gap: { xs: 1.5, md: '16px' }, gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' } }}>
           {mahaVideos.map((v) => (
             <VideoCard key={v.youtubeId} video={v} showDate={false} small maha onPlay={() => play(v.youtubeId)} />
           ))}

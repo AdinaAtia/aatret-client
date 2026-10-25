@@ -6,11 +6,16 @@ import { useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import { Globe, Users, Heart, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import content from './donationContent.json';
+
+// כל אפיק מוביל ישר לדף התשלום בנדרים פלוס; Analytic שונה לכל אחד כדי לדעת מה נבחר
+const paymentUrl = (analytic: string) =>
+  `${content.nedarimUrl.split('&Analytic=')[0]}&Analytic=${encodeURIComponent(analytic)}`;
 
 const donationOptions = [
-  { title: 'מגבית לחידוש ותרומות לאתר הישיבה', subtitle: 'בזכותך – קול התורה לא ייפסק', icon: <Globe size={24} /> },
-  { title: 'תרומה כללית', subtitle: 'עבור החזקת פעילות הישיבה והפצת התורה', icon: <Heart size={24} /> },
-  { title: 'אחזקת אברך בחודש', subtitle: 'קנה לך שותף למשמרת הלימוד של הישיבה', icon: <Users size={24} /> },
+  { title: 'מגבית לחידוש ותרומות לאתר הישיבה', subtitle: 'בזכותך – קול התורה לא ייפסק', icon: <Globe size={24} />, href: paymentUrl('אתר-מגבית') },
+  { title: 'תרומה כללית', subtitle: 'עבור החזקת פעילות הישיבה והפצת התורה', icon: <Heart size={24} />, href: paymentUrl('אתר-כללית') },
+  { title: 'אחזקת אברך בחודש', subtitle: 'קנה לך שותף למשמרת הלימוד של הישיבה', icon: <Users size={24} />, href: paymentUrl('אתר-אברך') },
 ];
 
 const LuxuryDonationPage = () => {
@@ -79,15 +84,28 @@ const LuxuryDonationPage = () => {
               {donationOptions.map((option) => (
                 <Box
                   key={option.title}
+                  component="a"
+                  href={option.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 'var(--s3)',
                     width: '100%',
+                    boxSizing: 'border-box',
                     textAlign: 'right',
+                    textDecoration: 'none',
+                    cursor: 'pointer',
                     p: 'var(--s3)',
                     border: '1px solid color-mix(in srgb, var(--gold) 34.902%, transparent)',
                     borderRadius: 'var(--donation-section-letter-inner-radius)',
+                    transition: 'border-color 0.2s, background-color 0.2s',
+                    '&:hover, &:focus-visible': {
+                      borderColor: 'var(--gold)',
+                      bgcolor: 'color-mix(in srgb, var(--gold) 10%, transparent)',
+                    },
+                    '&:focus-visible': { outline: '2px solid var(--gold-light)', outlineOffset: '2px' },
                   }}
                 >
                   <Box sx={{ color: 'var(--gold)', display: 'flex', flexShrink: 0 }}>{option.icon}</Box>
@@ -171,7 +189,7 @@ const LuxuryDonationPage = () => {
 
               <Box sx={{ borderTop: '1px solid var(--rule-soft)', pt: 'var(--s2)', display: 'flex', alignItems: 'baseline', gap: 'var(--s2)' }}>
                 <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--donation-section-letter-name-size)', fontWeight: 400, color: 'var(--ink-wine)' }}>
-                  הרב מרדכי עטייה
+                  הרב מרדכי עטייה שליט״א
                 </Typography>
                 <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--donation-section-letter-role-size)', color: 'var(--muted)' }}>
                   · ראש הישיבה

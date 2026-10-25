@@ -59,7 +59,11 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, sticky }) => {
                 tabIndex={0}
                 onClick={() => navigate(item.path!)}
                 onKeyDown={(e) => { if (e.key === 'Enter') navigate(item.path!); }}
-                sx={{ color: 'var(--gold-text)', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                sx={{
+                  color: 'var(--gold-text)', cursor: 'pointer', '&:hover': { textDecoration: 'underline' },
+                  // אלמנט בגובה 44px; השוליים השליליים שומרים על גובה הסרגל כמו קודם
+                  display: 'inline-flex', alignItems: 'center', minHeight: 44, my: '-12px',
+                }}
               >
                 {item.label}
               </Box>

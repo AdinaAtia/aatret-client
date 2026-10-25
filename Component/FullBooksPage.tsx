@@ -14,8 +14,18 @@ import PageHeader from './shared/PageHeader';
 import { cardHoverSx } from './shared/cardHover';
 import { Crown } from './Header';
 import { site } from '../src/content/site';
+import PhoneNumber from './shared/PhoneNumber';
 
 /** טלפון הזמנת ספרים כקישור tel: — 03-6815542 → +97236815542 */
+
+/** מספר הכרכים במילים (לשון זכר, כמו "אחד־עשר כרכים"); מעל 20 — ספרות */
+const HE_COUNTS: Record<number, string> = {
+  2: 'שני', 3: 'שלושה', 4: 'ארבעה', 5: 'חמישה', 6: 'שישה', 7: 'שבעה', 8: 'שמונה', 9: 'תשעה', 10: 'עשרה',
+  11: 'אחד־עשר', 12: 'שנים־עשר', 13: 'שלושה־עשר', 14: 'ארבעה־עשר', 15: 'חמישה־עשר',
+  16: 'שישה־עשר', 17: 'שבעה־עשר', 18: 'שמונה־עשר', 19: 'תשעה־עשר', 20: 'עשרים',
+};
+const volumesLabel = (n: number) => HE_COUNTS[n] ?? String(n);
+
 const booksPhoneHref = `tel:+972${site.phones.books.replace(/^0/, '').replace(/-/g, '')}`;
 
 const CHIP_ACTIVE_TEXT = 'var(--gold-light)';
@@ -66,12 +76,13 @@ const FullBooksPage = () => {
     });
   }, [books, searchTerm, selectedCategory]);
 
+  const volumesEyebrow = books.length === 1 ? 'כרך אחד' : books.length > 1 ? `${volumesLabel(books.length)} כרכים` : undefined;
   const hasActiveFilter = selectedCategory !== 'הכל' || !!searchTerm;
   const categoryNames = categories.map((cat: any) => cat.attributes?.name || cat.name).filter(Boolean);
 
   return (
     <Box sx={{ direction: 'rtl', backgroundColor: 'var(--parchment)', minHeight: '100vh' }}>
-      <PageHeader eyebrow="אחד־עשר כרכים" title="ספרי הישיבה" />
+      <PageHeader eyebrow={volumesEyebrow} title="ספרי הישיבה" />
 
       <Box sx={{ maxWidth: '1200px', mx: 'auto', p: { xs: 2, md: 4 } }}>
 
@@ -142,7 +153,7 @@ const FullBooksPage = () => {
             <Grid container spacing={3}>
               {loading ? (
                 [1, 2, 3, 4, 5, 6].map(i => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
+                  <Grid size={{ xs: 6, sm: 6, md: 4 }} key={i}>
                     <Skeleton variant="rounded" height={380} sx={{ borderRadius: `var(--book-card-radius)` }} />
                   </Grid>
                 ))
@@ -150,7 +161,7 @@ const FullBooksPage = () => {
                 const item = book.attributes || book;
                 const imageUrl = item.image?.data?.[0]?.attributes?.url || item.image?.[0]?.url || '';
                 return (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={book.id}>
+                  <Grid size={{ xs: 6, sm: 6, md: 4 }} key={book.id}>
                     <Box
                       onClick={() => navigate(`/BookDetailsPage/${book.id}`, { state: { book } })}
                       sx={{
@@ -267,14 +278,14 @@ const FullBooksPage = () => {
                     '&:hover': { filter: 'brightness(1.06)' },
                   }}
                 >
-                  {site.phones.books}
+                  <PhoneNumber>{site.phones.books}</PhoneNumber>
                 </Box>
 
                 <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t2)', fontWeight: 700, color: 'var(--book-purchase-card-muted-text-color)', mb: '4px' }}>
                   {site.booksContact}
                 </Typography>
                 <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t2)', color: 'var(--book-purchase-card-muted-text-color)', mb: '2px' }}>
-                  פקס: {site.phones.fax}
+                  פקס: <PhoneNumber>{site.phones.fax}</PhoneNumber>
                 </Typography>
                 <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t2)', color: 'var(--book-purchase-card-muted-text-color)', mb: site.hours ? '2px' : 0 }}>
                   {site.addresses.office}

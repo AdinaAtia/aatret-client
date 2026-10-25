@@ -9,7 +9,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import {
   Box, Typography, Paper, IconButton, Checkbox, Tooltip, Select, MenuItem,
-  Accordion, AccordionSummary, AccordionDetails, Stack, Skeleton, Drawer,
+  Accordion, AccordionSummary, AccordionDetails, Stack, Skeleton, Drawer, useMediaQuery,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -20,9 +20,12 @@ import axios from 'axios';
 import LessonPlayer from './LessonPlayer';
 import AppButton from './shared/AppButton';
 import PageHeader from './shared/PageHeader';
+import NotFound from './NotFound';
 import ActionButtons from './shared/ActionButtons';
 import LessonThumb from './shared/LessonThumb';
 import { cardHoverSx } from './shared/cardHover';
+import { withHonorific } from '../src/utils/rabbiName';
+import { formatHebrewDate } from '../src/utils/hebrewDate';
 
 const DEFAULT_SORT = 'date:desc';
 // שדה מיון + כיוון ברירת מחדל + תיאור הכיוון (לתיאור הכפתור)
@@ -39,6 +42,7 @@ const AllLessons = () => {
   const BLUE_TEXT = 'var(--ink-wine)';
   const GOLD_TEXT = 'var(--gold-text)';
   const [selectedLesson, setSelectedLesson] = useState<any | null>(null);
+  const [lessonLoadStatus, setLessonLoadStatus] = useState<'ok' | 'notFound' | 'error'>('ok');
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -105,8 +109,11 @@ const AllLessons = () => {
   };
   const exactCategoryRef = useRef(false); // true רק אחרי "לכל הסדרה" — התאמה מדויקת לקטגוריה
   const prevSeriesKeyRef = useRef<string | undefined>(undefined);
+  // מחרוזת הסינון האחרונה שנכתבה לכתובת (או נקראה ממנה) — מונעת לולאה בין הכתובת ל־state
+  const lastQsRef = useRef<string>(location.search.replace(/^\?/, ''));
   const sidebarRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const isPhone = useMediaQuery('(max-width:599.95px)');
 
   // הגעה מכפתור "חיפוש בשיעורים" בדף הבית — פוקוס אוטומטי בשדה החיפוש
   useEffect(() => {
@@ -122,6 +129,7 @@ const AllLessons = () => {
 
   // טעינת שיעור לפי URL param
   useEffect(() => {
+    setLessonLoadStatus('ok');
     if (!lessonId) {
       setSelectedLesson(null);
       return;
@@ -129,7 +137,7 @@ const AllLessons = () => {
     axios.get(`${import.meta.env.VITE_API_URL}/api/lessons?filters[id][$eq]=${lessonId}&populate=rabbi`)
       .then(res => {
         const data = res.data.data[0];
-        if (!data) { navigate('/AllLessons', { replace: true }); return; }
+        if (!data) { setSelectedLesson(null); setLessonLoadStatus('notFound'); return; }
         const attr = data.attributes || data;
         setSelectedLesson({
           ...attr,
@@ -138,7 +146,7 @@ const AllLessons = () => {
           rabbi: { name: attr.rabbi?.data?.attributes?.name || attr.rabbi?.name || '' }
         });
       })
-      .catch(() => navigate('/AllLessons', { replace: true }));
+      .catch(() => { setSelectedLesson(null); setLessonLoadStatus('error'); });
   }, [lessonId]);
 
   const fetchLessons = async (
@@ -151,6 +159,7 @@ const AllLessons = () => {
   ) => {
     // עמוד 1 מתחיל "דור" חדש של תוצאות; תשובות ישנות מדור קודם נזרקות
     const reqId = page === 1 ? ++requestIdRef.current : requestIdRef.current;
+    if (page === 1 && !lessonId) writeFiltersToUrl(rabbiIds, mainIds, subId, query);
     try {
       if (page === 1) { setLoadingLessons(true); setLoadingMore(false); }
       else setLoadingMore(true);
@@ -183,6 +192,60 @@ const AllLessons = () => {
     }
   };
 
+  // הסינון בכתובת: /AllLessons?rabbi=44&series=234&q=קדיש (main = קטגוריה ראשית, exact=1 = "לכל הסדרה")
+  const buildFilterQs = (
+    rabbiIds: (number | string)[],
+    mainIds: (number | string)[],
+    subId: number | string | null,
+    query: string
+  ) => {
+    const p = new URLSearchParams();
+    if (rabbiIds.length) p.set('rabbi', rabbiIds.join(','));
+    if (mainIds.length) p.set('main', mainIds.join(','));
+    if (subId) p.set('series', String(subId));
+    if (exactCategoryRef.current && (mainIds.length || subId)) p.set('exact', '1');
+    if (query.trim()) p.set('q', query.trim());
+    return p.toString();
+  };
+
+  const writeFiltersToUrl = (
+    rabbiIds: (number | string)[],
+    mainIds: (number | string)[],
+    subId: number | string | null,
+    query: string
+  ) => {
+    const qs = buildFilterQs(rabbiIds, mainIds, subId, query);
+    if (qs === lastQsRef.current) return;
+    lastQsRef.current = qs;
+    navigate({ search: qs }, { replace: true });
+  };
+
+  const parseFiltersFromUrl = () => {
+    const p = new URLSearchParams(location.search);
+    const ids = (v: string | null) =>
+      (v ? v.split(',') : []).map(Number).filter(n => Number.isInteger(n) && n > 0);
+    return {
+      rabbis: ids(p.get('rabbi')),
+      mains: ids(p.get('main')),
+      sub: ids(p.get('series'))[0] ?? null,
+      exact: p.get('exact') === '1',
+      q: (p.get('q') || '').trim(),
+    };
+  };
+
+  const applyFiltersFromUrl = (u: ReturnType<typeof parseFiltersFromUrl>) => {
+    exactCategoryRef.current = u.exact;
+    setSelectedLecturerIds(u.rabbis);
+    setExpandedRabbiIds(u.rabbis);
+    setSelectedMainCatIds(u.mains);
+    setSelectedSubCatId(u.sub);
+    setExpandedSubId(u.sub);
+    setSearchQuery(u.q);
+    setCurrentPage(1);
+    fetchLessons(1, u.rabbis, u.mains, u.sub, u.q);
+    u.rabbis.forEach(id => fetchTree(id));
+  };
+
   const fetchTree = async (rabbiId: number | string | null) => {
     if (!rabbiId) return;
     try {
@@ -197,7 +260,7 @@ const AllLessons = () => {
   const fetchLecturers = async () => {
     try {
       setLoadingLecturers(true);
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/rabbis?fields[0]=name&populate[photo_url][fields][0]=url`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/rabbis?fields[0]=name&populate[photo_url][fields][0]=url&populate[photo_url][fields][1]=formats`);
       // רב של המרחב הקולי בלבד אין לו שיעורים באתר — לא מציגים אותו בסינון
       setLecturers((response.data.data || []).filter((r: any) => !r.phoneOnly));
     } catch (error) {
@@ -252,6 +315,18 @@ const AllLessons = () => {
     }
 
     if (!hasFetched.current) {
+      const fromUrl = parseFiltersFromUrl();
+      const hasStateFilter = incomingRabbiId || seriesSubId || seriesMainId || initialSearch;
+      if (!hasStateFilter && (fromUrl.rabbis.length || fromUrl.mains.length || fromUrl.sub || fromUrl.q)) {
+        // כניסה מקישור עם סינון בכתובת
+        lastQsRef.current = location.search.replace(/^\?/, '');
+        applyFiltersFromUrl(fromUrl);
+        fetchLecturers();
+        fetchAllTopics();
+        hasFetched.current = true;
+        prevRabbiIdRef.current = fromUrl.rabbis[0] ?? null;
+        return;
+      }
       if (initialSearch) setSearchQuery(initialSearch);
       if (incomingRabbiId) {
         setSelectedLecturerIds([incomingRabbiId]);
@@ -286,6 +361,15 @@ const AllLessons = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [location.state]);
+
+  // ניווט חיצוני לכתובת סינון אחרת (קישור באתר, כפתור אחורה) — מיישמים אותה על הדף
+  useEffect(() => {
+    if (lessonId || !hasFetched.current) return;
+    const qs = location.search.replace(/^\?/, '');
+    if (qs === lastQsRef.current) return;
+    lastQsRef.current = qs;
+    applyFiltersFromUrl(parseFiltersFromUrl());
+  }, [location.search, lessonId]);
 
   useEffect(() => {
     loadMoreFnRef.current = () => {
@@ -490,10 +574,10 @@ const AllLessons = () => {
         )}
       </Box>
 
-      <Accordion defaultExpanded elevation={0} sx={{ bgcolor: 'var(--surface)', borderRadius: '12px !important', border: `1px solid var(--gold)`, mb: 1.5, flexShrink: 0, '&:before': { display: 'none' } }}>
+      <Accordion defaultExpanded elevation={0} slots={{ heading: 'h2' }} slotProps={{ heading: { style: { margin: 0 } } }} sx={{ bgcolor: 'var(--surface)', borderRadius: '12px !important', border: `1px solid var(--gold)`, mb: 1.5, flexShrink: 0, '&:before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: GOLD_TEXT }} />} sx={{ px: 2 }}>
           <Box sx={{ width: '100%' }}>
-            <Typography component="h2" sx={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--filter-group-title-size)', color: 'var(--ink-wine)', m: 0 }}>
+            <Typography component="div" sx={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--filter-group-title-size)', color: 'var(--ink-wine)', m: 0 }}>
               הרב המוסר
             </Typography>
             <Box sx={{ width: '30px', height: '2px', bgcolor: 'var(--gold)', mt: 1 }} />
@@ -508,7 +592,7 @@ const AllLessons = () => {
                   sx={{ fontFamily: 'var(--font-body)', fontSize: 'var(--filter-label-size)', py: 0.8, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', fontWeight: selectedLecturerIds.includes(item.id) ? 'bold' : 'normal', color: 'var(--filter-label-color)' }}
                 >
                   <SquareIcon isSelected={selectedLecturerIds.includes(item.id)} />
-                  {item.attributes?.name || item.name}
+                  {withHonorific(item.attributes?.name || item.name)}
                 </Box>
                 {expandedRabbiIds.includes(item.id) && (categoriesMap[String(item.id)]?.length ?? 0) > 0 && (
                   <Box sx={{ mr: 1, mb: 0.5 }}>
@@ -558,12 +642,19 @@ const AllLessons = () => {
     </>
   );
 
+  if (lessonId && lessonLoadStatus === 'notFound') {
+    return <NotFound title="השיעור לא נמצא" message="השיעור שחיפשת אינו קיים, או שהוסר מהארכיון." showSearch={false} showHome={false} />;
+  }
+  if (lessonId && lessonLoadStatus === 'error') {
+    return <NotFound title="אירעה שגיאה בטעינת השיעור" message="לא הצלחנו לטעון את השיעור כרגע. נסי לרענן את הדף בעוד רגע." showSearch={false} showHome={false} />;
+  }
+
   return (
     <Box sx={{ direction: 'rtl', backgroundColor: 'var(--parchment)' }}>
       {selectedLesson ? (
         <LessonPlayer
           lesson={selectedLesson}
-          onBack={() => navigate('/AllLessons')}
+          onBack={() => navigate(`/AllLessons${lastQsRef.current ? `?${lastQsRef.current}` : ''}`)}
           onLessonSelect={(lesson) => { navigate(`/AllLessons/${lesson.id}`); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
         />
       ) : (
@@ -637,7 +728,7 @@ const AllLessons = () => {
                 component="input"
                 type="text"
                 ref={searchInputRef}
-                placeholder="חיפוש לפי שם שיעור, רב, מסכת או נושא..."
+                placeholder={isPhone ? 'חיפוש שיעור, רב או נושא' : 'חיפוש לפי שם שיעור, רב, מסכת או נושא...'}
                 value={searchQuery}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const val = e.target.value;
@@ -694,6 +785,8 @@ const AllLessons = () => {
                     '& .MuiOutlinedInput-notchedOutline': { border: `1px solid var(--gold)` },
                     '&:hover .MuiOutlinedInput-notchedOutline, &.Mui-focused .MuiOutlinedInput-notchedOutline': { border: `1px solid var(--gold)` },
                     '& .MuiSelect-icon': { color: GOLD_TEXT },
+                    // אזור הלחיצה האמיתי הוא ה-div הפנימי; שימלא את כל גובה הבורר (≥44px)
+                    '&&& .MuiSelect-select': { minHeight: 'var(--btn-h)', boxSizing: 'border-box', display: 'flex', alignItems: 'center' },
                   }}
                 >
                   {SORT_FIELDS.map((opt) => (
@@ -726,7 +819,7 @@ const AllLessons = () => {
                         setSelectedIds([]);
                       }
                     }}
-                    sx={{ color: GOLD_TEXT, '&.Mui-checked': { color: GOLD_TEXT }, '&.MuiCheckbox-indeterminate': { color: GOLD_TEXT }, p: 0.3 }}
+                    sx={{ color: GOLD_TEXT, '&.Mui-checked': { color: GOLD_TEXT }, '&.MuiCheckbox-indeterminate': { color: GOLD_TEXT }, p: '12px', m: '-9.6px' /* אזור מגע 44px */ }}
                   />
                 </Tooltip>
                 <Tooltip title={selectedIds.length > 0 ? `הורד ${selectedIds.length} שיעורים נבחרים` : 'הורד נבחרים'}>
@@ -753,7 +846,8 @@ const AllLessons = () => {
                   const hasYoutube = youtube_id && youtube_id.trim() !== "";
                   const rabbiId = rabbi?.data?.id || rabbi?.id;
                   const lecturerData = lecturers.find(l => l.id === rabbiId);
-                  const rabbiPhotoPath = lecturerData?.photo_url?.[0]?.url;
+                  const rabbiPhoto = lecturerData?.photo_url?.[0];
+                  const rabbiPhotoPath = rabbiPhoto?.formats?.medium?.url || rabbiPhoto?.url;
                   const thumbnailUrl = hasYoutube
                     ? `https://img.youtube.com/vi/${youtube_id}/hqdefault.jpg`
                     : rabbiPhotoPath
@@ -805,12 +899,13 @@ const AllLessons = () => {
                           flexShrink: 0,
                           color: GOLD_TEXT, '&.Mui-checked': { color: GOLD_TEXT },
                           '&.Mui-disabled': { opacity: 0.3 },
-                          p: 0.3, borderRadius: '4px',
+                          p: '12px', m: '-9.6px' /* אזור מגע 44px */, borderRadius: '4px',
                         }}
                       />
 
                       <LessonThumb
                         src={thumbnailUrl}
+                        alt={title}
                         crownWidth={44}
                         sx={{
                           flex: { xs: '0 0 96px', md: '0 0 130px' },
@@ -824,7 +919,7 @@ const AllLessons = () => {
                             bottom: 'var(--lesson-card-duration-badge-bottom)', right: 'var(--lesson-card-duration-badge-right)',
                             bgcolor: 'var(--wine)', color: 'var(--gold-light)',
                             border: `1px solid var(--lesson-card-duration-badge-border)`,
-                            fontSize: `var(--lesson-card-duration-badge-size)`, fontWeight: 700, px: '8px', py: '2px',
+                            fontFamily: 'var(--font-body)', fontSize: `var(--lesson-card-duration-badge-size)`, fontWeight: 700, px: '8px', py: '2px',
                             borderRadius: `var(--lesson-card-duration-badge-radius)`, lineHeight: 1.5,
                             direction: 'ltr', fontVariantNumeric: 'tabular-nums',
                           }}>
@@ -860,7 +955,7 @@ const AllLessons = () => {
                           )}
                           <Box aria-hidden sx={{ width: '1px', height: '16px', bgcolor: 'var(--gold)', flexShrink: 0 }} />
                           <Typography sx={{ fontSize: '13px', color: 'var(--muted)' }} title={lesson_date_gregorian || undefined}>
-                            {lesson_date_hebrew || lesson_date_gregorian}
+                            {formatHebrewDate(lesson_date_gregorian, lesson_date_hebrew) || lesson_date_gregorian}
                           </Typography>
                           {Number(views) > 0 && (
                             <>

@@ -163,6 +163,8 @@
   --breadcrumb-size: 14px;
 
   /* ───── lessonCard ───── */
+  /* גובה אחיד לכל הכרטיסים בדף הבית — נמדד מכרטיס שיעור (356px) */
+  --home-card-height: 356px;
   --lesson-card-radius: 12px;
   --lesson-card-shadow: 0 1px 3px rgba(44,14,16,.05);
   --lesson-card-duration-badge-border: #875736;
@@ -233,11 +235,11 @@
   --footer-text-size: 15px;
   --footer-text-color: var(--book-purchase-card-muted-text-color); /* #C4B396 — קישורים, רבנים, צור קשר */
   --footer-contact-strong-size: 16px;           /* טלפון ווטסאפ: 16px */
-  --footer-brand-text-color: #8A7A5E;           /* תיאור המותג, שתי שורות, מרווח שורות 26px */
+  --footer-brand-text-color: #B5A68A;           /* תיאור המותג, שתי שורות, מרווח שורות 26px — ניגודיות על #2C0E10 */
   --footer-brand-text-line: 26px;
   --footer-link-pitch: 38px;                    /* מרחק בין שורות קישורים */
-  --footer-copyright-size: 14px;                /* #6E6152 — זכויות יוצרים וקישורים משפטיים */
-  --footer-copyright-color: var(--muted);
+  --footer-copyright-size: 14px;                /* זכויות יוצרים וקישורים משפטיים */
+  --footer-copyright-color: #B5A68A;            /* היה --muted (#6E6152): 2.97:1 על הרקע הכהה */
 
   /* ───── bookDetailsHero ───── */
   --book-details-hero-grid-cols: 480px 1fr;

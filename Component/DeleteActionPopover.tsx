@@ -57,7 +57,7 @@ const DeleteActionPopover = ({
   const handleDelete = async () => {
     if (!documentId) return;
     
-    const confirmDelete = window.confirm(`האם את בטוחה שברצונך למחוק לצמיתות את השיעור: "${lessonName}"?`);
+    const confirmDelete = window.confirm(`האם את בטוחה שברצונך למחוק לצמיתות את השיעור: "${lessonName}"?\nאם יש לו קובץ שמע, הוא יימחק גם משרת המדיה (אלא אם שיעור אחר משתמש בו).`);
     if (!confirmDelete) return;
 
     setLoading('delete');

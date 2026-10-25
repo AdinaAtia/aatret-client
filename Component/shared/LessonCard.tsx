@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material';
 import ActionButtons from './ActionButtons';
 import LessonThumb from './LessonThumb';
 import { cardHoverSx } from './cardHover';
+import { withHonorific } from '../../src/utils/rabbiName';
 
 export interface LessonCardData {
   id: string | number;
@@ -44,6 +45,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onSelect, onPlayVideo, 
     >
       <LessonThumb
         src={thumb}
+        alt={lesson.title}
         onClick={onSelect}
         role="button"
         tabIndex={0}
@@ -56,7 +58,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onSelect, onPlayVideo, 
             bottom: 'var(--lesson-card-duration-badge-bottom)', right: 'var(--lesson-card-duration-badge-right)',
             bgcolor: 'var(--wine)', color: 'var(--gold-light)',
             border: `1px solid var(--lesson-card-duration-badge-border)`,
-            fontSize: `var(--lesson-card-duration-badge-size)`, fontWeight: 700, px: '8px', py: '2px',
+            fontFamily: 'var(--font-body)', fontSize: `var(--lesson-card-duration-badge-size)`, fontWeight: 700, px: '8px', py: '2px',
             borderRadius: `var(--lesson-card-duration-badge-radius)`, lineHeight: 1.5,
             direction: 'ltr', fontVariantNumeric: 'tabular-nums',
           }}>
@@ -89,7 +91,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onSelect, onPlayVideo, 
         </Typography>
 
         <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 600, color: 'var(--gold-text)', mb: '2px' }}>
-          {lesson.rabbiName}
+          {withHonorific(lesson.rabbiName)}
         </Typography>
         {lesson.dateHebrew && (
           <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--muted)' }}>

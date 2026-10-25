@@ -1,6 +1,7 @@
 import{ useState, useEffect, useRef } from 'react';
-import { 
-  Box, TextField, Button, Typography, Paper, CircularProgress, 
+import type { DragEvent } from 'react';
+import {
+  Box, TextField, Button, Typography, Paper, 
   MenuItem, Stack, Divider, Autocomplete, Zoom, FormControlLabel, Switch
 } from '@mui/material';
 import axios from 'axios';
@@ -12,6 +13,7 @@ import { Snackbar, Alert, Button as MuiButton } from '@mui/material';
 import { PlusCircle, Send, FileEdit } from 'lucide-react';
 
 import { colors } from '../src/theme/tokens';
+import { addJob, patchJob } from './UploadJobs';
 const GOLD = colors.gold;
 const COLORS = {
   SIDEBAR_BROWN: colors.gold,
@@ -43,7 +45,7 @@ const editFieldStyle = {
   '& legend': { textAlign: 'right' },
 };
 
-const NUM_PATTERN = /שיעור(?:\s+מס.?)?\s+(\d+)/;
+const NUM_PATTERN =/שיעור(?:\s+מס.?)?\s+(\d+)/;
 
 const extractNum = (t: string) => {
   const m = t.match(NUM_PATTERN);
@@ -85,6 +87,9 @@ const detectTitlePrefix = (titles: string[]): string => {
   return common;
 };
 
+// מפתחות של שיעורים שנשלחו להעלאה — מחוץ לקומפוננטה כדי שיישמרו גם אחרי מעבר בין דפים
+const submittedKeys = new Set<string>();
+
 const AudioUploader = () => {
   const [lecturers, setLecturers] = useState<any[]>([]);
   const [categoriesPath, setCategoriesPath] = useState<any[]>([]);
@@ -107,7 +112,6 @@ const AudioUploader = () => {
       }
     }).catch(() => setSuggestedPdfs([]));
   };
-  const [loading, setLoading] = useState(false);
   const [selectedRabbi, setSelectedRabbi] = useState('');
 const [errors, setErrors] = useState<any>({});
 const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success', audioUrl: '' });
@@ -191,7 +195,7 @@ const formatToHebrewDate = (dateString: string) => {
       return;
     }
 
-    axios.get(`${import.meta.env.VITE_API_URL}/api/categories-mains?filters[rabbi][documentId][$eq]=${selectedRabbi}`)
+    axios.get(`${import.meta.env.VITE_API_URL}/api/categories-mains?filters[rabbi][documentId][$eq]=${selectedRabbi}&pagination[pageSize]=100`)
       .then(res => {
         const sorted = (res.data.data || []).sort((a: any, b: any) =>
           (a.name || a.attributes?.name || '').localeCompare(b.name || b.attributes?.name || '', 'he')
@@ -204,6 +208,27 @@ const formatToHebrewDate = (dateString: string) => {
 
   }, [selectedRabbi]);
 
+  const [isDraggingAudio, setIsDraggingAudio] = useState(false);
+
+  const processAudioFile = (file: File) => {
+    selectedAudioFileRef.current = file;
+    setLessonData(prev => ({ ...prev, audioFileName: file.name }));
+    // שליפת אורך מהקובץ באמצעות HTML5 Audio
+    const audio = document.createElement('audio');
+    audio.src = URL.createObjectURL(file);
+    audio.addEventListener('loadedmetadata', () => {
+      const sec = Math.round(audio.duration);
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      const dur = h > 0
+        ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+        : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      setLessonData(prev => ({ ...prev, duration: dur }));
+      URL.revokeObjectURL(audio.src);
+    });
+  };
+
   const handleCategoryChange = async (index: number, documentId: string) => {
     const updatedPath = [...categoriesPath];
     updatedPath[index].selected = documentId;
@@ -214,10 +239,10 @@ const formatToHebrewDate = (dateString: string) => {
     );
 
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-subs?filters[parent_sub][documentId][$eq]=${documentId}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-subs?filters[parent_sub][documentId][$eq]=${documentId}&pagination[pageSize]=100`);
       let children = response.data.data;
       if (index === 0 && (!children || children.length === 0)) {
-        const subRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-subs?filters[main_category][documentId][$eq]=${documentId}&filters[parent_sub][documentId][$null]=true`);
+        const subRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-subs?filters[main_category][documentId][$eq]=${documentId}&filters[parent_sub][documentId][$null]=true&pagination[pageSize]=100`);
         children = subRes.data.data;
       }
       if (children && children.length > 0) {
@@ -282,22 +307,62 @@ const handleSubmit = async () => {
     return;
   }
 
-  // 3. ניקוי שגיאות קודמות והפעלת מצב טעינה
+  // 3. ניקוי שגיאות קודמות
   setErrors({});
-  setLoading(true);
 
-  // 3.5 העלאת קובץ שמע ישירות לשרת לפני שמירה ב-DB
-  if (selectedAudioFileRef.current) {
+  // 3.5 צילום הנתונים ואיפוס הטופס מיד — ההעלאה ממשיכה ברקע עם תגית התקדמות
+  const snapshot = {
+    lessonData,
+    file: selectedAudioFileRef.current,
+    rabbi: selectedRabbi,
+    mainCategory: categoriesPath[0]?.selected || null,
+    subCategory: [...categoriesPath].slice(1).reverse().find(s => s.selected)?.selected || null,
+    published: isPublished,
+  };
+  // הגנה מפני שליחה כפולה: שיעור זהה לחלוטין לשיעור שכבר נשלח (למשל לחיצה כפולה בטעות) נחסם.
+  // הטופס נשאר מלא, כך שאפשר לשנות פרט ולהעלות שיעור חדש.
+  const submitKey = JSON.stringify([
+    lessonData.title.trim(), lessonData.lesson_date_gregorian, lessonData.audioDir,
+    lessonData.audioFileName, lessonData.pdfFileName, snapshot.rabbi,
+    snapshot.mainCategory, snapshot.subCategory, snapshot.published,
+    snapshot.file ? [snapshot.file.name, snapshot.file.size] : null,
+  ]);
+  if (submittedKeys.has(submitKey)) {
+    setSnackbar({ open: true, message: 'השיעור הזה כבר נשלח להעלאה. שני פרט בשיעור כדי להעלות שיעור נוסף.', severity: 'warning', audioUrl: '' });
+    return;
+  }
+  submittedKeys.add(submitKey);
+
+  const jobId = addJob(lessonData.title, snapshot.file ? 'uploading' : 'saving');
+
+  runUpload(jobId, snapshot, submitKey);
+};
+
+const runUpload = async (jobId: number, s: {
+  lessonData: typeof lessonData;
+  file: File | null;
+  rabbi: string;
+  mainCategory: string | null;
+  subCategory: string | null;
+  published: boolean;
+}, submitKey: string) => {
+  const lessonData = s.lessonData;
+
+  // העלאת קובץ שמע ישירות לשרת לפני שמירה ב-DB
+  if (s.file) {
     try {
       const formData = new FormData();
-      formData.append('file', selectedAudioFileRef.current);
+      formData.append('file', s.file);
       formData.append('audioDir', lessonData.audioDir);
-      await axios.post(import.meta.env.VITE_UPLOAD_PHP_URL, formData, {
-        headers: { 'X-Upload-Secret': import.meta.env.VITE_UPLOAD_SECRET },
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/lessons/upload-media`, formData, {
+        onUploadProgress: (ev) => {
+          if (ev.total) patchJob(jobId, { percent: Math.round((ev.loaded / ev.total) * 100) });
+        },
       });
+      patchJob(jobId, { status: 'saving', percent: 100 });
     } catch {
-      setSnackbar({ open: true, message: 'שגיאה בהעלאת קובץ השמע לשרת', severity: 'error', audioUrl: '' });
-      setLoading(false);
+      submittedKeys.delete(submitKey);
+      patchJob(jobId, { status: 'failed', error: 'שגיאה בהעלאת קובץ השמע לשרת' });
       return;
     }
   }
@@ -319,9 +384,9 @@ const handleSubmit = async () => {
 
         
         // קישור לישויות אחרות (Relations)
-        rabbi: selectedRabbi, 
-        main_category: categoriesPath[0]?.selected || null,
-        sub_category: [...categoriesPath].slice(1).reverse().find(s => s.selected)?.selected || null,
+        rabbi: s.rabbi,
+        main_category: s.mainCategory,
+        sub_category: s.subCategory,
         
         views: 0
       }
@@ -330,41 +395,23 @@ const handleSubmit = async () => {
     console.log("Sending data to Strapi:", dataToSend);
 
     // 5. שליחת הבקשה לשרת
-const url = isPublished 
-      ? `${import.meta.env.VITE_API_URL}/api/lessons` 
+const url = s.published
+      ? `${import.meta.env.VITE_API_URL}/api/lessons`
       : `${import.meta.env.VITE_API_URL}/api/lessons?status=draft`;
-    await axios.post(url, dataToSend);    // 6. הצגת הודעת הצלחה ב-Snackbar ואיפוס חלקי של הטופס
-    setSnackbar({
-      open: true,
-      message: 'השיעור נשמר בהצלחה בבסיס הנתונים!',
-      severity: 'success',
-      audioUrl: buildSafeUrl(lessonData.audioDir, lessonData.audioFileName) || ''
-    });
+    await axios.post(url, dataToSend);
 
-    // איפוס השדות כדי שיהיה אפשר להזין שיעור חדש מיד
-    selectedAudioFileRef.current = null;
-    setLessonData({
-      ...lessonData,
-      title: '',
-      audioFileName: '',
-      pdfFileName: '',
-      duration: ''
+    // 6. עדכון התגית — "נשמר בהצלחה" עם קישור להאזנה
+    patchJob(jobId, {
+      status: 'done',
+      audioUrl: buildSafeUrl(lessonData.audioDir, lessonData.audioFileName) || ''
     });
 
   } catch (err: any) {
     // 7. טיפול בשגיאות מהשרת (400/500) והצגת הודעה מתאימה
     const errorMessage = err.response?.data?.error?.message || 'שגיאה בתקשורת עם השרת';
     console.error("Save error details:", err.response?.data || err);
-    
-    setSnackbar({
-      open: true,
-      message: `שגיאה בשמירה: ${errorMessage}`,
-      severity: 'error',
-      audioUrl: ''
-    });
-  } finally {
-    // 8. כיבוי ה-Spinner בכפתור
-    setLoading(false);
+    submittedKeys.delete(submitKey);
+    patchJob(jobId, { status: 'failed', error: `שגיאה בשמירה: ${errorMessage}` });
   }
 };
 return (
@@ -379,11 +426,24 @@ return (
           {/* העלאת קובץ שמע — ראשון */}
           <Box
             component="label"
+            onDragOver={(e: DragEvent) => { e.preventDefault(); setIsDraggingAudio(true); }}
+            onDragLeave={(e: DragEvent) => { e.preventDefault(); setIsDraggingAudio(false); }}
+            onDrop={(e: DragEvent) => {
+              e.preventDefault();
+              setIsDraggingAudio(false);
+              const file = e.dataTransfer.files?.[0];
+              if (!file) return;
+              if (!file.type.startsWith('audio/')) {
+                setSnackbar({ open: true, message: 'ניתן לגרור רק קובץ שמע', severity: 'error', audioUrl: '' });
+                return;
+              }
+              processAudioFile(file);
+            }}
             sx={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               gap: 1.5, p: 5, mb: 1, borderRadius: '16px',
-              border: `2px dashed ${lessonData.audioFileName ? GOLD : '#ccc'}`,
-              bgcolor: lessonData.audioFileName ? '#fffbf0' : '#fafafa',
+              border: `2px dashed ${lessonData.audioFileName || isDraggingAudio ? GOLD : '#ccc'}`,
+              bgcolor: lessonData.audioFileName || isDraggingAudio ? '#fffbf0' : '#fafafa',
               cursor: 'pointer', transition: 'all 0.2s',
               '&:hover': { borderColor: GOLD, bgcolor: '#fffbf0' }
             }}
@@ -410,22 +470,7 @@ return (
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                selectedAudioFileRef.current = file;
-                setLessonData(prev => ({ ...prev, audioFileName: file.name }));
-                // שליפת אורך מהקובץ באמצעות HTML5 Audio
-                const audio = document.createElement('audio');
-                audio.src = URL.createObjectURL(file);
-                audio.addEventListener('loadedmetadata', () => {
-                  const sec = Math.round(audio.duration);
-                  const h = Math.floor(sec / 3600);
-                  const m = Math.floor((sec % 3600) / 60);
-                  const s = sec % 60;
-                  const dur = h > 0
-                    ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-                    : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                  setLessonData(prev => ({ ...prev, duration: dur }));
-                  URL.revokeObjectURL(audio.src);
-                });
+                processAudioFile(file);
                 e.target.value = '';
               }}
             />
@@ -679,8 +724,7 @@ return (
             variant="contained" 
             fullWidth 
             onClick={handleSubmit} 
-            disabled={loading} 
-            sx={{ 
+            sx={{
               py: 1.8,
               mt: 2,
               borderRadius: '12px', 
@@ -690,7 +734,7 @@ return (
               '&:hover': { bgcolor: GOLD, color: '#000' } 
             }}
           >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'הוסף שיעור '}
+            הוסף שיעור
           </Button>
         </Stack>
       </Paper>

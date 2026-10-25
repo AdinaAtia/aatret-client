@@ -3,6 +3,8 @@ import { Box, Typography, Link, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useRabbis } from '../src/context/RabbisContext';
 import { site } from '../src/content/site';
+import PhoneNumber from './shared/PhoneNumber';
+import { withHonorific } from '../src/utils/rabbiName';
 import Logo from './shared/Logo';
 import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined';
 import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
@@ -40,7 +42,10 @@ const listItemSx = {
   fontSize: 'var(--footer-text-size)',
   lineHeight: '24px',
   textDecoration: 'none',
+  position: 'relative',
   '&:hover': { textDecoration: 'underline' },
+  // אזור מגע 44px בלי לשנות את העימוד
+  '&::before': { content: '""', position: 'absolute', inset: '-10px -4px' },
 } as const;
 
 /** שורת "צור קשר" עם אייקון — Heebo, #C4B396, 15px (טלפון ווטסאפ: 16px) */
@@ -52,6 +57,8 @@ const contactLineSx = {
   fontSize: 'var(--footer-text-size)',
   lineHeight: 'var(--footer-brand-text-line)',
   color: 'var(--footer-text-color)',
+  position: 'relative',
+  '&::before': { content: '""', position: 'absolute', inset: '-10px -4px' },
 } as const;
 
 const contactIconSx = { fontSize: '1rem', color: 'var(--gold)', flexShrink: 0 } as const;
@@ -98,16 +105,16 @@ const Footer: React.FC = () => {
                 lineHeight: 'var(--footer-brand-text-line)',
               }}
             >
-              ישיבת החיים והשלום — בית מדרש לתורת הקבלה על פי תורת האר״י ז״ל.
+              ישיבת החיים והשלום — בית מדרש לתורת הפשט והקבלה על פי תורת האר״י ז״ל.
             </Typography>
           </Box>
 
           {/* עמודה 2: ניווט */}
           <Box>
-            <Typography component="h6" sx={columnHeadingSx}>
+            <Typography component="h3" sx={columnHeadingSx}>
               ניווט
             </Typography>
-            <Stack spacing="14px">
+            <Stack spacing="20px">
               {[
                 { label: 'דף הבית', href: '/' },
                 { label: 'שיעורים', href: '/AllLessons' },
@@ -125,10 +132,10 @@ const Footer: React.FC = () => {
 
           {/* עמודה 3: רבני הישיבה (דינמי) */}
           <Box>
-            <Typography component="h6" sx={columnHeadingSx}>
+            <Typography component="h3" sx={columnHeadingSx}>
               רבני הישיבה
             </Typography>
-            <Stack spacing="14px">
+            <Stack spacing="20px">
               {rabbis.map((rabbi) => (
                 rabbi.phoneOnly ? (
                   // רב במרחב הקולי בלבד — אין לו שיעורים באתר, לכן חיוג לקו במקום מעבר לרשימה ריקה
@@ -137,7 +144,7 @@ const Footer: React.FC = () => {
                     href={toTelHref(site.phones.lessonsArchive)}
                     sx={listItemSx}
                   >
-                    {rabbi.name} · מרחב קולי
+                    {withHonorific(rabbi.name)} · מרחב קולי
                   </Link>
                 ) : (
                   <Typography
@@ -145,7 +152,7 @@ const Footer: React.FC = () => {
                     onClick={() => navigate('/AllLessons', { state: { rabbiId: rabbi.id } })}
                     sx={{ ...listItemSx, cursor: 'pointer' }}
                   >
-                    {rabbi.name}
+                    {withHonorific(rabbi.name)}
                   </Typography>
                 )
               ))}
@@ -154,7 +161,7 @@ const Footer: React.FC = () => {
 
           {/* עמודה 4: צור קשר — כל הערכים מ-src/content/site.ts, ערך ריק לא מוצג */}
           <Box>
-            <Typography component="h6" sx={columnHeadingSx}>
+            <Typography component="h3" sx={columnHeadingSx}>
               צור קשר
             </Typography>
             <Stack>
@@ -176,20 +183,20 @@ const Footer: React.FC = () => {
                 }}
               >
                 <PhoneOutlinedIcon sx={contactIconSx} />
-                משרד הישיבה (לא לרכישת ספרים): {site.phones.general}
+                משרד הישיבה (לא לרכישת ספרים): <PhoneNumber>{site.phones.general}</PhoneNumber>
               </Link>
               <Link
                 href={booksPhoneHref}
                 sx={{
                   ...contactLineSx,
                   fontSize: 'var(--footer-contact-strong-size)',
-                  mt: '12px',
+                  mt: '18px', // 26px גובה + 18px מרווח = אזורי מגע של 44px שלא נחתכים זה בזה
                   textDecoration: 'none',
                   '&:hover': { textDecoration: 'underline' },
                 }}
               >
                 <PhoneOutlinedIcon sx={contactIconSx} />
-                רכישת ספרים: {site.phones.books}
+                רכישת ספרים: <PhoneNumber>{site.phones.books}</PhoneNumber>
               </Link>
               {site.phones.lessonsArchive && (
                 <Link
@@ -197,13 +204,13 @@ const Footer: React.FC = () => {
                   sx={{
                     ...contactLineSx,
                     fontSize: 'var(--footer-contact-strong-size)',
-                    mt: '12px',
+                    mt: '18px',
                     textDecoration: 'none',
                     '&:hover': { textDecoration: 'underline' },
                   }}
                 >
                   <PhoneOutlinedIcon sx={contactIconSx} />
-                  מאגר שיעורים טלפוני: {site.phones.lessonsArchive}
+                  מאגר שיעורים טלפוני: <PhoneNumber>{site.phones.lessonsArchive}</PhoneNumber>
                 </Link>
               )}
               {site.whatsapp && (
@@ -218,12 +225,12 @@ const Footer: React.FC = () => {
                   }}
                 >
                   <WhatsAppIcon sx={contactIconSx} />
-                  וואטסאפ · {site.whatsapp}
+                  וואטסאפ · <PhoneNumber>{site.whatsapp}</PhoneNumber>
                 </Link>
               )}
               <Typography sx={{ ...contactLineSx, mt: '26px' }}>
                 <AccessTimeOutlinedIcon sx={contactIconSx} />
-                שיעור יומי · {site.weeklyLesson.time}
+                שיעור יומי · {site.weeklyLesson.time}–{site.weeklyLesson.endTime}
               </Typography>
             </Stack>
           </Box>
@@ -248,11 +255,11 @@ const Footer: React.FC = () => {
           <Typography sx={{ fontFamily: 'inherit', fontSize: 'inherit', color: 'inherit' }}>
             © {new Date().getFullYear()} ישיבת החיים והשלום - עטרת מרדכי. כל הזכויות שמורות.
           </Typography>
-          {/* שני הפריטים הבאים מופיעים במוקאפ אבל אין להם מסלול באתר עדיין —
-              טקסט בלבד, לא קישור שקורס, עד שיובנו העמודים */}
-          <Typography sx={{ fontFamily: 'inherit', fontSize: 'inherit', color: 'inherit' }}>
-            הצהרת נגישות · תנאי שימוש
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontFamily: 'inherit', fontSize: 'inherit', color: 'inherit' }}>
+            <Link href="/accessibility" sx={{ ...listItemSx, color: 'inherit', fontSize: 'inherit' }}>הצהרת נגישות</Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/terms" sx={{ ...listItemSx, color: 'inherit', fontSize: 'inherit' }}>תנאי שימוש</Link>
+          </Box>
         </Box>
       </Box>
     </Box>

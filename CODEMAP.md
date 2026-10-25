@@ -368,3 +368,25 @@ const theme = createTheme({
 
 8. **איפה האתר מתארח?** פאזה 4.1 תלויה בזה — אם Netlify או Cloudflare, prerendering
    הוא הגדרה אחת. לא נמצאו `netlify.toml`, `vercel.json` או `_redirects` בריפו.
+
+---
+
+## תצוגה מקדימה בשיתוף קישור (וואטסאפ) — בדיקת אפשרות בשרת (BRIEF-FIXES משימה 2ד)
+
+**המצב:** ה־SPA קובע את תגיות ה־og בדפדפן בלבד (Helmet). הסורק של וואטסאפ קורא רק את ה־HTML הראשוני,
+לכן כל כתובת מציגה את התגיות של `index.html` (שם הישיבה + `og-default.jpg`). שם השיעור עצמו לא יופיע בשיתוף בלי הזרקה בצד השרת.
+
+**השרת:** nginx (`/etc/nginx/sites-enabled/aret-mordechai`). האתר מוגש מ־`/var/www/ateret-mordechai/client/dist`
+עם `try_files ... /index.html`; `/api/` ו־`/uploads/` מועברים ל־Strapi ב־`localhost:1337`.
+
+**אפשרות מומלצת — הגשת HTML ייעודי לסורקים בלבד:**
+1. ב־Strapi: נתיב `GET /api/lessons/:documentId/share` שמחזיר HTML קצר עם `og:title`
+   (`<שם השיעור> | ישיבת עטרת מרדכי`), `og:description` (רב · סדרה), `og:url`, `og:image`.
+   אין לשיעורים שדה תמונה; אפשר `https://i.ytimg.com/vi/<youtube_id>/hqdefault.jpg`, ובלי `youtube_id` — `og-default.jpg`.
+2. ב־nginx: `map $http_user_agent $is_share_bot` (WhatsApp, facebookexternalhit, Telegram, Twitterbot, Slack, LinkedIn)
+   ובתוך `location /AllLessons/` — אם `$is_share_bot` מעבירים ל־`/api/lessons/<id>/share`; אחרת ממשיכים ל־`index.html`.
+   גולשים רגילים לא מושפעים וכתובות קיימות ממשיכות לעבוד.
+
+**מה לברר לפני יישום:** האם ה־`:lessonId` בכתובת `/AllLessons/:lessonId` הוא `id` מספרי או `documentId`
+(נתיב ה־share צריך להתאים), ומי מעלה את ההגדרה לשרת (`nginx -t` + `reload`).
+**לא בוצע** — נרשם לעדכון בלבד, לפי הבריף.

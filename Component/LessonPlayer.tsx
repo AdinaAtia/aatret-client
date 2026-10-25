@@ -10,14 +10,18 @@ import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumb
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import  { useEffect, useRef, useState } from 'react';
 import axios from "axios";
+import { withHonorific } from '../src/utils/rabbiName';
+import { Helmet } from 'react-helmet-async';
 import { ChevronRight, ChevronLeft, Play, Pause, Volume2, VolumeX, Link2, Mail, ArrowDownToLine, FileText, Heart, MessageSquare } from 'lucide-react';
 import LessonThumb, { youtubeThumbSources } from './shared/LessonThumb';
 import { site } from '../src/content/site';
 import AppButton from './shared/AppButton';
+import Honeypot from './shared/Honeypot';
 import { getPdfList } from './shared/pdfFiles';
 import Breadcrumb from './shared/Breadcrumb';
 import LessonCard from './shared/LessonCard';
 import SectionArch from './shared/SectionArch';
+import { formatHebrewDate } from '../src/utils/hebrewDate';
 
 interface LessonPlayerProps {
   lesson: any;
@@ -128,6 +132,30 @@ const LessonPlayer = ({ lesson, onBack, onLessonSelect }: LessonPlayerProps) => 
     setDragRatio(null);
   };
 
+  /** מקלדת: הפס מתמלא מימין לשמאל, אז חץ שמאלה = קדימה וחץ ימינה = אחורה */
+  const seekTo = (sec: number) => {
+    const el = audioRef.current;
+    const dur = getDuration();
+    if (!el || !dur) return;
+    const next = Math.min(dur, Math.max(0, sec));
+    el.currentTime = next;
+    setCurrentTime(next);
+  };
+
+  const handleTrackKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const dur = getDuration();
+    if (!dur) return;
+    const step = 10;
+    switch (e.key) {
+      case 'ArrowLeft':  seekTo(currentTime + step); break;
+      case 'ArrowRight': seekTo(currentTime - step); break;
+      case 'Home':       seekTo(0); break;
+      case 'End':        seekTo(dur); break;
+      default: return;
+    }
+    e.preventDefault();
+  };
+
   const shownDuration = getDuration();
   const progressPct = dragRatio !== null
     ? dragRatio * 100
@@ -149,7 +177,7 @@ const LessonPlayer = ({ lesson, onBack, onLessonSelect }: LessonPlayerProps) => 
     document.body.removeChild(a);
   };
 
-  const rabbiName = rabbi?.name || "";
+  const rabbiName = withHonorific(rabbi?.name);
   const lessonNumber = title.match(/\d{3}/)?.[0] || "";
 
   // הגדרת בסיס הכתובת המעודכן
@@ -177,10 +205,13 @@ const LessonPlayer = ({ lesson, onBack, onLessonSelect }: LessonPlayerProps) => 
 };
   const audioUrl = buildSafeUrl(AudioDir, AudioFileName);
 
+  // הקובץ חסר בשרת = הדפדפן לא הצליח לטעון אותו (onError על ה-source). לא תלוי ב-API ולא ב-CORS
+  const [audioMissing, setAudioMissing] = useState(false);
+  useEffect(() => { setAudioMissing(false); }, [audioUrl]);
+  const hasAudio = !!audioUrl && !audioMissing;
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
-    document.title = title ? `${title} | עטרת מרדכי` : 'עטרת מרדכי';
-    return () => { document.title = 'עטרת מרדכי'; };
   }, [title]);
 const [categoryPath, setCategoryPath] = useState<string>("");
   const [relatedLessons, setRelatedLessons] = useState<any[]>([]);
@@ -193,6 +224,7 @@ const [categoryPath, setCategoryPath] = useState<string>("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackData, setFeedbackData] = useState({ name: '', email: '', message: '' });
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const feedbackHoneypotRef = useRef<HTMLInputElement>(null);
 
   const handleFeedbackSubmit = async () => {
     if (!feedbackData.name || !feedbackData.email || !feedbackData.message) return;
@@ -202,6 +234,7 @@ const [categoryPath, setCategoryPath] = useState<string>("");
         ...feedbackData,
         lessonTitle: title,
         lessonDocumentId: lesson?.documentId,
+        website: feedbackHoneypotRef.current?.value || '',
       });
       setFeedbackStatus('success');
       setFeedbackData({ name: '', email: '', message: '' });
@@ -350,7 +383,8 @@ useEffect(() => {
 
   // --- B3/B4 — נתונים נגזרים לפריסת העמוד ---
   const seriesName = categoryPath ? categoryPath.split(' / ').pop() : '';
-  const yearHebrew = lesson_date_hebrew ? lesson_date_hebrew.trim().split(' ').pop() : '';
+  const dateHebrew = formatHebrewDate(lesson_date_gregorian, lesson_date_hebrew);
+  const yearHebrew = dateHebrew ? dateHebrew.trim().split(' ').pop() : '';
   const breadcrumbItems = [
     { label: 'דף הבית', path: '/' },
     { label: 'ארכיון השיעורים', path: '/AllLessons' },
@@ -377,7 +411,9 @@ useEffect(() => {
     if (next.getTime() < now.getTime()) next.setDate(next.getDate() + 1);
     const pad = (n: number) => String(n).padStart(2, '0');
     const fmt = (d: Date) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
-    const end = new Date(next.getTime() + 60 * 60 * 1000);
+    const [eh, em] = site.weeklyLesson.endTime.split(':').map(Number);
+    const end = new Date(next);
+    end.setHours(eh || 0, em || 0, 0, 0);
     const ics = [
       'BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT',
       `DTSTART:${fmt(next)}`, `DTEND:${fmt(end)}`, 'RRULE:FREQ=DAILY',
@@ -402,6 +438,15 @@ useEffect(() => {
 
   return (
     <Box sx={{ bgcolor: 'var(--parchment)', direction: 'rtl' }}>
+      {title && (
+        <Helmet>
+          <title>{`${title} | ישיבת עטרת מרדכי`}</title>
+          <meta property="og:title" content={`${title} | ישיבת עטרת מרדכי`} />
+          {[rabbiName, seriesName].filter(Boolean).length > 0 && (
+            <meta property="og:description" content={[rabbiName, seriesName].filter(Boolean).join(' · ')} />
+          )}
+        </Helmet>
+      )}
       <Breadcrumb items={breadcrumbItems} sticky />
 
       <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
@@ -453,6 +498,7 @@ useEffect(() => {
                   >
                     <LessonThumb
                       src={youtubeThumbSources(youtube_id)}
+                      alt={title}
                       playSize={84}
                       crownWidth={110}
                       sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
@@ -463,7 +509,7 @@ useEffect(() => {
             )}
 
             {/* נגן אודיו מותאם — B2. אלמנט ה-audio האמיתי מוסתר, הממשק כולו בנוי מסביבו */}
-            {audioUrl && (
+            {hasAudio && (
               <Box sx={{
                 mb: 3, bgcolor: 'var(--wine)', border: `1px solid var(--gold)`,
                 borderRadius: `var(--audio-player-radius)`, p: '16px 20px',
@@ -481,7 +527,7 @@ useEffect(() => {
                   onDurationChange={(e) => setAudioDuration(e.currentTarget.duration)}
                   onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                 >
-                  <source src={audioUrl} type="audio/mpeg" />
+                  <source src={audioUrl} type="audio/mpeg" onError={() => setAudioMissing(true)} />
                 </audio>
 
                 <IconButton
@@ -518,10 +564,20 @@ useEffect(() => {
                     onPointerMove={handleTrackPointerMove}
                     onPointerUp={handleTrackPointerUp}
                     onPointerCancel={() => setDragRatio(null)}
+                    role="slider"
+                    tabIndex={0}
+                    aria-label="התקדמות השיעור"
+                    aria-orientation="horizontal"
+                    aria-valuemin={0}
+                    aria-valuemax={Math.round(shownDuration || 0)}
+                    aria-valuenow={Math.round(currentTime)}
+                    aria-valuetext={`${formatTime(currentTime)} מתוך ${formatTime(shownDuration)}`}
+                    onKeyDown={handleTrackKeyDown}
                     sx={{
                       position: 'relative', height: `var(--audio-player-track-height)`,
                       borderRadius: '999px', bgcolor: 'var(--audio-player-track-bg)', cursor: 'pointer', mb: '6px',
                       touchAction: 'none', userSelect: 'none',
+                      '&:focus-visible': { outline: '2px solid var(--gold-light)', outlineOffset: '6px' },
                     }}
                   >
                     <Box sx={{
@@ -542,7 +598,7 @@ useEffect(() => {
                   sx={{
                     width: 'var(--audio-player-control-button-size)', height: 'var(--audio-player-control-button-size)',
                     flexShrink: 0, borderRadius: "10px", border: `1px solid var(--gold)`, color: 'var(--gold-light)',
-                    fontSize: '13px', fontWeight: 700, direction: 'ltr',
+                    fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 700, direction: 'ltr',
                   }}
                 >
                   {playbackRate}x
@@ -607,8 +663,7 @@ useEffect(() => {
               p: '18px 22px', display: 'flex', flexWrap: 'wrap', gap: '16px 34px', mb: '24px',
             }}>
               {rabbiName && <Box sx={metaItemSx}><PersonOutlineOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />{rabbiName}</Box>}
-              {lesson_date_hebrew && <Box sx={metaItemSx}><CalendarTodayOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />{lesson_date_hebrew}</Box>}
-              {lesson_date_gregorian && <Box sx={metaItemSx}><CalendarTodayOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />{lesson_date_gregorian}</Box>}
+              {(dateHebrew || lesson_date_gregorian) && <Box sx={metaItemSx} title={lesson_date_gregorian || undefined}><CalendarTodayOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />{dateHebrew || lesson_date_gregorian}</Box>}
               <Box sx={metaItemSx}><AccessTimeOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />{duration || '00:00'}</Box>
               {Number(views) > 0 && <Box sx={metaItemSx}><VisibilityOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />{Number(views).toLocaleString('he-IL')} צפיות</Box>}
               {lessonNumber && <Box sx={metaItemSx}><ConfirmationNumberOutlinedIcon sx={{ fontSize: 17, color: 'var(--gold-text)' }} />שיעור מס׳ {lessonNumber}</Box>}
@@ -616,12 +671,12 @@ useEffect(() => {
 
             {/* כפתורי פעולה — אחד ראשי, השאר משניים */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {AudioFileName && (
+              {hasAudio && (
                 <IconButton
                   aria-label="עזרה בהורדת השיעור"
                   aria-haspopup="dialog"
                   onClick={(e) => setDownloadHelpAnchor(e.currentTarget)}
-                  sx={{ width: 36, height: 36, flexShrink: 0, border: `1px solid var(--gold)`, color: 'var(--gold-text)', '&:hover': { bgcolor: `color-mix(in srgb, var(--gold) 12.157%, transparent)` } }}
+                  sx={{ width: 44, height: 44, flexShrink: 0, border: `1px solid var(--gold)`, color: 'var(--gold-text)', '&:hover': { bgcolor: `color-mix(in srgb, var(--gold) 12.157%, transparent)` } }}
                 >
                   <HelpOutlineIcon sx={{ fontSize: 20 }} />
                 </IconButton>
@@ -632,11 +687,10 @@ useEffect(() => {
               gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
               '& .MuiButton-root': { width: '100%', height: '46px', whiteSpace: 'nowrap' },
             }}>
+              {hasAudio && (
               <Tooltip title="הורדת קובץ השמע בלבד. הסרטון זמין לצפייה ביוטיוב">
               <Box component="span" sx={{ display: 'block', flex: 1 }}>
               <AppButton
-
-                disabled={!AudioFileName}
                 onClick={() => {
                   const cleanDir = (AudioDir || '').replace(/^\/+|\/+$/g, '');
                   const file = `${cleanDir}/${AudioFileName}`;
@@ -653,10 +707,11 @@ useEffect(() => {
               </AppButton>
               </Box>
               </Tooltip>
+              )}
 
+              {pdfList.length > 0 && (
               <AppButton
                 variant="outline"
-                disabled={pdfList.length === 0}
                 onClick={(e: any) => {
                   if (pdfList.length === 1) downloadPdf(pdfList[0]);
                   else setPdfMenuAnchor(e.currentTarget);
@@ -665,6 +720,7 @@ useEffect(() => {
               >
                 {pdfList.length > 1 ? 'הורדת דפי מקורות' : 'הורדת דף מקורות'}
               </AppButton>
+              )}
               <Menu anchorEl={pdfMenuAnchor} open={!!pdfMenuAnchor} onClose={() => setPdfMenuAnchor(null)}>
                 {pdfList.map((name) => (
                   <MenuItem key={name} onClick={() => { downloadPdf(name); setPdfMenuAnchor(null); }} sx={{ direction: 'rtl', fontFamily: 'var(--font-body)' }}>
@@ -732,7 +788,7 @@ useEffect(() => {
                 שיעור קבלה יומי
               </Typography>
               <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--book-purchase-card-sub-text-color)', mb: '4px' }}>
-                {site.weeklyLesson.day} · {site.weeklyLesson.time}
+                {site.weeklyLesson.day} · {site.weeklyLesson.time}–{site.weeklyLesson.endTime} · ביום חמישי: {site.weeklyLesson.thursday}
               </Typography>
               <Typography sx={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--book-purchase-card-sub-text-color)', mb: '14px' }}>
                 {site.weeklyLesson.place} · {site.addresses.yeshiva}
@@ -769,7 +825,7 @@ useEffect(() => {
                   key={rel.id}
                   lesson={{
                     id: rel.id, title: a.title, rabbiName: relRabbiName,
-                    dateHebrew: a.lesson_date_hebrew, youtubeId: a.youtube_id, duration: a.duration,
+                    dateHebrew: formatHebrewDate(a.lesson_date_gregorian, a.lesson_date_hebrew), youtubeId: a.youtube_id, duration: a.duration,
                   }}
                   onSelect={selectThisLesson}
                   onPlayVideo={selectThisLesson}
@@ -812,6 +868,7 @@ useEffect(() => {
             <TextField size="small" label="שם" value={feedbackData.name} onChange={e => setFeedbackData(p => ({ ...p, name: e.target.value }))} sx={goldField} />
             <TextField size="small" label='אימייל' value={feedbackData.email} onChange={e => setFeedbackData(p => ({ ...p, email: e.target.value }))} sx={goldField} />
             <TextField multiline rows={4} label="תגובה" value={feedbackData.message} onChange={e => setFeedbackData(p => ({ ...p, message: e.target.value }))} sx={goldField} />
+            <Honeypot ref={feedbackHoneypotRef} />
             {feedbackStatus === 'success' && <Typography sx={{ color: 'var(--gold-text)', textAlign: 'center', fontWeight: 700 }}>התגובה נשלחה! החלון יסגר בעוד מספר שניות...</Typography>}
             {feedbackStatus === 'error' && <Typography sx={{ color: 'var(--contact-form-required)', textAlign: 'center' }}>שגיאה בשליחה, נסה שוב.</Typography>}
             <AppButton fullWidth disabled={feedbackStatus === 'loading'} onClick={handleFeedbackSubmit}>

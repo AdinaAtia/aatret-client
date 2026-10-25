@@ -2,7 +2,7 @@ import  { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Stack, MenuItem, Typography, Divider, Zoom, Autocomplete,
-  InputAdornment, IconButton, Tooltip, CircularProgress, Box
+  InputAdornment, IconButton, Tooltip, CircularProgress, Box, Checkbox, FormControlLabel
 } from '@mui/material';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CloseIcon from '@mui/icons-material/Close';
@@ -148,6 +148,8 @@ interface EditLessonDialogProps {
 
 export type ConvertState = {
   status: 'running' | 'done' | 'failed' | 'timeout';
+  kind?: 'convert' | 'upload'; // ברירת מחדל: המרה מיוטיוב
+  percent?: number; // התקדמות העלאה
   stage?: string;
   error?: string;
 };
@@ -160,6 +162,11 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
 
   const [converting, setConverting] = useState(false);
   const [convertStage, setConvertStage] = useState('');
+
+  // "החלף שיעור": העלאת קובץ שמע מהמחשב במקום המרה מיוטיוב
+  const [replaceMode, setReplaceMode] = useState(false);
+  const [replaceFile, setReplaceFile] = useState<File | null>(null);
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
   const [nameHint, setNameHint] = useState<any>(null);
   const [suggesting, setSuggesting] = useState(false);
 
@@ -232,6 +239,10 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
       const pdf = res.data?.pdf;
       setLinkInfo(pdf ? { audioDir: pdf.audioDir, pdfFileName: pdf.pdfFileName } : null);
       setHintsMsg(pdf ? '' : 'לא נמצא קישור PDF בתיאור הסרטון');
+      // שם הקובץ המקורי שהועלה ליוטיוב (כ-mp3) — מוצג כהצעה, נכנס לשדה רק באישור
+      const ytName = res.data?.audioFileName;
+      console.log('[youtube-hints] שם קובץ מקורי מיוטיוב:', res.data?.youtubeFileName, '| הצעה ל-mp3:', ytName);
+      if (ytName) setNameHint({ suggested: ytName, exists: false, source: 'youtube' });
     } catch {
       setLinkInfo(null);
       setHintsMsg('לא הצלחנו לקרוא את תיאור הסרטון');
@@ -267,6 +278,9 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
       setHintsMsg('');
       setDismissedDir(false);
       setDismissedPdf(false);
+      setReplaceMode(false);
+      setReplaceFile(null);
+      setUploadPercent(null);
       // חילוץ נתונים מסטרפי 5: הנתונים יכולים להיות ישירות באובייקט או תחת attributes
       const attrs = lesson.attributes || lesson;
       
@@ -304,13 +318,14 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
 
       // שיעור שכבר מלא בתיקייה וב-PDF לא נבדק אוטומטית — רק ב"בדוק שוב"
       const hasPdf = getPdfList(attrs).length > 0;
-      if (attrs.youtube_id && (!audioDir || !hasPdf)) loadLinkInfo(attrs.youtube_id);
+      const hasAudioName = !!(attrs.AudioFileName || attrs.audioFileName);
+      if (attrs.youtube_id && (!audioDir || !hasPdf || !hasAudioName)) loadLinkInfo(attrs.youtube_id);
     }
   }, [lesson, open]);
 
   const loadCategoriesWithSelection = async (rabbiId: string, mainCatNumericId: number | null, subCatDocId: string | null) => {
     try {
-      const mainRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-mains?filters[rabbi][documentId][$eq]=${rabbiId}`);
+      const mainRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-mains?filters[rabbi][documentId][$eq]=${rabbiId}&pagination[pageSize]=100`);
       const mainOptions = mainRes.data.data || [];
 
       // הפיכת ID מספרי ל-documentId מתוך הרשימה שנטענה
@@ -347,12 +362,12 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
         let options: any[];
         if (i === 0) {
           const res = await axios.get(
-            `${import.meta.env.VITE_API_URL}/api/categories-subs?filters[main_category][documentId][$eq]=${mainCatDocId}&filters[parent_sub][documentId][$null]=true`
+            `${import.meta.env.VITE_API_URL}/api/categories-subs?filters[main_category][documentId][$eq]=${mainCatDocId}&filters[parent_sub][documentId][$null]=true&pagination[pageSize]=100`
           );
           options = res.data.data || [];
         } else {
           const res = await axios.get(
-            `${import.meta.env.VITE_API_URL}/api/categories-subs?filters[parent_sub][documentId][$eq]=${ancestorIds[i - 1]}`
+            `${import.meta.env.VITE_API_URL}/api/categories-subs?filters[parent_sub][documentId][$eq]=${ancestorIds[i - 1]}&pagination[pageSize]=100`
           );
           options = res.data.data || [];
         }
@@ -362,7 +377,7 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
       // טעינת ילדים של הרמה האחרונה שנבחרה
       if (ancestorIds.length > 0) {
         const lastId = ancestorIds[ancestorIds.length - 1];
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-subs?filters[parent_sub][documentId][$eq]=${lastId}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-subs?filters[parent_sub][documentId][$eq]=${lastId}&pagination[pageSize]=100`);
         const children = res.data.data || [];
         if (children.length > 0) {
           pathBuilder.push({ level: ancestorIds.length + 2, label: `תת קטגוריה (רמה ${ancestorIds.length + 2})`, options: children, selected: '' });
@@ -370,7 +385,7 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
       } else {
         // אין תת-קטגוריה, הצג את הרמה הראשונה ריקה
         const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/categories-subs?filters[main_category][documentId][$eq]=${mainCatDocId}&filters[parent_sub][documentId][$null]=true`
+          `${import.meta.env.VITE_API_URL}/api/categories-subs?filters[main_category][documentId][$eq]=${mainCatDocId}&filters[parent_sub][documentId][$null]=true&pagination[pageSize]=100`
         );
         const children = res.data.data || [];
         if (children.length > 0) {
@@ -399,10 +414,10 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
     const newPath = updatedPath.slice(0, index + 1);
     
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-subs?filters[parent_sub][documentId][$eq]=${documentId}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-subs?filters[parent_sub][documentId][$eq]=${documentId}&pagination[pageSize]=100`);
       let children = response.data.data;
       if (index === 0 && (!children || children.length === 0)) {
-        const subRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-subs?filters[main_category][documentId][$eq]=${documentId}&filters[parent_sub][documentId][$null]=true`);
+        const subRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories-subs?filters[main_category][documentId][$eq]=${documentId}&filters[parent_sub][documentId][$null]=true&pagination[pageSize]=100`);
         children = subRes.data.data;
       }
       if (children && children.length > 0) {
@@ -449,6 +464,15 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
       const youtubeIdMatch = youtubeIdRaw.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
       const youtubeId = youtubeIdMatch ? youtubeIdMatch[1] : (youtubeIdRaw.length === 11 ? youtubeIdRaw : null);
 
+      // החלפת קובץ מהמחשב: מעלים קודם — אם ההעלאה נכשלת, כלום לא משתנה
+      const replacing = replaceMode && !!replaceFile;
+      const originalAttrs = lesson?.attributes || lesson || {};
+      const oldFileName: string = originalAttrs.AudioFileName || originalAttrs.audioFileName || '';
+      if (replacing && replaceFile) {
+        if (!editedLesson.AudioDir) { alert('צריך למלא תיקיית שמע (AudioDir) לפני העלאת קובץ'); return; }
+        if (oldFileName && !window.confirm(`את מאשרת את ההחלפה?\nהקובץ הקיים "${oldFileName}" יימחק מהשרת ויוחלף ב-"${replaceFile.name}".`)) return;
+      }
+
       const payload = {
         data: {
           title: editedLesson.title,
@@ -456,7 +480,7 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
           lesson_date_hebrew: editedLesson.lesson_date_hebrew,
           lesson_date_gregorian: editedLesson.lesson_date_gregorian,
           AudioDir: editedLesson.AudioDir,
-          AudioFileName: editedLesson.AudioFileName,
+          AudioFileName: replacing && replaceFile ? replaceFile.name : editedLesson.AudioFileName,
           PdfFileName: getPdfList(editedLesson)[0] || null,
           PdfFiles: getPdfList(editedLesson),
           youtube_id: youtubeId,
@@ -466,7 +490,68 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
         }
       };
 
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/lessons/${docId}${isDraft ? '?status=draft' : ''}`, payload);
+      console.log('[EditLesson] PUT payload', JSON.stringify(payload)); // זמני — בירור "Invalid key main_category"
+      const saveUrl =`${import.meta.env.VITE_API_URL}/api/lessons/${docId}${isDraft ? '?status=draft' : ''}`;
+
+      if (replacing && replaceFile) {
+        const file = replaceFile;
+        const audioDir = editedLesson.AudioDir;
+        // העלאה → שמירה → מחיקת הקובץ הישן (רק אם שמו שונה, אחרת הועלה מעליו)
+        const runReplace = async (report: (state: ConvertState) => void) => {
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('audioDir', audioDir);
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/lessons/upload-media`, formData, {
+              onUploadProgress: (ev) => {
+                if (ev.total) report({ status: 'running', kind: 'upload', percent: Math.round((ev.loaded / ev.total) * 100) });
+              },
+            });
+          } catch {
+            report({ status: 'failed', kind: 'upload', error: 'שגיאה בהעלאת קובץ השמע לשרת. השיעור לא שונה.' });
+            return false;
+          }
+          try {
+            await axios.put(saveUrl, payload);
+          } catch (err: any) {
+            report({ status: 'failed', kind: 'upload', error: `הקובץ הועלה אך השמירה נכשלה: ${err.response?.data?.error?.message || err.message}` });
+            return false;
+          }
+          let warning: string | undefined;
+          if (oldFileName && oldFileName !== file.name) {
+            try {
+              await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/lessons/delete-audio`,
+                { audio_dir: audioDir, audio_file_name: oldFileName },
+              );
+            } catch (delErr: any) {
+              if (delErr.response?.status !== 404) warning = `מחיקת הקובץ הישן "${oldFileName}" מהשרת נכשלה — אפשר למחוק ידנית`;
+            }
+          }
+          report({ status: 'done', kind: 'upload', error: warning });
+          return true;
+        };
+
+        if (onConvertChange) {
+          // רץ ברקע: החלון נסגר מיד וההתקדמות מדווחת לתגית בשורה
+          onConvertChange(docId, { status: 'running', kind: 'upload', percent: 0 });
+          runReplace((state) => onConvertChange(docId, state));
+          onClose();
+          return;
+        }
+
+        setUploadPercent(0);
+        const ok = await runReplace((state) => {
+          if (state.status === 'running') setUploadPercent(state.percent ?? 0);
+          else if (state.status === 'failed') alert(state.error);
+          else if (state.error) alert(`השיעור הוחלף, אך ${state.error}`);
+        });
+        setUploadPercent(null);
+        if (ok) { onSaveSuccess(); onClose(); }
+        return;
+      }
+
+      await axios.put(saveUrl, payload);
 
       // אם יש youtube_id ו-AudioDir ו-AudioFileName → הרץ המרה
       // אם קובץ השמע כבר קיים בשרת — מדלגים על ההמרה ומעדכנים רק את הנתונים
@@ -524,6 +609,7 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
       onSaveSuccess();
       onClose();
     } catch (error: any) {
+      setUploadPercent(null);
       console.error('Update Error:', error.response?.data || error);
       alert(`שגיאה בשמירה: ${error.response?.data?.error?.message || "בדקי את שדות החובה בסטרפי"}`);
     }
@@ -754,7 +840,9 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
                   variant="caption"
                   sx={{ display: 'block', fontWeight: 700, color: nameHint.exists ? '#c62828' : '#8c6644' }}
                 >
-                  {nameHint.exists ? 'שם זה כבר קיים בתיקייה' : 'הצעה לשם הקובץ'}
+                  {nameHint.exists
+                    ? 'שם זה כבר קיים בתיקייה'
+                    : nameHint.source === 'youtube' ? 'הצעה לשם הקובץ — השם המקורי שהועלה ליוטיוב' : 'הצעה לשם הקובץ'}
                 </Typography>
                 <Typography
                   variant="body2"
@@ -836,6 +924,54 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
             </Stack>
           )}
 
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={replaceMode}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    if (!checked) { setReplaceMode(false); setReplaceFile(null); return; }
+                    // פותחים את בחירת הקובץ; הסימון נשאר רק אם נבחר קובץ
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'audio/*,.mp3,.m4a,.wav';
+                    input.onchange = () => {
+                      const f = input.files?.[0];
+                      if (!f) return;
+                      setReplaceFile(f);
+                      setReplaceMode(true);
+                      // אורך השיעור מתעדכן מהקובץ החדש (שדה "אורך השיעור" נשאר ניתן לעריכה)
+                      const audio = document.createElement('audio');
+                      audio.src = URL.createObjectURL(f);
+                      audio.addEventListener('loadedmetadata', () => {
+                        const sec = Math.round(audio.duration);
+                        if (Number.isFinite(sec)) {
+                          const h = Math.floor(sec / 3600);
+                          const m = Math.floor((sec % 3600) / 60);
+                          const s = sec % 60;
+                          const dur = h > 0
+                            ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+                            : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                          setEditedLesson((prev: any) => ({ ...prev, duration: dur }));
+                        }
+                        URL.revokeObjectURL(audio.src);
+                      });
+                    };
+                    input.click();
+                  }}
+                  sx={{ color: colors.gold, '&.Mui-checked': { color: colors.gold } }}
+                />
+              }
+              label="החלף שיעור (העלאת קובץ מהמחשב)"
+            />
+            {replaceMode && replaceFile && (
+              <Typography variant="caption" sx={{ color: COLORS.TEXT_GRAY }} dir="ltr">
+                {replaceFile.name}
+              </Typography>
+            )}
+          </Stack>
+
           <TextField
             fullWidth
             label="אורך השיעור"
@@ -854,8 +990,8 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
         <Button 
           onClick={handleUpdate} 
           variant="contained"
-          disabled={converting}
-          sx={{ 
+          disabled={converting || uploadPercent !== null}
+          sx={{
             bgcolor: '#000', 
             color: colors.gold,
             borderRadius: '8px', 
@@ -866,7 +1002,7 @@ const EditLessonDialog = ({ open, onClose, lesson, lecturers, onSaveSuccess, isD
             transition: '0.3s'
           }}
         >
-          {converting ? (convertStage ? `${convertStage}...` : 'ממיר ומעלה...') : 'שמור שינויים'}
+          {uploadPercent !== null ? `מעלה קובץ... ${uploadPercent}%` : converting ? (convertStage ? `${convertStage}...` : 'ממיר ומעלה...') : 'שמור שינויים'}
         </Button>
       </DialogActions>
     </Dialog>

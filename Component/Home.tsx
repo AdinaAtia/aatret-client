@@ -23,6 +23,7 @@ import BooksCarousel from './BooksCarousel'; // ודאי שהנתיב לקובץ
 import { Crown } from './Header';
 import founderContent from './founderContent.json';
 import { site } from '../src/content/site';
+import { withHonorific } from '../src/utils/rabbiName';
 import weeklyLesson from './weeklyLesson.json';
 
 const MEDIA_BASE_URL = `${import.meta.env.VITE_MEDIA_URL}/About`;
@@ -44,7 +45,7 @@ const rabbiVideos = [
   { youtubeId: '8kWZWx7W010', name: 'תדמית הישיבה', date: '2026' },
 ];
 
-function LazyYouTube({ youtubeId, thumbnail, caption }: { youtubeId: string; thumbnail?: string; caption?: string }) {
+function LazyYouTube({ youtubeId, thumbnail, caption, alt }: { youtubeId: string; thumbnail?: string; caption?: string; alt?: string }) {
   const [active, setActive] = useState(false);
   if (active) {
     return (
@@ -62,6 +63,7 @@ function LazyYouTube({ youtubeId, thumbnail, caption }: { youtubeId: string; thu
     <Box onClick={() => setActive(true)} sx={{ position: 'relative', width: '100%', height: '100%', cursor: 'pointer' }}>
       <LessonThumb
         src={thumbnail ? [thumbnail] : youtubeThumbSources(youtubeId)}
+        alt={alt ?? caption ?? ''}
         imagePosition={caption ? '60% center' : 'center'}
         playSize={52}
         crownWidth={64}
@@ -119,7 +121,8 @@ const Home: React.FC = () => {
         const photoData = attr.photo_url;
         if (photoData && photoData.length > 0) {
           const photo = photoData[0];
-          const url = photo.url || photo.attributes?.url;
+          // הכרטיס מוצג בקטן — טוענים את הגרסה המוקטנת (small, 500px) שסטרפי יוצר, ולא את המקור
+          const url = photo.formats?.small?.url || photo.url || photo.attributes?.url;
           if (url) {
             imageSrc = `${import.meta.env.VITE_API_URL}${url}`;
           }
@@ -239,7 +242,8 @@ const Home: React.FC = () => {
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    pt: { xs: '14vh', md: '16vh' },
     alignItems: 'center',
     textAlign: 'center',
     zIndex: 3,
@@ -248,9 +252,9 @@ const Home: React.FC = () => {
     {/* הכתר — אותה קומפוננטת Crown של ההאדר */}
     <Box sx={{
       mb: { xs: 1.5, md: 2 },
-      '& svg': { width: { xs: '34px', md: '46px' }, height: 'auto' },
+      '& svg': { width: { xs: '72px', md: '110px' }, height: 'auto' },
     }}>
-      <Crown width={46} height={39} />
+      <Crown width={110} height={93} />
     </Box>
 
     <Typography sx={{
@@ -294,7 +298,7 @@ const Home: React.FC = () => {
       lineHeight: 1.5,
       letterSpacing: '0.03em',
     }}>
-      ישיבה ללימוד קבלה
+      ישיבה ללימוד הקבלה והפשט
     </Typography>
 
     <Typography sx={{
@@ -320,7 +324,7 @@ const Home: React.FC = () => {
         אודות הישיבה
       </AppButton>
 
-      <AppButton variant="outline" onClick={() => navigate('/AllLessons')}>
+      <AppButton variant="outline" onClick={() => navigate('/AllLessons')} sx={{ bgcolor: 'rgba(255,252,244,0.85)', '&:hover': { bgcolor: '#FFFCF4' } }}>
         ארכיון השיעורים
       </AppButton>
     </Box>
@@ -493,7 +497,7 @@ const Home: React.FC = () => {
         component="img"
         loading="lazy"
         decoding="async"
-        src={`${MEDIA_BASE_URL}/דד (1) (1).png`}
+        src={`${MEDIA_BASE_URL}/דד (1) (1).webp`}
         alt="ראש הישיבה הרב מרדכי עטייה שליט״א"
         sx={{
           display: 'block',
@@ -646,6 +650,7 @@ const Home: React.FC = () => {
                     border: `1px solid var(--gold)`,
                     borderRadius: `var(--book-card-radius)`,
                     p: '8px',
+                    height: 'var(--home-card-height)',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
                     ...cardHoverSx,
                   }}
@@ -664,7 +669,7 @@ const Home: React.FC = () => {
                     {/* קשת ארון הקודש — ריבוע בעיצוב, ולכן aspect-ratio 1 */}
                     <Box sx={{
                       width: '100%',
-                      aspectRatio: '1 / 1',
+                      height: 'var(--rabbi-card-photo-height, 100px)',
                       flexShrink: 0,
                       bgcolor: 'var(--rabbi-card-arch-fill)',
                       borderRadius: 'var(--radius-arch)',
@@ -703,7 +708,7 @@ const Home: React.FC = () => {
                         lineHeight: 1.2,
                         color: 'var(--ink-wine)',
                       }}>
-                        {rabbi.name}
+                        {withHonorific(rabbi.name)}
                       </Typography>
 
                       <Box sx={{
@@ -826,6 +831,7 @@ const Home: React.FC = () => {
               scrollSnapAlign: 'start',
               display: 'flex',
               flexDirection: 'column',
+              height: 'var(--home-card-height)',
               boxSizing: 'border-box',
               bgcolor: 'var(--surface)',
               border: `1px solid var(--gold)`,
@@ -844,7 +850,7 @@ const Home: React.FC = () => {
                   border: `1px solid var(--gold)`,
                   bgcolor: 'var(--ink)',
                 }}>
-                  <LazyYouTube youtubeId={v.youtubeId} thumbnail={(v as any).thumbnail} />
+                  <LazyYouTube youtubeId={v.youtubeId} thumbnail={(v as any).thumbnail} alt={v.name} />
                 </Box>
               </Box>
 
@@ -1031,7 +1037,7 @@ const Home: React.FC = () => {
             fontSize: 'var(--donation-section-letter-name-size)',
             fontWeight: 400,
             color: 'var(--ink-wine)',
-          }}>הרב מרדכי עטייה</Typography>
+          }}>הרב מרדכי עטייה שליט״א</Typography>
           <Typography sx={{
             fontFamily: 'var(--font-body)',
             fontSize: 'var(--donation-section-letter-role-size)',

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import { Helmet } from 'react-helmet-async';
 import Grid from '@mui/material/Grid';
 import { Box, Typography, CircularProgress, CardMedia, CardContent } from '@mui/material';
 import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
@@ -9,6 +10,8 @@ import AppButton from './shared/AppButton';
 import SectionFlourish from './shared/SectionFlourish';
 import { cardHoverSx } from './shared/cardHover';
 import { site } from '../src/content/site';
+import PhoneNumber from './shared/PhoneNumber';
+import NotFound from './NotFound';
 import { getBookDetails } from '../src/content/bookDetails';
 
 const STRAPI_BASE_URL = `${import.meta.env.VITE_API_URL}`;
@@ -66,7 +69,18 @@ const BookDetailsPage = () => {
   }, [book]);
 
   if (!book && loadingBook) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
-  if (!book) return <Typography sx={{ textAlign: 'center', mt: 5 }}>הספר לא נמצא</Typography>;
+  if (!book) {
+    return (
+      <NotFound
+        title="הספר לא נמצא"
+        message="הספר שחיפשת אינו קיים, או שהוסר מהאתר. אפשר לראות את כל ספרי הישיבה."
+        showSearch={false}
+        showHome={false}
+        actionLabel="לספרי הישיבה"
+        actionPath="/FullBooksPage"
+      />
+    );
+  }
 
   const seriesName = book.book_categorie?.data?.attributes?.name || book.book_categorie?.name || '';
   const details = getBookDetails(book.id);
@@ -81,9 +95,15 @@ const BookDetailsPage = () => {
 
   return (
     <Box sx={{ direction: 'rtl', backgroundColor: '#fff', minHeight: '100vh' }}>
+      {book.book_name && (
+        <Helmet>
+          <title>{`${book.book_name} | ישיבת עטרת מרדכי`}</title>
+          <meta property="og:title" content={`${book.book_name} | ישיבת עטרת מרדכי`} />
+        </Helmet>
+      )}
       <Breadcrumb
         items={[
-          { label: 'ראשי', path: '/' },
+          { label: 'דף הבית', path: '/' },
           { label: 'ספרי הישיבה', path: '/FullBooksPage' },
           { label: book.book_name },
         ]}
@@ -269,7 +289,7 @@ const BookDetailsPage = () => {
                     textAlign: { xs: 'center', md: 'right' },
                   }}
                 >
-                  {site.phones.books}
+                  <PhoneNumber>{site.phones.books}</PhoneNumber>
                 </Box>
                 <Typography
                   sx={{
@@ -312,6 +332,7 @@ const BookDetailsPage = () => {
         {/* ספרים נוספים בנושא */}
         <Box>
           <Typography
+            component="h2"
             sx={{
               fontFamily: 'var(--font-heading-ornate)',
               fontSize: '2em',
@@ -331,7 +352,7 @@ const BookDetailsPage = () => {
                 const item = relBook.attributes || relBook;
                 const imageUrl = item.image?.data?.[0]?.attributes?.url || item.image?.[0]?.url || '';
                 return (
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }} key={relBook.id}>
+                  <Grid size={{ xs: 6, sm: 6, md: 3 }} key={relBook.id}>
                     <Box
                       onClick={() => navigate(`/BookDetailsPage/${relBook.id}`, { state: { book: relBook } })}
                       sx={{

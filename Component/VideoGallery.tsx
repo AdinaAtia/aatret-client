@@ -6,6 +6,7 @@ import SectionArch from './shared/SectionArch';
 import SectionFlourish from './shared/SectionFlourish';
 import { cssNumber } from '../src/styles/cssVar';
 import { cardHoverSx } from './shared/cardHover';
+import { formatHebrewDate } from '../src/utils/hebrewDate';
 
 interface VideoItem {
   youtubeId: string;
@@ -14,9 +15,10 @@ interface VideoItem {
 }
 
 /** תמונה ממוזערת מיוטיוב לפי מזהה: maxres → sd → hq (ל־hq יש פסים שחורים, לכן cover ב־16/9) */
-const YtThumb = ({ youtubeId }: { youtubeId: string }) => (
+const YtThumb = ({ youtubeId, alt = '' }: { youtubeId: string; alt?: string }) => (
   <LessonThumb
     src={youtubeThumbSources(youtubeId)}
+    alt={alt}
     playSize={cssNumber('--video-card-play-size')}
     sx={{ width: '100%', height: '100%', aspectRatio: '16/9' }}
   />
@@ -41,7 +43,7 @@ const VideoCard = ({ video, onPlay }: { video: VideoItem; onPlay: () => void }) 
     }}
   >
     <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', bgcolor: '#000' }}>
-      <YtThumb youtubeId={video.youtubeId} />
+      <YtThumb youtubeId={video.youtubeId} alt={video.name} />
     </Box>
     <Box
       className="vc-caption"
@@ -94,7 +96,7 @@ const VideoGallery = () => {
             return {
               youtubeId: attrs.youtube_id,
               name: attrs.title || '',
-              date: attrs.lesson_date_hebrew || '',
+              date: formatHebrewDate(attrs.lesson_date_gregorian, attrs.lesson_date_hebrew),
             };
           });
 

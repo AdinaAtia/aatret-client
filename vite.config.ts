@@ -36,6 +36,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/lessons/download-file': 'http://localhost:1337',
+      '/api/lessons/stream-file': 'http://localhost:1337',
     },
   },
 });

@@ -3,11 +3,11 @@ import { Box, Stack } from '@mui/material';
 
 /**
  * נעילת הלוגו — כתר + כתובית "עטרת מרדכי", במקום אחד לסרגל, לתפריט הנייד ולפוטר.
- * TODO: להחליף ב-SVG יחיד (כתר + שם) כשהמעצב יספק. עד אז הכתר נבנה מ-logo.png (ראו Crown).
+ * TODO: להחליף ב-SVG יחיד (כתר + שם) כשהמעצב יספק. עד אז הכתר נבנה מ-logo.webp (ראו Crown).
  */
 
 /**
- * הכתר — הלוגו המקורי של הישיבה (logo.png), צבוע בזהב מתכתי.
+ * הכתר — הלוגו המקורי של הישיבה (logo.webp), צבוע בזהב מתכתי.
  *
  * הקובץ בנוי ממילוי לבן אטום עם קווים כהים (#211E1E) על רקע שקוף, ולכן
  * מסכת שקיפות רגילה הייתה נותנת כתם זהב מלא. במקומה: feColorMatrix הופך
@@ -35,7 +35,7 @@ export const Crown: React.FC<{ width: number | string; height: number | string }
           />
         </filter>
         <mask id={mid}>
-          <image href="/logo.png?v=2" x="0" y="0" width="184" height="154" filter={`url(#${fid})`} />
+          <image href="/logo.webp" x="0" y="0" width="184" height="154" filter={`url(#${fid})`} />
         </mask>
         <linearGradient id={gid} x1="0" y1="0" x2="0.35" y2="1">
           <stop offset="0%" stopColor="#D9BC7F" />

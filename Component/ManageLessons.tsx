@@ -14,7 +14,8 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarTodayOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import axios from 'axios';
 import EditIcon from '@mui/icons-material/Edit';
-import EditLessonDialog, { type ConvertState } from './EditLessonDialog';
+import { useCompletedUploads } from './UploadJobs';
+import EditLessonDialog,{ type ConvertState } from './EditLessonDialog';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import DeleteActionPopover from './DeleteActionPopover';
@@ -73,12 +74,32 @@ const [playingAudio, setPlayingAudio] = useState<{ url: string; title: string } 
   const refreshRef = useRef<() => void>(() => {});
   refreshRef.current = () => fetchLessons(currentPage, searchQuery, selectedRabbiDocId);
 
+  // מונע סגירת לשונית בטעות בזמן שיש העלאת קובץ פעילה
+  const uploadRunning = Object.values(conversions).some(c => c.kind === 'upload' && c.status === 'running');
+  useEffect(() => {
+    if (!uploadRunning) return;
+    const guard = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', guard);
+    return () => window.removeEventListener('beforeunload', guard);
+  }, [uploadRunning]);
+
   const dismissConversion = (docId: string) =>
     setConversions(prev => { const next = { ...prev }; delete next[docId]; return next; });
 
   const handleConvertChange = (docId: string, state: ConvertState) => {
     setConversions(prev => ({ ...prev, [docId]: state }));
     if (state.status === 'running') return;
+
+    if (state.kind === 'upload') {
+      if (state.status === 'done') {
+        setSnackbar({ open: true, message: `ההחלפה הסתיימה בהצלחה${state.error ? ` (${state.error})` : ''}`, severity: state.error ? 'error' : 'success' });
+        refreshRef.current();
+        setTimeout(() => dismissConversion(docId), 6000);
+      } else {
+        setSnackbar({ open: true, message: `ההחלפה נכשלה: ${state.error || 'שגיאה לא ידועה'}`, severity: 'error' });
+      }
+      return;
+    }
 
     if (state.status === 'done') {
       setSnackbar({ open: true, message: 'ההמרה הסתיימה בהצלחה', severity: 'success' });
@@ -146,14 +167,13 @@ const getAudioUrl = (attr: any) => {
   const cleanDir = (attr.AudioDir || '').startsWith('/')
     ? attr.AudioDir.slice(1)
     : (attr.AudioDir || '');
-  return `/api/lessons/download-file?audioDir=${encodeURIComponent(cleanDir)}&audioFileName=${encodeURIComponent(attr.AudioFileName)}`;
+  return `/api/lessons/stream-file?audioDir=${encodeURIComponent(cleanDir)}&audioFileName=${encodeURIComponent(attr.AudioFileName)}`;
 };
 
 const getPdfUrl = (attr: any, fileName: string) => {
-  const cleanDir = (attr.PdfDir || '').startsWith('/')
-    ? attr.PdfDir.slice(1)
-    : (attr.PdfDir || '');
-  return `/api/lessons/download-file?audioDir=${encodeURIComponent(cleanDir)}&audioFileName=${encodeURIComponent(fileName)}`;
+  const cleanDir = (attr.PdfDir || attr.AudioDir || '').replace(/^\/+|\/+$/g, '');
+  const encodedPath = cleanDir.split('/').map(encodeURIComponent).join('/');
+  return `${import.meta.env.VITE_MEDIA_URL}/${encodedPath}/${encodeURIComponent(fileName)}`;
 };
 
 const handleOpenPopover = (event: React.MouseEvent<HTMLButtonElement>, lesson: any) => {
@@ -287,6 +307,15 @@ const fetchLecturers = async () => {
     fetchLecturers()
   }, []);
 
+  // כשהעלאת שיעור מסתיימת (גם אם התחילה בדף אחר) — מרעננים כדי שהשיעור החדש יופיע מיד
+  const completedUploads = useCompletedUploads();
+  const seenUploadsRef = useRef(completedUploads);
+  useEffect(() => {
+    if (completedUploads === seenUploadsRef.current) return;
+    seenUploadsRef.current = completedUploads;
+    fetchLessons(1);
+  }, [completedUploads]);
+
   return (
   <>
   <Box sx={{
@@ -418,7 +447,7 @@ const fetchLecturers = async () => {
     {confirmBulkDelete && (
       <Stack direction="row" alignItems="center" gap={1}>
         <Typography variant="caption" sx={{ color: colors.gold, fontWeight: 700 }}>
-          למחוק {selectedIds.length} שיעורים?
+          למחוק {selectedIds.length} שיעורים (כולל קבצי השמע שלהם)?
         </Typography>
         <Button size="small" variant="contained" onClick={handleBulkDelete}
           sx={{ bgcolor: '#000', color: colors.gold, fontSize: '0.7rem', px: 1, py: 0.3, minWidth: 0, '&:hover': { bgcolor: colors.gold, color: '#000' } }}>
@@ -485,7 +514,7 @@ const fetchLecturers = async () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {loadingLessons ? (
+            {loadingLessons && lessons.length === 0 ? (
               <TableRow><TableCell colSpan={6} align="center" sx={{ py: 3 }}>טוען נתונים...</TableCell></TableRow>
             ) : (
               lessons.map((lesson) => {
@@ -523,7 +552,11 @@ const { rabbi } = attr;   const rabbiName = rabbi?.data?.attributes?.name || rab
                         const running = conv.status === 'running';
                         const done = conv.status === 'done';
                         const failed = conv.status === 'failed';
-                        const label = running
+                        const label = conv.kind === 'upload'
+                          ? (running ? `מעלה קובץ… ${conv.percent ?? 0}%`
+                            : done ? '✓ ההחלפה הסתיימה'
+                            : 'ההחלפה נכשלה')
+                          : running
                           ? `ממיר ברקע${conv.stage ? ` · ${conv.stage}` : ''}…`
                           : done ? '✓ ההמרה הסתיימה'
                           : failed ? 'ההמרה נכשלה'

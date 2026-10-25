@@ -149,7 +149,9 @@ const Header: React.FC = () => {
           <IconButton
             onClick={() => setMobileMenuOpen(true)}
             aria-label="פתיחת תפריט"
-            sx={{ display: { xs: 'flex', md: 'none' }, color: 'var(--ink)', p: 1 }}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-nav-drawer"
+            sx={{ display: { xs: 'flex', md: 'none' }, color: 'var(--ink)', p: 1, minWidth: 44, minHeight: 44 }}
           >
             <MenuIcon sx={{ fontSize: '22px' }} />
           </IconButton>
@@ -195,6 +197,7 @@ const Header: React.FC = () => {
                     paddingBottom: '11px',
                     transition: 'color 0.2s ease',
                     '&:hover': { color: 'var(--gold-deep)' },
+                    '&::before': { content: '""', position: 'absolute', inset: '-5px -8px' }, // אזור מגע 44px בלי לשנות את העימוד
                   }}
                 >
                   {item.text}
@@ -310,6 +313,7 @@ const Header: React.FC = () => {
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         aria-label="תפריט ראשי"
+        id="mobile-nav-drawer"
         PaperProps={{ sx: { backgroundColor: 'var(--surface)', backgroundImage: 'none' } }}
       >
         <Box sx={{ width: 280, backgroundColor: 'var(--surface)', height: '100%', direction: 'rtl', p: 2 }}>

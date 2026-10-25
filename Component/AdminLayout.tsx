@@ -11,6 +11,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 import { colors } from '../src/theme/tokens';
+import { UploadJobsPanel } from './UploadJobs';
 // הגדרת ה-Props עבור TypeScript
 interface AdminLayoutProps {
   children: ReactNode;
@@ -153,6 +154,8 @@ const AdminLayout = ({ children, token }: AdminLayoutProps) => {
       >
         {children}
       </Box>
+
+      <UploadJobsPanel />
 
     </Box>
   );

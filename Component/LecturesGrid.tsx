@@ -13,6 +13,7 @@ import AppButton from './shared/AppButton';
 import SectionFlourish from './shared/SectionFlourish';
 import SectionArch from './shared/SectionArch';
 import LessonCard from './shared/LessonCard';
+import { formatHebrewDate } from '../src/utils/hebrewDate';
 
 /** כמה כרטיסים מוצגים ברשת — לפי העיצוב: 4 שווים בשורה */
 const VISIBLE_COUNT = 4;
@@ -66,7 +67,7 @@ const LecturesGrid = (_props: LecturesGridProps) => {
     return {
       title: attrs.title,
       youtubeId: attrs.youtube_id,
-      dateHebrew: attrs.lesson_date_hebrew,
+      dateHebrew: formatHebrewDate(attrs.lesson_date_gregorian, attrs.lesson_date_hebrew),
       dateGregorian: attrs.lesson_date_gregorian,
       duration: attrs.duration || "00:00",
       rabbiName: attrs.rabbi?.data?.attributes?.name || attrs.rabbi?.name || "",
@@ -101,9 +102,9 @@ const LecturesGrid = (_props: LecturesGridProps) => {
           <Typography
             component="h2"
             sx={{
-              fontFamily: `var(--font-heading) !important`,
-              fontSize: { xs: '2.2rem', md: '3.2rem' },
-              lineHeight: 1.35,
+              fontFamily: 'var(--font-heading-ornate)',
+              fontSize: { xs: 'var(--t5)', md: 'var(--t6)' },
+              lineHeight: 1.2,
               fontWeight: 400,
               color: 'var(--wine)',
               m: 0,

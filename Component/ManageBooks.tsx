@@ -4,13 +4,14 @@ import {
   Box, Typography, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, Tooltip,
   Stack, Button, Avatar, Skeleton, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField, MenuItem
+  DialogContent, DialogActions, TextField, MenuItem, Autocomplete
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/Edit';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 
 import { colors } from '../src/theme/tokens';
+import { compressImage } from '../src/utils/compressImage';
 const API = import.meta.env.VITE_API_URL;
 
 const editFieldStyle = {
@@ -33,6 +34,7 @@ const editFieldStyle = {
 const ManageBooks = () => {
   const [books, setBooks] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [rabbiNames, setRabbiNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [editBook, setEditBook] = useState<any | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -64,9 +66,22 @@ const ManageBooks = () => {
     }
   };
 
+  const fetchRabbis = async () => {
+    try {
+      const res = await axios.get(`${API}/api/rabbis?fields[0]=name&pagination[pageSize]=200`);
+      const names = (res.data.data || [])
+        .map((r: any) => r.name || r.attributes?.name)
+        .filter(Boolean);
+      setRabbiNames(Array.from(new Set<string>(names)));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     fetchBooks();
     fetchCategories();
+    fetchRabbis();
   }, []);
 
   const getImageUrl = (attr: any): string | null => {
@@ -137,7 +152,7 @@ const ManageBooks = () => {
     if (!editBook) return;
     try {
       const formData = new FormData();
-      formData.append('files', file);
+      formData.append('files', await compressImage(file));
       const uploadRes = await axios.post(`${API}/api/upload`, formData);
       const uploadedId = uploadRes.data[0]?.id;
       const uploadedUrl = uploadRes.data[0]?.url;
@@ -170,7 +185,7 @@ const ManageBooks = () => {
   const handleAddImageUpload = async (file: File) => {
     try {
       const formData = new FormData();
-      formData.append('files', file);
+      formData.append('files', await compressImage(file));
       const uploadRes = await axios.post(`${API}/api/upload`, formData);
       const uploadedId = uploadRes.data[0]?.id;
       const uploadedUrl = uploadRes.data[0]?.url;
@@ -359,12 +374,14 @@ const ManageBooks = () => {
               fullWidth
               sx={editFieldStyle}
             />
-            <TextField
-              label="שם הרב"
+            <Autocomplete
+              freeSolo
+              options={rabbiNames}
               value={editBook?.rabbi || ''}
-              onChange={e => setEditBook((prev: any) => ({ ...prev, rabbi: e.target.value }))}
+              onChange={(_, val) => setEditBook((prev: any) => ({ ...prev, rabbi: val || '' }))}
+              onInputChange={(_, val) => setEditBook((prev: any) => ({ ...prev, rabbi: val }))}
+              renderInput={params => <TextField {...params} label="שם הרב" sx={editFieldStyle} />}
               fullWidth
-              sx={editFieldStyle}
             />
             <TextField
               label="תיאור"
@@ -466,12 +483,14 @@ const ManageBooks = () => {
               fullWidth
               sx={editFieldStyle}
             />
-            <TextField
-              label="שם הרב"
+            <Autocomplete
+              freeSolo
+              options={rabbiNames}
               value={addBook?.rabbi || ''}
-              onChange={e => setAddBook((prev: any) => ({ ...prev, rabbi: e.target.value }))}
+              onChange={(_, val) => setAddBook((prev: any) => ({ ...prev, rabbi: val || '' }))}
+              onInputChange={(_, val) => setAddBook((prev: any) => ({ ...prev, rabbi: val }))}
+              renderInput={params => <TextField {...params} label="שם הרב" sx={editFieldStyle} />}
               fullWidth
-              sx={editFieldStyle}
             />
             <TextField
               label="תיאור"

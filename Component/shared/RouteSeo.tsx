@@ -52,6 +52,14 @@ const PAGES: Record<string, PageMeta> = {
     title: 'תרומות',
     description: 'תמיכה בישיבת עטרת מרדכי — תרומה להחזקת לימוד התורה.',
   },
+  '/accessibility': {
+    title: 'הצהרת נגישות',
+    description: 'הצהרת הנגישות של אתר ישיבת עטרת מרדכי — רמת התאימות, התאמות שבוצעו ופרטי רכז הנגישות.',
+  },
+  '/terms': {
+    title: 'תנאי שימוש ומדיניות פרטיות',
+    description: 'תנאי השימוש ומדיניות הפרטיות של אתר ישיבת עטרת מרדכי.',
+  },
   '/donateletter': {
     title: 'מכתב התרומה',
     description: 'מכתב ראש הישיבה — "עץ חיים היא למחזיקים בה".',
@@ -77,17 +85,20 @@ export default function RouteSeo() {
   const isHome = key === '/';
   const fullTitle = isHome ? meta.title : `${meta.title} | ${SITE_NAME}`;
   const url = `${SITE_URL}${pathname === '/' ? '/' : pathname}`;
+  // עמוד שיעור בודד (/AllLessons/:id): הכותרת וה-og:title/og:description מגיעים מ-LessonPlayer.
+  // אם גם כאן נוסיף אותם, יהיו שתי תגיות og:title והכללית (ארכיון השיעורים) תופיע ראשונה.
+  const isLessonPage = /^\/alllessons\/[^/]+/.test(lower);
 
   return (
     <Helmet>
       <html lang="he" dir="rtl" />
-      <title>{fullTitle}</title>
+      {!isLessonPage && <title>{fullTitle}</title>}
       <meta name="description" content={meta.description} />
       <link rel="canonical" href={url} />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content={SITE_NAME} />
-      <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={meta.description} />
+      {!isLessonPage && <meta property="og:title" content={fullTitle} />}
+      {!isLessonPage && <meta property="og:description" content={meta.description} />}
       <meta property="og:image" content={OG_IMAGE} />
       <meta property="og:url" content={url} />
       <meta property="og:locale" content="he_IL" />

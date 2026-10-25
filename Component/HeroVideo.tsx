@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { Box, useMediaQuery, useTheme, type SxProps, type Theme } from '@mui/material';
+import { useVideoPlayback, VideoToggleButton } from './VideoToggle';
 
 /**
  * סרטון הרקע של ההירו — קטע "הרבה אנשים" (האולם) מתוך VID-20260715-WA0084.
@@ -44,19 +45,32 @@ function HeroVideoInner({ sx }: HeroVideoProps) {
     );
   }
 
+  return <HeroVideoDesktop sx={sx} />;
+}
+
+/** דסקטופ: סרטון + כפתור עצירה בפינה השמאלית התחתונה של ההירו (ההורה position:relative) */
+function HeroVideoDesktop({ sx }: HeroVideoProps) {
+  const { playing, toggle, videoProps } = useVideoPlayback();
   return (
-    <Box
-      component="video"
-      autoPlay
-      loop
-      muted
-      playsInline
-      preload="none"
-      poster={POSTER_SRC}
-      sx={{ objectFit: 'cover', ...sx }}
-    >
-      <source src={VIDEO_SRC_MP4} type="video/mp4" />
-    </Box>
+    <>
+      <Box
+        component="video"
+        {...videoProps}
+        loop
+        muted
+        playsInline
+        preload="none"
+        poster={POSTER_SRC}
+        sx={{ objectFit: 'cover', ...sx }}
+      >
+        <source src={VIDEO_SRC_MP4} type="video/mp4" />
+      </Box>
+      <VideoToggleButton
+        playing={playing}
+        onToggle={toggle}
+        sx={{ position: 'absolute', bottom: 56, left: 56, zIndex: 4 }}
+      />
+    </>
   );
 }
 

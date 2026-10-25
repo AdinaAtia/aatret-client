@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import {
   Box, Typography, TextField, MenuItem,
@@ -9,6 +9,8 @@ import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import AppButton from './shared/AppButton';
 import PageHeader from './shared/PageHeader';
+import PhoneNumber from './shared/PhoneNumber';
+import Honeypot from './shared/Honeypot';
 import { site } from '../src/content/site';
 
 const API = import.meta.env.VITE_API_URL;
@@ -24,9 +26,15 @@ const booksPhoneHref = toTelHref(site.phones.books);
 const generalPhoneHref = toTelHref(site.phones.general);
 
 const yeshivaMapQuery = site.addresses.yeshiva;
+import { withHonorific } from '../src/utils/rabbiName';
 const mapEmbedSrc = `https://www.google.com/maps?q=${encodeURIComponent(yeshivaMapQuery)}&output=embed`;
 const googleMapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(yeshivaMapQuery)}`;
 const wazeHref = `https://waze.com/ul?q=${encodeURIComponent(yeshivaMapQuery)}`;
+
+/** סדר השדות בטופס — גם סדר הטאב וגם הסדר שבו מועבר הפוקוס לשדה הראשון שגוי */
+const FIELD_ORDER = ['fullName', 'phone', 'email', 'rabbiName', 'questionType', 'message'] as const;
+
+const SELECT_PLACEHOLDER = 'בחרו מהרשימה';
 
 const fieldStyle = {
   direction: 'rtl',
@@ -71,18 +79,23 @@ const FieldLabel = ({ id, children, required }: { id: string; children: React.Re
   </Box>
 );
 
+const PlaceholderText = () => (
+  <Box component="span" sx={{ color: 'var(--muted)' }}>{SELECT_PLACEHOLDER}</Box>
+);
+
 interface ContactCardDef {
   key: string;
   icon: React.ReactNode;
   label: string;
   value: string;
   href?: string;
-  subText?: string;
+  subText?: React.ReactNode;
 }
 
 const ContactForm: React.FC = () => {
   const [rabbis, setRabbis] = useState<{ id: number; name: string }[]>([]);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const honeypotRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -127,15 +140,20 @@ const ContactForm: React.FC = () => {
     if (!formData.questionType) newErrors.questionType = 'יש לבחור נושא פנייה';
     if (formData.message.trim().length < 10) newErrors.message = 'תוכן הפנייה חייב להכיל לפחות 10 תווים';
     setErrors(newErrors);
-    return Object.values(newErrors).every(e => e === '');
+    return newErrors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    const found = validate();
+    const firstInvalid = FIELD_ORDER.find(k => found[k]);
+    if (firstInvalid) {
+      document.getElementById(`cf-${firstInvalid}`)?.focus();
+      return;
+    }
     setSubmitStatus('loading');
     try {
-      await axios.post(`${API}/api/contact/send`, { ...formData, subject: formData.questionType });
+      await axios.post(`${API}/api/contact/send`, { ...formData, subject: formData.questionType, website: honeypotRef.current?.value || '' });
       setSubmitStatus('success');
       setFormData({ fullName: '', phone: '', email: '', rabbiName: '', questionType: '', message: '' });
     } catch {
@@ -158,7 +176,7 @@ const ContactForm: React.FC = () => {
       label: 'משרד והזמנת ספרים',
       value: site.phones.books,
       href: booksPhoneHref,
-      subText: `${site.addresses.office} · פקס ${site.phones.fax}`,
+      subText: <>{site.addresses.office} · פקס <PhoneNumber>{site.phones.fax}</PhoneNumber></>,
     },
     {
       key: 'lessonsArchive',
@@ -181,7 +199,7 @@ const ContactForm: React.FC = () => {
       icon: <RoomOutlinedIcon sx={{ fontSize: 22 }} />,
       label: 'בניין הישיבה',
       value: site.addresses.yeshiva,
-      subText: `שיעור יומי · ${site.weeklyLesson.time}`,
+      subText: `שיעור יומי מפי ראש הישיבה שליט״א · ${site.weeklyLesson.time}–${site.weeklyLesson.endTime}`,
     },
   ];
 
@@ -246,7 +264,7 @@ const ContactForm: React.FC = () => {
                         sx={{
                           display: 'block', fontFamily: 'var(--font-heading)',
                           fontSize: `var(--contact-card-value-size)`, fontWeight: 'var(--contact-card-value-weight)',
-                          color: 'var(--wine)', textDecoration: 'none', direction: 'ltr', textAlign: 'right',
+                          color: 'var(--wine)', textDecoration: 'none', direction: 'ltr', unicodeBidi: 'isolate', whiteSpace: 'nowrap', textAlign: 'right',
                         }}
                       >
                         {card.value}
@@ -274,6 +292,7 @@ const ContactForm: React.FC = () => {
               component="iframe"
               title="מפת בניין הישיבה"
               src={mapEmbedSrc}
+              tabIndex={-1}
               loading="lazy"
               sx={{
                 width: '100%', aspectRatio: '16/9', border: `1px solid var(--gold)`,
@@ -318,19 +337,8 @@ const ContactForm: React.FC = () => {
                   {EXPLANATION_TEXT}
                 </Typography>
 
-                <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <Box component="form" noValidate onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                   <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <FieldLabel id="cf-phone" required>טלפון</FieldLabel>
-                    <TextField
-                      id="cf-phone" fullWidth size="small" required
-                      name="phone"
-                      value={formData.phone} onChange={handleChange}
-                      error={!!errors.phone} helperText={errors.phone}
-                      inputProps={{ 'aria-required': true }}
-                      sx={fieldStyle}
-                    />
-                    </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                     <FieldLabel id="cf-fullName" required>שם מלא</FieldLabel>
                     <TextField
@@ -338,7 +346,18 @@ const ContactForm: React.FC = () => {
                       name="fullName"
                       value={formData.fullName} onChange={handleChange}
                       error={!!errors.fullName} helperText={errors.fullName}
-                      inputProps={{ 'aria-required': true }}
+                      inputProps={{ 'aria-required': true, autoComplete: 'name' }}
+                      sx={fieldStyle}
+                    />
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <FieldLabel id="cf-phone" required>טלפון</FieldLabel>
+                    <TextField
+                      id="cf-phone" fullWidth size="small" required
+                      name="phone" type="tel"
+                      value={formData.phone} onChange={handleChange}
+                      error={!!errors.phone} helperText={errors.phone}
+                      inputProps={{ 'aria-required': true, autoComplete: 'tel', inputMode: 'tel' }}
                       sx={fieldStyle}
                     />
                     </Box>
@@ -346,11 +365,28 @@ const ContactForm: React.FC = () => {
 
                   <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <FieldLabel id="cf-email" required>דוא"ל</FieldLabel>
+                    <TextField
+                      id="cf-email" fullWidth size="small" required
+                      name="email" type="email"
+                      value={formData.email} onChange={handleChange}
+                      error={!!errors.email} helperText={errors.email}
+                      inputProps={{ 'aria-required': true, autoComplete: 'email', dir: 'ltr', style: { textAlign: 'right' } }}
+                      sx={fieldStyle}
+                    />
+                    </Box>
+
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
                     <FieldLabel id="cf-rabbiName" required>הפנייה לרב</FieldLabel>
                     <TextField
                       id="cf-rabbiName" select fullWidth size="small" required
                       name="rabbiName"
-                      SelectProps={{ labelId: 'cf-rabbiName-label' }}
+                      SelectProps={{
+                        labelId: 'cf-rabbiName-label',
+                        displayEmpty: true,
+                        renderValue: (v: unknown) => (v ? withHonorific(String(v)) : <PlaceholderText />),
+                        SelectDisplayProps: { 'aria-invalid': !!errors.rabbiName, 'aria-describedby': errors.rabbiName ? 'cf-rabbiName-helper-text' : undefined },
+                      }}
                       value={formData.rabbiName} onChange={handleChange}
                       error={!!errors.rabbiName} helperText={errors.rabbiName}
                       inputProps={{ 'aria-required': true }}
@@ -358,22 +394,10 @@ const ContactForm: React.FC = () => {
                     >
                       {rabbis.map(r => (
                         <MenuItem key={r.id} value={r.name} sx={{ justifyContent: 'flex-end' }}>
-                          {r.name}
+                          {withHonorific(r.name)}
                         </MenuItem>
                       ))}
                     </TextField>
-                    </Box>
-
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <FieldLabel id="cf-email" required>דוא"ל</FieldLabel>
-                    <TextField
-                      id="cf-email" fullWidth size="small" required
-                      name="email" type="email"
-                      value={formData.email} onChange={handleChange}
-                      error={!!errors.email} helperText={errors.email}
-                      inputProps={{ 'aria-required': true, dir: 'ltr', style: { textAlign: 'right' } }}
-                      sx={fieldStyle}
-                    />
                     </Box>
                   </Box>
 
@@ -382,7 +406,12 @@ const ContactForm: React.FC = () => {
                   <TextField
                     id="cf-questionType" select fullWidth size="small" required
                     name="questionType"
-                    SelectProps={{ labelId: 'cf-questionType-label' }}
+                    SelectProps={{
+                      labelId: 'cf-questionType-label',
+                      displayEmpty: true,
+                      renderValue: (v: unknown) => (v ? String(v) : <PlaceholderText />),
+                      SelectDisplayProps: { 'aria-invalid': !!errors.questionType, 'aria-describedby': errors.questionType ? 'cf-questionType-helper-text' : undefined },
+                    }}
                     value={formData.questionType} onChange={handleChange}
                     error={!!errors.questionType} helperText={errors.questionType}
                     inputProps={{ 'aria-required': true }}
@@ -419,6 +448,8 @@ const ContactForm: React.FC = () => {
                       שגיאה בשליחה, נסו שוב.
                     </Typography>
                   )}
+
+                  <Honeypot ref={honeypotRef} />
 
                   <AppButton type="submit" fullWidth disabled={submitStatus === 'loading'}>
                     {submitStatus === 'loading' ? 'שולח...' : 'שליחת הפנייה'}

@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import { site } from '../src/content/site';
+import PhoneNumber from './shared/PhoneNumber';
 import AppButton from './shared/AppButton';
 import SectionFlourish from './shared/SectionFlourish';
 import SectionArch from './shared/SectionArch';
@@ -85,7 +86,7 @@ const BooksCarousel = () => {
             aria-label="הקודם"
             disabled={!canPrev}
             onClick={() => scrollPage('prev')}
-            sx={{ ...arrowSx, right: -52 }}
+            sx={{ ...arrowSx, right: -44 }}
           >
             <ChevronRight size={22} strokeWidth={1.5} />
           </IconButton>
@@ -126,7 +127,7 @@ const BooksCarousel = () => {
                       sm: 'calc((100% - 26px) / 2)',
                       md: 'calc((100% - 78px) / 4)',
                     },
-                    minHeight: { md: '444px' },
+                    height: 'var(--home-card-height)',
                     display: 'flex',
                     bgcolor: 'var(--surface)',
                     border: `1px solid var(--gold)`,
@@ -148,8 +149,8 @@ const BooksCarousel = () => {
                     p: '8px 18px 18px',
                   }}>
                     <Box sx={{
-                      height: `var(--book-card-image-height)`,
-                      flexShrink: 0,
+                      flex: "1 1 0",
+                      minHeight: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       overflow: 'hidden',
                     }}>
@@ -158,7 +159,7 @@ const BooksCarousel = () => {
                         alt={`כריכת הספר ${book.book_name || ''}`}
                         loading="lazy"
                         style={{
-                          height: '72%',
+                          height: '90%',
                           width: 'auto',
                           maxWidth: '85%',
                           objectFit: 'contain',
@@ -197,7 +198,7 @@ const BooksCarousel = () => {
             aria-label="הבא"
             disabled={!canNext}
             onClick={() => scrollPage('next')}
-            sx={{ ...arrowSx, left: -52 }}
+            sx={{ ...arrowSx, left: -44 }}
           >
             <ChevronLeft size={22} strokeWidth={1.5} />
           </IconButton>
@@ -236,7 +237,7 @@ const BooksCarousel = () => {
                   direction: 'ltr',
                 }}
               >
-                {site.phones.books}
+                <PhoneNumber>{site.phones.books}</PhoneNumber>
               </Typography>
             </Box>
             {site.addresses.office && (

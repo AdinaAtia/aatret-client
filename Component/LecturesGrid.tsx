@@ -35,7 +35,7 @@ const LecturesGrid = (_props: LecturesGridProps) => {
   const fetchLectures = async () => {
     try {
       setLoading(true);
-      const url = `${import.meta.env.VITE_API_URL}/api/lessons?filters[rabbi][name][$eq]=${encodeURIComponent('הרב מרדכי עטייה')}&sort=lesson_date_gregorian:desc&populate=*&pagination[pageSize]=9`;
+      const url = `${import.meta.env.VITE_API_URL}/api/lessons?filters[rabbi][name][$contains]=${encodeURIComponent('מרדכי עטייה')}&sort=lesson_date_gregorian:desc&populate=*&pagination[pageSize]=9`;
       const response = await axios.get(url);
       setLectures(response.data.data || []);
     } catch (error) {

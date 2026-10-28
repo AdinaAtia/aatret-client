@@ -141,11 +141,17 @@ const Home: React.FC = () => {
 
       setRabbiCardsData([...formatted].sort((a, b) => a.priority - b.priority));
 
-      const lessonRequests = rabbisData.data.map((r: any) =>
-        fetch(`${import.meta.env.VITE_API_URL}/api/lessons?filters[rabbi][id][$eq]=${r.id}&sort=lesson_date_gregorian:desc&pagination[limit]=1`)
-          .then(res => res.json())
-          .then(data => ({ rabbiId: r.id, lesson: data?.data?.[0] ?? null }))
-      );
+      const lessonRequests = rabbisData.data.map(async (r: any) => {
+        const base = `${import.meta.env.VITE_API_URL}/api/lessons?filters[rabbi][id][$eq]=${r.id}&sort=lesson_date_gregorian:desc&pagination[limit]=1`;
+        // השיעור האחרון שיש לו סרטון (תמונת הכרטיס היא מהסרטון). אם אין לרב כזה — השיעור האחרון בכלל
+        const withVideo = await fetch(`${base}&filters[youtube_id][$notNull]=true&filters[youtube_id][$ne]=`).then(res => res.json());
+        let lesson = withVideo?.data?.[0] ?? null;
+        if (!lesson) {
+          const latest = await fetch(base).then(res => res.json());
+          lesson = latest?.data?.[0] ?? null;
+        }
+        return { rabbiId: r.id, lesson };
+      });
 
       const lessonsResults = await Promise.all(lessonRequests);
       const lessonsMap: Record<number, any> = {};
@@ -678,7 +684,14 @@ const Home: React.FC = () => {
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
-                      {hasPhoto ? (
+                      {lesson?.youtube_id ? (
+                        // תמונת הסרטון של השיעור האחרון, כמו בשיעורי ראש הישיבה
+                        <LessonThumb
+                          src={`https://i.ytimg.com/vi/${lesson.youtube_id}/hqdefault.jpg`}
+                          alt={rabbi.name}
+                          sx={{ width: '100%', height: '100%' }}
+                        />
+                      ) : hasPhoto ? (
                         <Box
                           component="img"
                           src={rabbi.imageSrc}
